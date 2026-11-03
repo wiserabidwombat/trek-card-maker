@@ -74,3 +74,34 @@ def compute_art_mask(
         frame_inside &= ~inner
     overlay[..., 3] = np.where(frame_inside, 255, 0).astype(np.uint8)
     return bbox, overlay
+
+
+def erase_red_dots(img: np.ndarray, region: tuple[float, float, float, float], shift: int = 40) -> int:
+    """Remove small saturated-red skill bullets baked into older frames.
+
+    ``region`` is (x0, y0, x1, y1) as fractions of the image. Red pixels inside it (dilated by
+    2 px) are replaced with the pixel ``shift`` columns to the right (or left near the edge),
+    which on the parchment texture is indistinguishable. Returns the number of pixels replaced.
+    """
+    h, w = img.shape[:2]
+    x0, y0, x1, y1 = (int(region[0] * w), int(region[1] * h), int(region[2] * w), int(region[3] * h))
+    sub = img[y0:y1, x0:x1].astype(int)
+    r, g, b = sub[..., 0], sub[..., 1], sub[..., 2]
+    red = (r > 120) & (r - g > 60) & (r - b > 60)
+    if not red.any():
+        return 0
+    p = np.pad(red, 2)
+    dil = np.zeros_like(red)
+    hh, ww = red.shape
+    for dy in range(5):
+        for dx in range(5):
+            dil |= p[dy : dy + hh, dx : dx + ww]
+    ys, xs = np.nonzero(dil)
+    out = img[y0:y1, x0:x1]
+    src_x = np.where(xs + shift < ww, xs + shift, xs - shift)
+    src_x = np.clip(src_x, 0, ww - 1)
+    # avoid copying from another dot
+    bad = dil[ys, src_x]
+    src_x = np.where(bad, np.clip(xs - shift, 0, ww - 1), src_x)
+    out[ys, xs] = out[ys, src_x]
+    return int(len(ys))

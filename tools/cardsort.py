@@ -235,7 +235,7 @@ def derive_template(ctype: str, family: str, cards: list[list[tuple[str, Line]]]
     flow = {
         "x0": round(statistics.median(per_card_body_x0), 4) if per_card_body_x0 else 0.136,
         "y0": round(statistics.median(per_card_first_body_y), 4) if per_card_first_body_y else 0.65,
-        "x1": max(0.93, round(statistics.median(per_card_body_x1), 4)) if per_card_body_x1 else 0.93,
+        "x1": round(statistics.median(per_card_body_x1) + 0.005, 4) if per_card_body_x1 else 0.93,
         "y1": flow_y1,
         "sizePt": flow_size,
         "lineHeight": line_height,
@@ -247,7 +247,7 @@ def derive_template(ctype: str, family: str, cards: list[list[tuple[str, Line]]]
         skills = {
             "x0": round(statistics.median(skill_x0) - BULLET_GAP, 4),
             "y0": round(statistics.median(skill_first_y), 4),
-            "x1": max(0.93, round(statistics.median(skill_x1), 4)),
+            "x1": round(statistics.median(per_card_body_x1) + 0.005, 4) if per_card_body_x1 else 0.93,
             "rowHeight": round(statistics.median(skill_gaps), 4) if skill_gaps else line_height,
             "bulletSize": BULLET_SIZE,
         }

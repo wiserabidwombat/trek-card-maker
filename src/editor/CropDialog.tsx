@@ -15,6 +15,11 @@ export function CropDialog({ src, aspect, initial, onDone, onCancel }: Props) {
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [area, setArea] = useState<Area | null>(null);
+  const rotate = (delta: number) => {
+    setRotation((r) => (r + delta + 360) % 360);
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+  };
 
   return (
     <div className="modal-backdrop" onClick={onCancel}>
@@ -42,8 +47,8 @@ export function CropDialog({ src, aspect, initial, onDone, onCancel }: Props) {
             Zoom
             <input type="range" min={0.5} max={5} step={0.01} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} />
           </label>
-          <button onClick={() => setRotation((r) => (r + 270) % 360)}>⟲ Rotate</button>
-          <button onClick={() => setRotation((r) => (r + 90) % 360)}>⟳ Rotate</button>
+          <button onClick={() => rotate(-90)}>⟲ Rotate</button>
+          <button onClick={() => rotate(90)}>⟳ Rotate</button>
           <span className="muted small">{rotation}°</span>
           <span className="spacer" />
           <button onClick={onCancel}>Cancel</button>

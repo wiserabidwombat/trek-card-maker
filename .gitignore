@@ -4,3 +4,4 @@ public/frames/
 .venv/
 __pycache__/
 *.pyc
+public/test/

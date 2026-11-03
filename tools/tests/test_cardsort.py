@@ -144,6 +144,7 @@ def test_derive_template_dilemma():
     assert abs(t["flow"]["y0"] - 0.656) < 1e-6
     assert abs(t["flow"]["lineHeight"] - 0.032) < 1e-6
     assert t["flow"]["x0"] == 0.136
+    assert abs(t["flow"]["x1"] - 0.932) < 1e-6  # widest body line + a little slack
     assert abs(t["flow"]["y1"] - (0.793 + 0.032)) < 1e-6  # last body line + one line, under collector-0.02
     assert t["flow"]["sizePt"] == 7
     assert t["lore"]["sizePt"] == 6.5

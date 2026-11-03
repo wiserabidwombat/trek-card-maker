@@ -31,13 +31,14 @@ from PIL import Image, ImageDraw
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from affiliation import AFFILIATION_TABLE, cluster_colours, nearest_affiliation, sample_features  # noqa: E402
-from artmask import compute_art_mask  # noqa: E402
+from artmask import compute_art_mask, erase_red_dots  # noqa: E402
 from cardsort import classify_type, derive_template, family_for, line_roles  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ICON_MIN, ICON_MAX = 8, 40
 MAX_MASK_FRAMES = 40
 DEFAULT_ART_BOX = [0.02, 0.12, 0.93, 0.52]
+STD_SKILL_REGION = (0.16, 0.60, 0.92, 0.73)
 
 
 def log(msg: str) -> None:
@@ -230,6 +231,9 @@ def main() -> int:
                 title = next((l[1] for r, l in roles if r == "title"), "")
 
                 arr = pix_to_rgb(doc, xref)
+                if fam == "std" and ctype == "personnel":
+                    # older sets bake the skill bullets into the frame image; remove them
+                    erase_red_dots(arr, STD_SKILL_REGION)
                 idx = len(frames)
                 nnn = f"{idx - count_before + 1:03d}"
                 os.makedirs(os.path.join(set_dir, "thumbs"), exist_ok=True)
@@ -343,6 +347,12 @@ def main() -> int:
         if key not in art_box_px:
             templates[key]["artBox"] = DEFAULT_ART_BOX
             log(f"warn: {key} has no usable group; using default art box")
+        manual = overrides.get(key, {}).get("artBox")
+        if manual and by_tf[key]:
+            fr0 = frames[by_tf[key][0]]
+            w, h = fr0["w"], fr0["h"]
+            art_box_px[key] = (int(manual[0] * w), int(manual[1] * h), int(manual[2] * w), int(manual[3] * h))
+            templates[key]["artBox"] = list(manual)
 
     for gkey, idxs in by_group.items():
         tf = gkey.rsplit(".", 1)[0]

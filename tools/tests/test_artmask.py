@@ -5,7 +5,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from artmask import compute_art_mask  # noqa: E402
+from artmask import compute_art_mask, erase_red_dots  # noqa: E402
 
 
 def test_art_box_and_overlay():
@@ -66,3 +66,20 @@ def test_edge_band_limits_overlay_and_bbox_can_be_given():
     assert bbox == (10, 20, 130, 100)
     assert overlay[60, 70, 3] == 0  # deep-inside constant pixels are not kept
     assert overlay[21, 70, 3] == 255  # edge strip is kept
+
+
+def test_erase_red_dots_fills_with_neighbouring_texture():
+    img = np.full((100, 200, 3), (210, 200, 180), np.uint8)
+    img[:, ::2] = (200, 190, 170)  # faint vertical texture
+    yy, xx = np.mgrid[0:100, 0:200]
+    dot = (yy - 50) ** 2 + (xx - 60) ** 2 <= 36
+    img[dot] = (200, 30, 30)
+    n = erase_red_dots(img, (0.1, 0.2, 0.9, 0.8))
+    assert n > 0
+    assert not (((img[..., 0].astype(int) - img[..., 1]) > 60).any())
+    assert tuple(img[50, 60]) in ((210, 200, 180), (200, 190, 170))
+
+
+def test_erase_red_dots_ignores_regions_without_red():
+    img = np.full((50, 50, 3), 100, np.uint8)
+    assert erase_red_dots(img, (0, 0, 1, 1)) == 0
