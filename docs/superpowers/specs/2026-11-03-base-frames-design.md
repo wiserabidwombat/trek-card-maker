@@ -1,7 +1,7 @@
 # Base Frames with App-Drawn Icons and Skills — Design
 
 Date: 2026-11-03
-Status: approved, implementing
+Status: implemented 2026-11-03 (see README for usage)
 Builds on: `2026-11-02-card-maker-design.md`
 
 ## Goal
@@ -198,6 +198,22 @@ migration incl. frame remap), `renderCard` geometry helper `missionIconPositions
 
 Manual (browser): one card of every type with icons and skills, a Federation personnel with three
 Other Icons, a mission with four affiliations, and a sheet export.
+
+## Implementation notes (2026-11-03)
+
+- Socket geometry is measured once per family from the ring's radial brightness profile and kept
+  in `tools/template_overrides.json` (HiRes: x 0.0651, y 0.6393/0.7107/0.7804, diameter 0.0793 W;
+  older sets: x 0.102, y 0.6319/0.6983/0.7647, diameter 0.0753 W). The variance detector remains
+  as the fallback when no override exists. Ships use the personnel slots from the second one down.
+- The socket test compares a slot with the clean column texture below the last slot (plus a dark
+  gap / bright ring check), so bronze and gold rings are detected like silver ones. Base frames
+  rebuild every slot from that clean texture rather than relying on the median alone.
+- Terok Nor appears on no source card and no source mission lists Borg; both icons fall back to
+  the rulebook's 45 px images (smaller, visibly softer when printed).
+- A headquarters mission exists in the sources (Face of the Enemy), so no synthetic frame was
+  needed.
+- Decks and stored cards from the first version are migrated on load: skills text is parsed,
+  icons default to empty, and per-card frame ids move to the first base frame of the type.
 
 ## Out of scope
 

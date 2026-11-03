@@ -10,6 +10,8 @@
 
 **Spec:** `docs/superpowers/specs/2026-11-03-base-frames-design.md`
 
+**Status:** complete 2026-11-03. Deviations: slots come from measured overrides (detection kept as fallback); the socket test became texture-independent; `--pass3-only` reruns pass 3 from `source_frames.json`.
+
 ## Global Constraints
 
 - Extractor runs as `python -I -X utf8 tools/extract_frames.py --pdf-dir "C:/Users/altil/Downloads/TrekCC" --rulebook "C:/Users/altil/Downloads/rulebook.pdf" --out public/frames --review`.
@@ -55,7 +57,7 @@
 **Interfaces:**
 - Produces `load_reference_icons(rulebook_path, names_json) -> dict[str, np.ndarray]` (RGBA 45 px), `nearest_reference(crop_rgba, refs, size=32) -> tuple[str, float]`.
 
-- [ ] **Step 1: Failing test for nearest match with circular mask**
+- [x] **Step 1: Failing test for nearest match with circular mask**
 
 ```python
 # tools/tests/test_refs.py
@@ -76,9 +78,9 @@ def test_circular_mask_ignores_corners():
     assert not m[0, 0] and m[16, 16]
 ```
 
-- [ ] **Step 2: Run** `python -I -X utf8 -m pytest tools/tests/test_refs.py -q` → ImportError.
+- [x] **Step 2: Run** `python -I -X utf8 -m pytest tools/tests/test_refs.py -q` → ImportError.
 
-- [ ] **Step 3: Implement `tools/refs.py`**
+- [x] **Step 3: Implement `tools/refs.py`**
 
 ```python
 """Reference icons from the rulebook PDF and nearest-match naming of crops."""
@@ -133,9 +135,9 @@ def load_reference_icons(rulebook: str, names_json: str) -> dict[str, np.ndarray
   "6": ["dual","dilemma-planet","dilemma-space","bajoran","borg","cardassian","dominion","federation","ferengi","klingon","romulan","starfleet","non-aligned"] }
 ```
 
-- [ ] **Step 4: Run tests** → PASS.
-- [ ] **Step 5: Verify order** with a scratch script that saves a contact sheet of `load_reference_icons(...)` labelled by name; fix the JSON if any label is wrong.
-- [ ] **Step 6: Commit** `feat(tools): rulebook reference icons`.
+- [x] **Step 4: Run tests** → PASS.
+- [x] **Step 5: Verify order** with a scratch script that saves a contact sheet of `load_reference_icons(...)` labelled by name; fix the JSON if any label is wrong.
+- [x] **Step 6: Commit** `feat(tools): rulebook reference icons`.
 
 ---
 
@@ -145,7 +147,7 @@ def load_reference_icons(rulebook: str, names_json: str) -> dict[str, np.ndarray
 
 **Interfaces:** `mission_variant(img) -> "planet"|"space"`, `dilemma_variant(img) -> "dual"|"planet"|"space"`, `pick_family(members: list[dict]) -> str`. Regions (fractions): mission disc `(0.045,0.035,0.105,0.075)`; dilemma ring annulus sample `(0.028,0.085,0.045,0.100)` (left of the disc, on the coloured ring).
 
-- [ ] **Step 1: Tests**
+- [x] **Step 1: Tests**
 
 ```python
 import numpy as np
@@ -168,7 +170,7 @@ def test_pick_family_prefers_hires():
     assert pick_family([{"family": "std"}]) == "std"
 ```
 
-- [ ] **Step 2: Run → fail. Step 3: Implement** (mean colour of region; mission: `b > 120 and b > r + 40` → planet; dilemma: hue via `colorsys.rgb_to_hsv`: 140–200° → dual, <20° or >330° → planet, else space). **Step 4: tests pass. Step 5: commit** `feat(tools): mission and dilemma variants`.
+- [x] **Step 2: Run → fail. Step 3: Implement** (mean colour of region; mission: `b > 120 and b > r + 40` → planet; dilemma: hue via `colorsys.rgb_to_hsv`: 140–200° → dual, <20° or >330° → planet, else space). **Step 4: tests pass. Step 5: commit** `feat(tools): mission and dilemma variants`.
 
 ---
 
@@ -178,9 +180,9 @@ def test_pick_family_prefers_hires():
 
 **Interfaces:** `detect_slots(frames: list[np.ndarray], column=(0.0, 0.52, 0.16, 0.95), threshold=18.0, min_height=0.03) -> list[dict(cx, cy, size)]` (fractions of W/H; size = blob height / W as fraction of width), `detect_strip(frames, band=(0.0, 0.84, 1.0, 0.94)) -> dict(cy, step, size)`.
 
-- [ ] **Step 1: Test with synthetic frames**: 6 frames 200×300, a 30 px disc at (20, 170) in 3 of them and at (20, 210) in 2 of them; expect two slots with `cy ≈ 170/300`, `210/300`, `size ≈ 30/200`.
-- [ ] **Step 2: Implement**: `std = stack.std(0).max(2)` inside the column; mask = `std > threshold` majority-filtered (reuse `artmask._majority3x3`); row projection → runs of rows with `mean > 0.15`; each run is a slot; `cx` from column projection of that run; `size` = run height / W. For `detect_strip`, same on the band but project columns to get blob x-centres across all frames; `step` = median gap between adjacent distinct centres (merge within 0.01); `size` = median blob width / W; `cy` = mean blob centre / H.
-- [ ] **Step 3: tests pass; commit** `feat(tools): icon slot and strip detection`.
+- [x] **Step 1: Test with synthetic frames**: 6 frames 200×300, a 30 px disc at (20, 170) in 3 of them and at (20, 210) in 2 of them; expect two slots with `cy ≈ 170/300`, `210/300`, `size ≈ 30/200`.
+- [x] **Step 2: Implement**: `std = stack.std(0).max(2)` inside the column; mask = `std > threshold` majority-filtered (reuse `artmask._majority3x3`); row projection → runs of rows with `mean > 0.15`; each run is a slot; `cx` from column projection of that run; `size` = run height / W. For `detect_strip`, same on the band but project columns to get blob x-centres across all frames; `step` = median gap between adjacent distinct centres (merge within 0.01); `size` = median blob width / W; `cy` = mean blob centre / H.
+- [x] **Step 3: tests pass; commit** `feat(tools): icon slot and strip detection`.
 
 ---
 
@@ -190,8 +192,8 @@ def test_pick_family_prefers_hires():
 
 **Interfaces:** `median_frame(frames) -> np.ndarray`, `percentile_frame(frames, q) -> np.ndarray`, `fill_art_box(img, bbox_px, colour=(15,18,22))`, `slot_rect(slot, W, H, pad=1.25) -> (x0,y0,x1,y1)`, `socket_present(img, slot, W, H) -> bool` (mean brightness of the annulus `0.85–1.05·r` > 150 and std of inner disc > 25), `patch_slot(img, slot, W, H, donor: np.ndarray | None, step_px: int)`, `clean_strip(img, band_px, frames)`.
 
-- [ ] **Step 1: Tests**: median of 5 frames where a bright disc appears in 2 → disc gone; `patch_slot` with donor copies the donor rectangle; without donor copies from `y + step_px`; `clean_strip` replaces a bright blob in one frame with the dark percentile.
-- [ ] **Step 2: Implement; Step 3: tests pass; commit** `feat(tools): base frame synthesis`.
+- [x] **Step 1: Tests**: median of 5 frames where a bright disc appears in 2 → disc gone; `patch_slot` with donor copies the donor rectangle; without donor copies from `y + step_px`; `clean_strip` replaces a bright blob in one frame with the dark percentile.
+- [x] **Step 2: Implement; Step 3: tests pass; commit** `feat(tools): base frame synthesis`.
 
 ---
 
@@ -201,8 +203,8 @@ def test_pick_family_prefers_hires():
 
 **Interfaces:** `crop_disc(img, cx, cy, r) -> RGBA np.ndarray` (circle alpha, soft 1 px edge), `crop_ring(img, cx, cy, r_outer, r_inner) -> RGBA`, `sharpness(rgba) -> float` (variance of Laplacian on grey), `strip_blobs(img, band_px, bright=90) -> list[(x0,y0,x1,y1)]` (connected components of bright pixels, min 12 px, padded 2 px; implement BFS on a downsampled mask or use `scipy`-free flood fill with NumPy labelling by iterative dilation—keep it simple: scan-line union-find).
 
-- [ ] **Step 1: Tests**: `crop_disc` alpha is 0 at corners and 255 at centre; `crop_ring` alpha 0 at centre; `strip_blobs` finds two separated bright squares; `sharpness` higher for a checkerboard than a flat disc.
-- [ ] **Step 2: Implement; Step 3: pass; commit** `feat(tools): icon crops`.
+- [x] **Step 1: Tests**: `crop_disc` alpha is 0 at corners and 255 at centre; `crop_ring` alpha 0 at centre; `strip_blobs` finds two separated bright squares; `sharpness` higher for a checkerboard than a flat disc.
+- [x] **Step 2: Implement; Step 3: pass; commit** `feat(tools): icon crops`.
 
 ---
 
@@ -210,15 +212,15 @@ def test_pick_family_prefers_hires():
 
 **Files:** Modify `tools/extract_frames.py` (after overlays, before catalog write), `tools/template_overrides.json`.
 
-- [ ] **Step 1: Add `--rulebook` argument**; load refs when given (else log a warning and skip naming/headquarters).
-- [ ] **Step 2: Variants**: for every frame, `variant` = affiliation (personnel/ship), `mission_variant`/`dilemma_variant` (loaded from the saved JPEG), else `default`. Group by `(type, variant)`; `fam = pick_family(members)`; keep only members of that family (up to 40).
-- [ ] **Step 3: Slots**: per `(type, family)` for personnel and ship: `detect_slots` over the family's frames of the largest affiliation group; store `templates[key]["iconSlots"]`. Mission: `detect_strip` → `templates["mission.<fam>"]["missionAffiliations"]`. Apply overrides (`deep_merge`) afterwards as today.
-- [ ] **Step 4: Base frames**: `median_frame` → `fill_art_box` (bbox from `art_box_px[type.fam]`) → per slot, if `socket_present` then `patch_slot` with donor = median of the ship group of the same family+affiliation if that donor has no socket there, else `None` → mission: `clean_strip`. Headquarters: copy of the mission `space` base with the `headquarters` reference icon resized to the disc (disc centre/radius from the mission template's ring: `(0.075, 0.055)`, r `0.030·W`; measure once and put in `template_overrides.json` as `missionType`). Save JPEG + thumb. Review image: before/after side by side.
-- [ ] **Step 5: Rings and socket icons**: for each personnel/ship group median, `crop_ring` at slot 1 (`r_outer = size/2 · W`, `r_inner = 0.72 · r_outer`) → `rings/<fam>.<aff>.png`. For each frame and slot with `socket_present`, `crop_disc` at `r_inner`; `nearest_reference` against the twelve Other Icons; accept if `dist < 55` (tune with the review sheet); keep the sharpest per name → `icons/big-<name>.png` with `"group": "other"`. Unmatched → review sheet.
-- [ ] **Step 6: Mission affiliation icons**: `strip_blobs` on each mission frame's band; crop with transparency (alpha from brightness > 40, 2 px feather); name by nearest affiliation reference, accept `dist < 60`; sharpest per name → `icons/mission-<aff>.png`, `"group": "missionAffiliation"`.
-- [ ] **Step 7: Catalog**: `frames` = base frames only (`id = "<type>.<variant>"`, `label` = title-cased variant, `set = "base"`, `affiliation` = variant for personnel/ship else `"none"`, `overlay` from the group's overlay file, `ring`), `icons` with `group` (`inline` for the old 31 px ones), `skills` = sorted list of the 23 names collected from skill lines (count ≥ 5 occurrences, title-case, `Ofﬁcer` ligature normalised).
-- [ ] **Step 8: Run the extractor with `--review`** (background, ~6 min). Inspect `review/base_*.png`, `review/icons_sockets.png`, `review/icons_unmatched.png`, `review/icons_mission.png`. Fix thresholds or add overrides until every base frame is clean and all twelve Other Icons plus the affiliation icons are named.
-- [ ] **Step 9: Commit** `feat(tools): base frame catalog (pass 3)`.
+- [x] **Step 1: Add `--rulebook` argument**; load refs when given (else log a warning and skip naming/headquarters).
+- [x] **Step 2: Variants**: for every frame, `variant` = affiliation (personnel/ship), `mission_variant`/`dilemma_variant` (loaded from the saved JPEG), else `default`. Group by `(type, variant)`; `fam = pick_family(members)`; keep only members of that family (up to 40).
+- [x] **Step 3: Slots**: per `(type, family)` for personnel and ship: `detect_slots` over the family's frames of the largest affiliation group; store `templates[key]["iconSlots"]`. Mission: `detect_strip` → `templates["mission.<fam>"]["missionAffiliations"]`. Apply overrides (`deep_merge`) afterwards as today.
+- [x] **Step 4: Base frames**: `median_frame` → `fill_art_box` (bbox from `art_box_px[type.fam]`) → per slot, if `socket_present` then `patch_slot` with donor = median of the ship group of the same family+affiliation if that donor has no socket there, else `None` → mission: `clean_strip`. Headquarters: copy of the mission `space` base with the `headquarters` reference icon resized to the disc (disc centre/radius from the mission template's ring: `(0.075, 0.055)`, r `0.030·W`; measure once and put in `template_overrides.json` as `missionType`). Save JPEG + thumb. Review image: before/after side by side.
+- [x] **Step 5: Rings and socket icons**: for each personnel/ship group median, `crop_ring` at slot 1 (`r_outer = size/2 · W`, `r_inner = 0.72 · r_outer`) → `rings/<fam>.<aff>.png`. For each frame and slot with `socket_present`, `crop_disc` at `r_inner`; `nearest_reference` against the twelve Other Icons; accept if `dist < 55` (tune with the review sheet); keep the sharpest per name → `icons/big-<name>.png` with `"group": "other"`. Unmatched → review sheet.
+- [x] **Step 6: Mission affiliation icons**: `strip_blobs` on each mission frame's band; crop with transparency (alpha from brightness > 40, 2 px feather); name by nearest affiliation reference, accept `dist < 60`; sharpest per name → `icons/mission-<aff>.png`, `"group": "missionAffiliation"`.
+- [x] **Step 7: Catalog**: `frames` = base frames only (`id = "<type>.<variant>"`, `label` = title-cased variant, `set = "base"`, `affiliation` = variant for personnel/ship else `"none"`, `overlay` from the group's overlay file, `ring`), `icons` with `group` (`inline` for the old 31 px ones), `skills` = sorted list of the 23 names collected from skill lines (count ≥ 5 occurrences, title-case, `Ofﬁcer` ligature normalised).
+- [x] **Step 8: Run the extractor with `--review`** (background, ~6 min). Inspect `review/base_*.png`, `review/icons_sockets.png`, `review/icons_unmatched.png`, `review/icons_mission.png`. Fix thresholds or add overrides until every base frame is clean and all twelve Other Icons plus the affiliation icons are named.
+- [x] **Step 9: Commit** `feat(tools): base frame catalog (pass 3)`.
 
 ---
 
@@ -226,8 +228,8 @@ def test_pick_family_prefers_hires():
 
 **Files:** Modify `src/catalog/types.ts`, `src/catalog/loader.ts`, `src/catalog/loader.test.ts`.
 
-- [ ] **Step 1: Test**: a catalog with a frame carrying `variant`, `label`, `ring` and a template with `iconSlots` and `missionAffiliations` validates; a frame without `variant` gets `variant = affiliation`, `label = id`; `skills` defaults to `[]`; icon `group` defaults to `'inline'`.
-- [ ] **Step 2: Types**:
+- [x] **Step 1: Test**: a catalog with a frame carrying `variant`, `label`, `ring` and a template with `iconSlots` and `missionAffiliations` validates; a frame without `variant` gets `variant = affiliation`, `label = id`; `skills` defaults to `[]`; icon `group` defaults to `'inline'`.
+- [x] **Step 2: Types**:
 
 ```ts
 export interface IconSlot { cx: number; cy: number; size: number }
@@ -238,7 +240,7 @@ export interface IconSlot { cx: number; cy: number; size: number }
 export function framesOfType(c: Catalog, type: CardType): Frame[]
 ```
 
-- [ ] **Step 3: Loader** fills defaults; tests pass; commit `feat(catalog): variants, slots, icon groups`.
+- [x] **Step 3: Loader** fills defaults; tests pass; commit `feat(catalog): variants, slots, icon groups`.
 
 ---
 
@@ -246,9 +248,9 @@ export function framesOfType(c: Catalog, type: CardType): Frame[]
 
 **Files:** Create `src/model/skills.ts`, `src/model/skills.test.ts`; modify `src/model/card.ts`, `src/model/card.test.ts`.
 
-- [ ] **Step 1: Tests**: `skillText({name:'Leadership',count:2})==='2 Leadership'`, count 1 → `'Leadership'`; `parseSkillText('2 Treachery')` → `{name:'Treachery',count:2}`, `'Chef'` → `{name:'Chef',count:1}`; `newCard` has `icons: []`; `changeType` keeps `icons` only when both types are personnel/ship, else `[]`; `maxIcons('personnel', template)` = `iconSlots.length`, mission → 5, other → 0.
-- [ ] **Step 2: Implement**: `STANDARD_SKILLS` (23), `isStandardSkill`, `skillText`, `parseSkillText`; `Skill = { name: string; count: number }`; `Card.icons: string[]`.
-- [ ] **Step 3: Fix compile errors** in `SkillsEditor`/`renderCard` minimally (next tasks rewrite them). Tests pass; commit `feat(model): structured skills and icon list`.
+- [x] **Step 1: Tests**: `skillText({name:'Leadership',count:2})==='2 Leadership'`, count 1 → `'Leadership'`; `parseSkillText('2 Treachery')` → `{name:'Treachery',count:2}`, `'Chef'` → `{name:'Chef',count:1}`; `newCard` has `icons: []`; `changeType` keeps `icons` only when both types are personnel/ship, else `[]`; `maxIcons('personnel', template)` = `iconSlots.length`, mission → 5, other → 0.
+- [x] **Step 2: Implement**: `STANDARD_SKILLS` (23), `isStandardSkill`, `skillText`, `parseSkillText`; `Skill = { name: string; count: number }`; `Card.icons: string[]`.
+- [x] **Step 3: Fix compile errors** in `SkillsEditor`/`renderCard` minimally (next tasks rewrite them). Tests pass; commit `feat(model): structured skills and icon list`.
 
 ---
 
@@ -256,8 +258,8 @@ export function framesOfType(c: Catalog, type: CardType): Frame[]
 
 **Files:** Modify `src/store/deckJson.ts`, `src/store/deckJson.test.ts`.
 
-- [ ] **Step 1: Tests**: serialize writes `version: 2`; parse v2 round-trips `skills` and `icons`; parse v1 converts `{icon,text:'2 Honor'}` → `{name:'Honor',count:2}` and sets `icons: []`; `remapFrames(cards, catalog)` replaces unknown `frameId` with the first frame of the type and returns the count.
-- [ ] **Step 2: Implement**; tests pass; commit `feat(store): deck JSON v2 with v1 migration`.
+- [x] **Step 1: Tests**: serialize writes `version: 2`; parse v2 round-trips `skills` and `icons`; parse v1 converts `{icon,text:'2 Honor'}` → `{name:'Honor',count:2}` and sets `icons: []`; `remapFrames(cards, catalog)` replaces unknown `frameId` with the first frame of the type and returns the count.
+- [x] **Step 2: Implement**; tests pass; commit `feat(store): deck JSON v2 with v1 migration`.
 
 ---
 
@@ -265,9 +267,9 @@ export function framesOfType(c: Catalog, type: CardType): Frame[]
 
 **Files:** Create `src/render/iconLayout.ts`, `src/render/iconLayout.test.ts`; modify `src/render/renderCard.ts`.
 
-- [ ] **Step 1: Test** `missionIconPositions(3, {cy:0.9, step:0.08, size:0.06}, 1000, 1400)` → x centres 420, 500, 580, y 1260, width 60.
-- [ ] **Step 2: Implement** `missionIconPositions`; in `renderCard`: load `frame.ring` (if any) plus `card.icons`; after the overlay draw slots (personnel/ship: ring at `size·W`, icon at `0.72·size·W`) and mission strip (keep aspect: `h = w · img.naturalHeight / img.naturalWidth`); skills use `skillText` and the `skill-dot` icon.
-- [ ] **Step 3: Tests + typecheck pass; commit** `feat(render): slot icons, mission affiliations, skill text`.
+- [x] **Step 1: Test** `missionIconPositions(3, {cy:0.9, step:0.08, size:0.06}, 1000, 1400)` → x centres 420, 500, 580, y 1260, width 60.
+- [x] **Step 2: Implement** `missionIconPositions`; in `renderCard`: load `frame.ring` (if any) plus `card.icons`; after the overlay draw slots (personnel/ship: ring at `size·W`, icon at `0.72·size·W`) and mission strip (keep aspect: `h = w · img.naturalHeight / img.naturalWidth`); skills use `skillText` and the `skill-dot` icon.
+- [x] **Step 3: Tests + typecheck pass; commit** `feat(render): slot icons, mission affiliations, skill text`.
 
 ---
 
@@ -275,19 +277,19 @@ export function framesOfType(c: Catalog, type: CardType): Frame[]
 
 **Files:** Rewrite `src/editor/FramePicker.tsx`, `src/editor/SkillsEditor.tsx`; create `src/editor/IconsSection.tsx`; modify `FieldsForm.tsx`, `App.tsx`, `SetupScreen.tsx`, `src/index.css`.
 
-- [ ] **Step 1: FramePicker**: type tabs; grid of `framesOfType(catalog, type)` tiles showing `thumb` and `label`; selected state; no filters.
-- [ ] **Step 2: IconsSection** props `{ title, choices: IconDef[], value: string[], max: number, onChange }`: checklist buttons (image + id without prefix) toggling membership (append on check, block with a note at `max`), chip row with ↑ ↓ ×.
-- [ ] **Step 3: SkillsEditor**: row = `<select>` (standard names + `Custom…`), count `<input type=number min=1 max=9>`, custom text input when the name is not standard; ↑ ↓ ×; add button.
-- [ ] **Step 4: FieldsForm**: render `IconsSection` for personnel/ship (choices = icons with group `other`, `max = template.iconSlots?.length ?? 0`, title "Other icons") and mission (group `missionAffiliation`, max 5, title "Affiliations"); pass `template` in via props (App already has it).
-- [ ] **Step 5: App**: on catalog ready, `remapFrames` stored cards (log the count in the status line); JSON import uses the same; `selectFrame` unchanged. SetupScreen command includes `--rulebook`.
-- [ ] **Step 6: CSS**: `.variant-grid` (auto-fill 96 px tiles), `.icon-check` (40 px buttons, `.on` border), reuse `.chip`.
-- [ ] **Step 7: `npm run test && npm run typecheck && npm run build`; commit** `feat(editor): variant picker, icon lists, skill picker`.
+- [x] **Step 1: FramePicker**: type tabs; grid of `framesOfType(catalog, type)` tiles showing `thumb` and `label`; selected state; no filters.
+- [x] **Step 2: IconsSection** props `{ title, choices: IconDef[], value: string[], max: number, onChange }`: checklist buttons (image + id without prefix) toggling membership (append on check, block with a note at `max`), chip row with ↑ ↓ ×.
+- [x] **Step 3: SkillsEditor**: row = `<select>` (standard names + `Custom…`), count `<input type=number min=1 max=9>`, custom text input when the name is not standard; ↑ ↓ ×; add button.
+- [x] **Step 4: FieldsForm**: render `IconsSection` for personnel/ship (choices = icons with group `other`, `max = template.iconSlots?.length ?? 0`, title "Other icons") and mission (group `missionAffiliation`, max 5, title "Affiliations"); pass `template` in via props (App already has it).
+- [x] **Step 5: App**: on catalog ready, `remapFrames` stored cards (log the count in the status line); JSON import uses the same; `selectFrame` unchanged. SetupScreen command includes `--rulebook`.
+- [x] **Step 6: CSS**: `.variant-grid` (auto-fill 96 px tiles), `.icon-check` (40 px buttons, `.on` border), reuse `.chip`.
+- [x] **Step 7: `npm run test && npm run typecheck && npm run build`; commit** `feat(editor): variant picker, icon lists, skill picker`.
 
 ---
 
 ### Task 12: Browser verification, docs, memory
 
-- [ ] **Step 1: Start `card-maker-dev`**, build a Federation personnel with command + Earth + TNG icons and skills (2 Leadership, Honor, custom "Chef"), a Klingon ship with staffing and past icon, a planet mission with four affiliations, a dual dilemma; screenshot each; check overflow badges.
-- [ ] **Step 2: Export** a sheet and verify page count with the in-page pdf-lib check used before.
-- [ ] **Step 3: README** (frame picking, icons, skills, `--rulebook`), spec status "implemented", memory note update.
-- [ ] **Step 4: Commit** `docs: base frames usage`; report.
+- [x] **Step 1: Start `card-maker-dev`**, build a Federation personnel with command + Earth + TNG icons and skills (2 Leadership, Honor, custom "Chef"), a Klingon ship with staffing and past icon, a planet mission with four affiliations, a dual dilemma; screenshot each; check overflow badges.
+- [x] **Step 2: Export** a sheet and verify page count with the in-page pdf-lib check used before.
+- [x] **Step 3: README** (frame picking, icons, skills, `--rulebook`), spec status "implemented", memory note update.
+- [x] **Step 4: Commit** `docs: base frames usage`; report.
