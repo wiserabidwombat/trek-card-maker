@@ -1,3 +1,248 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { Catalog, Frame } from '../catalog/types';
+import { templateFor } from '../catalog/types';
+import { useCatalog, FRAMES_BASE } from '../catalog/useCatalog';
+import { changeType, newCard, type Card } from '../model/card';
+import { AssetCache } from '../render/assets';
+import { DEFAULT_FONTS, ensureFontsLoaded, registerUserFont, type FontConfig } from '../render/fonts';
+import { renderCard } from '../render/renderCard';
+import { buildSheetPdf, downloadBytes } from '../export/exportPdf';
+import { deleteCard, getImage, getUserFont, listCards, putCard, putImage } from '../store/db';
+import { parseDeck, serializeDeck } from '../store/deckJson';
+import { DeckList } from './DeckList';
+import { FieldsForm } from './FieldsForm';
+import { FontSettings } from './FontSettings';
+import { FramePicker } from './FramePicker';
+import { ImageSection } from './ImageSection';
+import { Preview } from './Preview';
+import { SetupScreen } from './SetupScreen';
+import { useRenderer } from './useRenderer';
+
 export default function App() {
-  return <h1>Trek Card Maker</h1>;
+  const cat = useCatalog();
+  if (cat.status === 'loading') return <main className="setup">Loading frame catalog…</main>;
+  if (cat.status === 'missing') return <SetupScreen />;
+  if (cat.status === 'error') return <SetupScreen error={cat.error} />;
+  return <Editor catalog={cat.catalog} />;
+}
+
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(blob);
+  });
+}
+
+async function dataUrlToBlob(url: string): Promise<Blob> {
+  return (await fetch(url)).blob();
+}
+
+function Editor({ catalog }: { catalog: Catalog }) {
+  const assets = useMemo(() => new AssetCache(), []);
+  const [fonts, setFonts] = useState<FontConfig>(DEFAULT_FONTS);
+  const [cards, setCards] = useState<Card[]>([]);
+  const [currentId, setCurrentId] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [showFonts, setShowFonts] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const saveTimers = useRef(new Map<string, number>());
+
+  const current = cards.find((c) => c.id === currentId) ?? null;
+  const frame = current ? catalog.frames.find((f) => f.id === current.frameId) ?? null : null;
+  const template = frame ? templateFor(catalog, frame) : null;
+
+  // initial load: user fonts, then saved cards
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const f: FontConfig = { ...DEFAULT_FONTS };
+      for (const slot of ['title', 'body'] as const) {
+        const blob = await getUserFont(slot);
+        if (blob) {
+          try {
+            f[slot] = await registerUserFont(slot, await blob.arrayBuffer());
+          } catch {
+            /* ignore a corrupt stored font */
+          }
+        }
+      }
+      await ensureFontsLoaded(f);
+      const saved = await listCards();
+      if (cancelled) return;
+      setFonts(f);
+      if (saved.length) {
+        setCards(saved);
+        setCurrentId(saved[saved.length - 1].id);
+      } else {
+        const first = catalog.frames.find((fr) => fr.type === 'personnel') ?? catalog.frames[0];
+        const c = newCard(first.type, first.id);
+        setCards([c]);
+        setCurrentId(c.id);
+        await putCard(c);
+      }
+      setLoaded(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [catalog]);
+
+  const render = useRenderer(current, catalog, fonts, assets);
+
+  const updateCard = useCallback((card: Card) => {
+    setCards((cs) => cs.map((c) => (c.id === card.id ? card : c)));
+    const timers = saveTimers.current;
+    const prev = timers.get(card.id);
+    if (prev) window.clearTimeout(prev);
+    timers.set(
+      card.id,
+      window.setTimeout(() => {
+        putCard(card).catch((e) => setNotice(`Could not save: ${e instanceof Error ? e.message : String(e)}`));
+        timers.delete(card.id);
+      }, 300),
+    );
+  }, []);
+
+  const selectFrame = (f: Frame) => {
+    if (!current) return;
+    updateCard(f.type === current.type ? { ...current, frameId: f.id, updatedAt: Date.now() } : changeType(current, f.type, f.id));
+  };
+
+  const addCard = async (base?: Card) => {
+    const c = base
+      ? { ...structuredClone(base), id: newCard(base.type, base.frameId).id, name: base.name ? `${base.name} (copy)` : '', updatedAt: Date.now() }
+      : newCard(current?.type ?? 'personnel', current?.frameId ?? catalog.frames[0].id);
+    if (base?.image) {
+      // duplicate the stored image so the copies can be edited independently
+      const blob = await getImage(base.image.blobKey);
+      if (blob) {
+        const key = `img-${c.id}`;
+        await putImage(key, blob);
+        c.image = { ...base.image, blobKey: key };
+      }
+    }
+    setCards((cs) => [...cs, c]);
+    setCurrentId(c.id);
+    await putCard(c);
+  };
+
+  const removeCard = async (id: string) => {
+    const card = cards.find((c) => c.id === id);
+    if (!card) return;
+    if (!window.confirm(`Delete "${card.name || card.fields.title || 'this card'}"?`)) return;
+    const rest = cards.filter((c) => c.id !== id);
+    setCards(rest);
+    if (currentId === id) setCurrentId(rest.length ? rest[rest.length - 1].id : null);
+    await deleteCard(id);
+    if (!rest.length) addCard();
+  };
+
+  const exportPdf = async () => {
+    setExporting(true);
+    setNotice(null);
+    try {
+      const items = [];
+      const skipped: string[] = [];
+      for (const card of cards) {
+        if (card.copies <= 0) continue;
+        const fr = catalog.frames.find((f) => f.id === card.frameId);
+        if (!fr) {
+          skipped.push(card.name || card.fields.title || card.id);
+          continue;
+        }
+        let userImage: HTMLImageElement | undefined;
+        if (card.image) {
+          const blob = await getImage(card.image.blobKey);
+          if (blob) userImage = await assets.getBlobImage(card.image.blobKey, blob);
+        }
+        try {
+          const r = await renderCard(card, { catalog, frame: fr, template: templateFor(catalog, fr), fonts, assets, userImage, base: FRAMES_BASE });
+          items.push({ canvas: r.canvas, copies: card.copies });
+        } catch {
+          skipped.push(card.name || card.fields.title || card.id);
+        }
+      }
+      const bytes = await buildSheetPdf(items);
+      downloadBytes(bytes, 'trek-cards-sheet.pdf');
+      if (skipped.length) setNotice(`Skipped (could not render): ${skipped.join(', ')}`);
+    } catch (e) {
+      setNotice(`Export failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const exportJson = async () => {
+    const images: Record<string, string> = {};
+    for (const c of cards) {
+      if (!c.image) continue;
+      const blob = await getImage(c.image.blobKey);
+      if (blob) images[c.image.blobKey] = await blobToDataUrl(blob);
+    }
+    downloadBytes(new TextEncoder().encode(serializeDeck(cards, images)), 'trek-cards-deck.json', 'application/json');
+  };
+
+  const importJson = async (file: File) => {
+    try {
+      const { cards: incoming, images } = parseDeck(await file.text());
+      for (const [key, url] of Object.entries(images)) await putImage(key, await dataUrlToBlob(url));
+      const existing = new Set(cards.map((c) => c.id));
+      const fresh = incoming.map((c) => (existing.has(c.id) ? { ...c, id: newCard(c.type, c.frameId).id } : c));
+      for (const c of fresh) await putCard(c);
+      setCards((cs) => [...cs, ...fresh]);
+      if (fresh.length) setCurrentId(fresh[fresh.length - 1].id);
+      setNotice(`Imported ${fresh.length} card${fresh.length === 1 ? '' : 's'}.`);
+    } catch (e) {
+      setNotice(`Import failed: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  };
+
+  if (!loaded) return <main className="setup">Loading your cards…</main>;
+
+  return (
+    <div className="app">
+      <header className="topbar">
+        <h1>Trek Card Maker</h1>
+        <span className="muted small">{catalog.frames.length} frames · {catalog.icons.length} icons</span>
+        <span className="spacer" />
+        {notice && (
+          <span className="badge" onClick={() => setNotice(null)} title="Dismiss">
+            {notice}
+          </span>
+        )}
+        <button onClick={() => setShowFonts(true)}>Fonts…</button>
+      </header>
+      <div className="columns">
+        <DeckList
+          cards={cards}
+          currentId={currentId}
+          busy={exporting}
+          onSelect={setCurrentId}
+          onNew={() => addCard()}
+          onDuplicate={(id) => {
+            const c = cards.find((x) => x.id === id);
+            if (c) addCard(c);
+          }}
+          onDelete={removeCard}
+          onCopiesChange={(id, copies) => {
+            const c = cards.find((x) => x.id === id);
+            if (c) updateCard({ ...c, copies });
+          }}
+          onExportPdf={exportPdf}
+          onExportJson={exportJson}
+          onImportJson={importJson}
+        />
+        <FramePicker catalog={catalog} selectedId={current?.frameId ?? ''} onSelect={selectFrame} />
+        <div className="middle">
+          {current && frame && template && <ImageSection card={current} frame={frame} template={template} assets={assets} onChange={updateCard} />}
+          {current && <FieldsForm card={current} catalog={catalog} onChange={updateCard} />}
+        </div>
+        <Preview render={render} filename={current?.name || current?.fields.title || 'card'} />
+      </div>
+      {showFonts && <FontSettings fonts={fonts} onChange={setFonts} onClose={() => setShowFonts(false)} />}
+    </div>
+  );
 }
