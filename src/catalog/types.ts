@@ -59,6 +59,8 @@ export interface Template {
   iconSlots?: IconSlot[] | null;
   /** Mission affiliation icon strip geometry. */
   missionAffiliations?: MissionStrip | null;
+  /** Black card border drawn around the frame image (PDF points); 0 when the image already has it. */
+  card?: { borderPt: number; cornerPt: number } | null;
 }
 
 export interface Frame {

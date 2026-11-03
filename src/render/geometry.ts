@@ -1,6 +1,12 @@
 import type { Box } from '../catalog/types';
 import type { CropRect } from '../model/card';
 
+/** Pixel size of the card border and corner radius for a frame `W` px wide (0 when baked in). */
+export function cardBorderPx(t: { refWidthPt: number; card?: { borderPt: number; cornerPt: number } | null }, W: number): { pad: number; radius: number } {
+  if (!t.card || t.card.borderPt <= 0) return { pad: 0, radius: 0 };
+  return { pad: Math.round(ptToPx(t.card.borderPt, t.refWidthPt, W)), radius: ptToPx(t.card.cornerPt, t.refWidthPt, W) };
+}
+
 export function ptToPx(sizePt: number, refWidthPt: number, frameW: number): number {
   return (sizePt / refWidthPt) * frameW;
 }

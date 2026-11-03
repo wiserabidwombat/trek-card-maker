@@ -6,7 +6,7 @@ import { skillText } from '../model/skills';
 import { missionIconPositions, slotPlacement } from './iconLayout';
 import type { AssetCache } from './assets';
 import { cssFont, cssFontForStyle, type FontConfig } from './fonts';
-import { boxToPx, coverDraw, ptToPx, type PxRect } from './geometry';
+import { boxToPx, cardBorderPx, coverDraw, ptToPx, type PxRect } from './geometry';
 import { fitFlow, layoutRuns, type Measure, type PlacedLine, type Style } from './textLayout';
 
 export interface RenderContext {
@@ -354,5 +354,33 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
   );
   drawPlacedLines(g, fit.lines, flowRect.x, flowTop, flowRect.w, fonts, icons, 'left');
 
-  return { canvas, overflow: fit.overflow };
+  return { canvas: withCardBorder(canvas, t), overflow: fit.overflow };
+}
+
+/**
+ * HiRes frames are the inner card only; the printed card is a black rounded rectangle with the
+ * frame inset in it (as on the TrekCC sheets). White paper shows outside the rounded corners.
+ */
+function withCardBorder(frameCanvas: HTMLCanvasElement, t: Template): HTMLCanvasElement {
+  const { pad, radius } = cardBorderPx(t, frameCanvas.width);
+  if (!pad) return frameCanvas;
+  const W = frameCanvas.width + 2 * pad;
+  const H = frameCanvas.height + 2 * pad;
+  const card = document.createElement('canvas');
+  card.width = W;
+  card.height = H;
+  const g = card.getContext('2d');
+  if (!g) return frameCanvas;
+  g.fillStyle = '#ffffff';
+  g.fillRect(0, 0, W, H);
+  g.fillStyle = '#000000';
+  g.beginPath();
+  if (typeof g.roundRect === 'function') g.roundRect(0, 0, W, H, radius);
+  else g.rect(0, 0, W, H);
+  g.fill();
+  g.drawImage(frameCanvas, pad, pad);
+  g.strokeStyle = '#231f20';
+  g.lineWidth = 1;
+  g.strokeRect(pad - 0.5, pad - 0.5, frameCanvas.width + 1, frameCanvas.height + 1);
+  return card;
 }

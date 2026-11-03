@@ -1,4 +1,17 @@
 import { describe, it, expect } from 'vitest';
+import { cardBorderPx } from './geometry';
+
+describe('cardBorderPx', () => {
+  it('converts the border and corner to pixels of the frame width', () => {
+    const { pad, radius } = cardBorderPx({ refWidthPt: 163.52, card: { borderPt: 7.5, cornerPt: 7.08 } }, 1022);
+    expect(pad).toBe(47);
+    expect(radius).toBeCloseTo(44.25, 1);
+  });
+  it('is zero when the image already carries the border', () => {
+    expect(cardBorderPx({ refWidthPt: 178.58, card: { borderPt: 0, cornerPt: 0 } }, 744)).toEqual({ pad: 0, radius: 0 });
+    expect(cardBorderPx({ refWidthPt: 178.58 }, 744)).toEqual({ pad: 0, radius: 0 });
+  });
+});
 import { ptToPx, boxToPx, coverDraw, centredCrop } from './geometry';
 
 describe('geometry', () => {

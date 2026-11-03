@@ -40,6 +40,10 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ICON_MIN, ICON_MAX = 8, 40
 MAX_MASK_FRAMES = 40
 DEFAULT_ART_BOX = [0.02, 0.12, 0.93, 0.52]
+# Card border around the frame image, measured on the TrekCC sheets: HiRes sets place the
+# 163.5 pt image 7.5 pt inside a black rounded rectangle (corner radius 7.08 pt) that makes the
+# 178.6 x 249.5 pt (63 x 88 mm) card; the older sets bake that border into the image itself.
+CARD_BORDER_PT = {"hires": {"borderPt": 7.5, "cornerPt": 7.08}, "std": {"borderPt": 0.0, "cornerPt": 0.0}}
 STD_SKILL_REGION = (0.16, 0.60, 0.92, 0.73)
 
 
@@ -421,6 +425,7 @@ def finish(args, out, overrides, refs, frames, roles_by_frame, templates, art_bo
     # ---------------- pass 3: variants, base frames, rings, full-size icons ----------------
     base = build_base_catalog(frames, roles_by_frame, templates, art_box_px, out, refs, args.review, log, overrides)
     for key, t in templates.items():
+        t["card"] = dict(CARD_BORDER_PT.get(key.split(".")[-1], CARD_BORDER_PT["std"]))
         if key in overrides:
             templates[key] = deep_merge(t, overrides[key])
 
