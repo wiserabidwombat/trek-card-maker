@@ -277,7 +277,7 @@ def build_base_catalog(
                             best_ring = (gap, src, s)
                 if best_ring is not None:
                     _gap, src, hit = best_ring
-                    r_outer = hit["size"] * W / 2
+                    r_outer = hit["size"] * W / 2 * 0.97  # stay inside the ring's outer edge
                     ring = crop_ring(src, hit["cx"] * W, hit["cy"] * H, r_outer, RING_INNER * r_outer)
                     rings[rkey] = f"rings/{fam}.{variant}.png"
                     Image.fromarray(ring, "RGBA").save(os.path.join(out, rings[rkey]))

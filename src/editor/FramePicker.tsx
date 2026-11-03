@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Catalog, CardType, Frame } from '../catalog/types';
 import { CARD_TYPES, framesOfType } from '../catalog/types';
 import { FRAMES_BASE } from '../catalog/useCatalog';
@@ -22,6 +22,10 @@ const LABELS: Record<CardType, string> = {
 export function FramePicker({ catalog, selectedId, onSelect }: Props) {
   const selected = catalog.frames.find((f) => f.id === selectedId);
   const [type, setType] = useState<CardType>(selected?.type ?? 'personnel');
+  // follow the current card when the user switches cards in the deck list
+  useEffect(() => {
+    if (selected) setType(selected.type);
+  }, [selected?.type]); // eslint-disable-line react-hooks/exhaustive-deps
   const frames = framesOfType(catalog, type);
 
   return (

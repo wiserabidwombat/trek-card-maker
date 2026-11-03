@@ -3,6 +3,7 @@ import type { Catalog, Frame } from '../catalog/types';
 import { templateFor } from '../catalog/types';
 import { useCatalog, FRAMES_BASE } from '../catalog/useCatalog';
 import { changeType, newCard, type Card } from '../model/card';
+import { parseSkillText } from '../model/skills';
 import { AssetCache } from '../render/assets';
 import { DEFAULT_FONTS, ensureFontsLoaded, registerUserFont, type FontConfig } from '../render/fonts';
 import { renderCard } from '../render/renderCard';
@@ -76,7 +77,11 @@ function Editor({ catalog }: { catalog: Catalog }) {
       if (stored.length) {
         // cards saved against an older catalog (per-card frames, text skills) are moved to base frames
         const { cards: saved, remapped } = remapFrames(
-          stored.map((c) => ({ ...c, icons: Array.isArray(c.icons) ? c.icons : [], skills: (c.skills ?? []).map((s) => ('name' in s ? s : { name: String((s as { text?: string }).text ?? ''), count: 1 })) })),
+          stored.map((c) => ({
+            ...c,
+            icons: Array.isArray(c.icons) ? c.icons : [],
+            skills: (c.skills ?? []).map((s) => ('name' in s ? s : parseSkillText(String((s as { text?: string }).text ?? '')))),
+          })),
           catalog,
         );
         if (remapped) {
