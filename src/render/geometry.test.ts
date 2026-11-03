@@ -12,7 +12,29 @@ describe('cardBorderPx', () => {
     expect(cardBorderPx({ refWidthPt: 178.58 }, 744)).toEqual({ pad: 0, radius: 0 });
   });
 });
-import { ptToPx, boxToPx, coverDraw, centredCrop } from './geometry';
+import { ptToPx, boxToPx, coverDraw, centredCrop, cropDraw } from './geometry';
+
+describe('cropDraw', () => {
+  it('maps a crop inside the picture one to one with the destination', () => {
+    const r = cropDraw({ w: 400, h: 300 }, { x: 100, y: 50, w: 200, h: 150 }, { x: 10, y: 20, w: 800, h: 600 });
+    expect(r).toEqual({ sx: 100, sy: 50, sw: 200, sh: 150, dx: 10, dy: 20, dw: 800, dh: 600 });
+  });
+
+  it('letterboxes a crop larger than the picture: the picture lands inset in the destination', () => {
+    // picture 400x300 sits centred in a 800x600 crop box drawn into a 400x300 destination
+    const r = cropDraw({ w: 400, h: 300 }, { x: -200, y: -150, w: 800, h: 600 }, { x: 0, y: 0, w: 400, h: 300 });
+    expect(r).toEqual({ sx: 0, sy: 0, sw: 400, sh: 300, dx: 100, dy: 75, dw: 200, dh: 150 });
+  });
+
+  it('clips a crop that runs off one edge and shifts the destination accordingly', () => {
+    const r = cropDraw({ w: 400, h: 300 }, { x: 300, y: 0, w: 200, h: 150 }, { x: 0, y: 0, w: 400, h: 300 });
+    expect(r).toEqual({ sx: 300, sy: 0, sw: 100, sh: 150, dx: 0, dy: 0, dw: 200, dh: 300 });
+  });
+
+  it('returns null when the crop misses the picture entirely', () => {
+    expect(cropDraw({ w: 400, h: 300 }, { x: 500, y: 0, w: 200, h: 150 }, { x: 0, y: 0, w: 400, h: 300 })).toBeNull();
+  });
+});
 
 describe('geometry', () => {
   it('converts PDF points to frame pixels', () => {

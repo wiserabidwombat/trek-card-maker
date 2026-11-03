@@ -58,7 +58,9 @@ Open the printed URL (default `http://localhost:5173`).
 - **Cards** (left): your saved cards, copy counts for the print sheet, PDF/JSON export and import.
 - **Frame**: pick the card type, then the affiliation (or mission/dilemma type).
 - **Artwork**: choose a PNG/JPEG/WebP, then *Adjust crop* to position, zoom and rotate it. The crop
-  box matches the frame's art area; a warning appears if the crop is smaller than the printed area.
+  box matches the frame's art area. Zoom out (or *Fit whole picture*) to get more of the picture
+  in: the part of the art area the picture does not cover shows the **Fill** colour (black by
+  default). A warning appears if the crop is smaller than the printed area.
 - **Card text**: fields depend on the card type. Game text supports `**bold**`, `*italic*`,
   `{icon:klingon}` (use *insert icon* for the list) and blank lines.
   - Personnel and ships: **Other icons** (command, staff, past, alternate, future, Deep Space

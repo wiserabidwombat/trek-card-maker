@@ -52,6 +52,7 @@ function checkCard(i: number, c: unknown): Card {
       crop: { x: Number(cr.x), y: Number(cr.y), w: Number(cr.w), h: Number(cr.h) },
       srcW: Number(c.image.srcW),
       srcH: Number(c.image.srcH),
+      ...(typeof c.image.fill === 'string' ? { fill: c.image.fill } : {}),
     };
   }
   return {

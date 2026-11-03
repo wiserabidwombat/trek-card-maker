@@ -26,10 +26,15 @@ export interface CropRect {
 
 export interface CardImage {
   blobKey: string;
+  /** May extend past the picture when zoomed out; the rest of the art area shows `fill`. */
   crop: CropRect;
   srcW: number;
   srcH: number;
+  /** CSS colour behind a zoomed-out picture; defaults to DEFAULT_ART_FILL. */
+  fill?: string;
 }
+
+export const DEFAULT_ART_FILL = '#000000';
 
 export interface Card {
   id: string;

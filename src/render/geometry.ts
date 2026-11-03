@@ -60,6 +60,32 @@ export function coverDraw(src: { w: number; h: number }, crop: CropRect, dst: Px
   return { sx, sy, sw, sh, dx: dst.x, dy: dst.y, dw: dst.w, dh: dst.h };
 }
 
+/**
+ * Map a crop rectangle onto a destination rectangle as positioned, without clamping: the crop
+ * box may extend past the picture (zoomed out), in which case only the picture's part is drawn
+ * and the rest of the destination is left for a fill colour. Returns null when nothing is visible.
+ */
+export function cropDraw(src: { w: number; h: number }, crop: CropRect, dst: PxRect): DrawMapping | null {
+  if (crop.w <= 0 || crop.h <= 0 || dst.w <= 0 || dst.h <= 0) return null;
+  const scaleX = dst.w / crop.w;
+  const scaleY = dst.h / crop.h;
+  const sx = Math.max(0, crop.x);
+  const sy = Math.max(0, crop.y);
+  const ex = Math.min(src.w, crop.x + crop.w);
+  const ey = Math.min(src.h, crop.y + crop.h);
+  if (ex <= sx || ey <= sy) return null;
+  return {
+    sx,
+    sy,
+    sw: ex - sx,
+    sh: ey - sy,
+    dx: dst.x + (sx - crop.x) * scaleX,
+    dy: dst.y + (sy - crop.y) * scaleY,
+    dw: (ex - sx) * scaleX,
+    dh: (ey - sy) * scaleY,
+  };
+}
+
 /** Largest centred rectangle of the given aspect (w/h) inside a w x h image. */
 export function centredCrop(srcW: number, srcH: number, aspect: number): CropRect {
   let w = srcW;

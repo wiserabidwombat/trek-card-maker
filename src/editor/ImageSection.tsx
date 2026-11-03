@@ -3,7 +3,7 @@ import type { Frame, Template } from '../catalog/types';
 import { artBoxFor } from '../catalog/types';
 import type { AssetCache } from '../render/assets';
 import { centredCrop } from '../render/geometry';
-import type { Card, CropRect } from '../model/card';
+import { DEFAULT_ART_FILL, type Card, type CropRect } from '../model/card';
 import { deleteImage, getImage, newImageKey, putImage } from '../store/db';
 import { CropDialog } from './CropDialog';
 
@@ -134,6 +134,16 @@ export function ImageSection({ card, frame, template, assets, onChange }: Props)
         </label>
         {card.image && <button onClick={openCrop}>Adjust crop</button>}
         {card.image && <button onClick={remove}>Remove</button>}
+        {card.image && (
+          <label className="row" title="Shown behind the picture when it is zoomed out">
+            Fill
+            <input
+              type="color"
+              value={card.image.fill ?? DEFAULT_ART_FILL}
+              onChange={(e) => card.image && onChange({ ...card, image: { ...card.image, fill: e.target.value }, updatedAt: Date.now() })}
+            />
+          </label>
+        )}
       </div>
       <p className="muted small">
         Art area is {Math.round(artW)} × {Math.round(artH)} px on this frame.

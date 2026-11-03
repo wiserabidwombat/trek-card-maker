@@ -1,12 +1,12 @@
 import type { Catalog, Frame, Template, TextBox } from '../catalog/types';
 import { artBoxFor } from '../catalog/types';
-import { ATTRIBUTE_FIELDS, QUADRANTS, displayTitle, maxIcons, staffingIcons, typeBarText, type Card } from '../model/card';
+import { ATTRIBUTE_FIELDS, DEFAULT_ART_FILL, QUADRANTS, displayTitle, maxIcons, staffingIcons, typeBarText, type Card } from '../model/card';
 import { parseMarkup, type Run } from '../model/markup';
 import { skillText } from '../model/skills';
 import { missionIconPositions, slotPlacement } from './iconLayout';
 import type { AssetCache } from './assets';
 import { cssFont, cssFontForStyle, type FontConfig } from './fonts';
-import { boxToPx, cardBorderPx, coverDraw, ptToPx, type PxRect } from './geometry';
+import { boxToPx, cardBorderPx, cropDraw, ptToPx, type PxRect } from './geometry';
 import { fitFlow, layoutRuns, type Measure, type PlacedLine, type Style } from './textLayout';
 
 export interface RenderContext {
@@ -128,12 +128,15 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
   const art = artBoxFor(frame, t);
   const artRect = boxToPx({ x0: art[0], y0: art[1], x1: art[2], y1: art[3] }, W, H);
   if (ctx.userImage && card.image) {
-    const m = coverDraw({ w: ctx.userImage.naturalWidth, h: ctx.userImage.naturalHeight }, card.image.crop, artRect);
+    const m = cropDraw({ w: ctx.userImage.naturalWidth, h: ctx.userImage.naturalHeight }, card.image.crop, artRect);
     g.save();
     g.beginPath();
     g.rect(artRect.x, artRect.y, artRect.w, artRect.h);
     g.clip();
-    g.drawImage(ctx.userImage, m.sx, m.sy, m.sw, m.sh, m.dx, m.dy, m.dw, m.dh);
+    // zoomed-out crops leave part of the art area empty: fill it with the card's chosen colour
+    g.fillStyle = card.image.fill ?? DEFAULT_ART_FILL;
+    g.fillRect(artRect.x, artRect.y, artRect.w, artRect.h);
+    if (m) g.drawImage(ctx.userImage, m.sx, m.sy, m.sw, m.sh, m.dx, m.dy, m.dw, m.dh);
     g.restore();
     if (frame.overlay) {
       try {

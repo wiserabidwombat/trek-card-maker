@@ -9,7 +9,7 @@ describe('deck JSON', () => {
     a.fields.title = 'Worf';
     a.skills = [{ name: 'Honor', count: 1 }, { name: 'Leadership', count: 2 }];
     a.icons = ['big-staff', 'big-earth'];
-    a.image = { blobKey: 'img-1', crop: { x: 1, y: 2, w: 3, h: 4 }, srcW: 10, srcH: 20 };
+    a.image = { blobKey: 'img-1', crop: { x: -5, y: 2, w: 30, h: 40 }, srcW: 10, srcH: 20, fill: '#102030' };
     const b = newCard('event', 'event.default');
     const json = serializeDeck([a, b], { 'img-1': 'data:image/png;base64,AAAA' });
     expect(JSON.parse(json).version).toBe(2);
