@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { newCard, changeType, typeBarText, displayTitle, COMMON_FIELDS, FIELD_DEFS, fieldsFor } from './card';
+import { newCard, changeType, typeBarText, displayTitle, COMMON_FIELDS, FIELD_DEFS, fieldsFor, staffingIcons, QUADRANTS } from './card';
 
 describe('card model', () => {
   it('creates a card with every field initialised to an empty string', () => {
@@ -51,5 +51,18 @@ describe('card model', () => {
     expect(ids.slice(0, COMMON_FIELDS.length)).toEqual(COMMON_FIELDS.map((f) => f.id));
     expect(ids).toContain('points');
     expect(ids).not.toContain('cost');
+  });
+});
+
+describe('ship and mission extras', () => {
+  it('parses staffing icon ids', () => {
+    const s = newCard('ship', 'A');
+    s.fields.staffing = 'command, staff,,staff ';
+    expect(staffingIcons(s)).toEqual(['command', 'staff', 'staff']);
+    expect(staffingIcons(newCard('ship', 'A'))).toEqual([]);
+  });
+  it('maps quadrant codes to Greek letters', () => {
+    expect(QUADRANTS.A).toBe('Α');
+    expect(QUADRANTS.D).toBe('Δ');
   });
 });

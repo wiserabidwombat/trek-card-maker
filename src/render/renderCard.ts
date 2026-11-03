@@ -1,6 +1,6 @@
 import type { Catalog, Frame, Template, TextBox } from '../catalog/types';
 import { artBoxFor } from '../catalog/types';
-import { ATTRIBUTE_FIELDS, displayTitle, typeBarText, type Card } from '../model/card';
+import { ATTRIBUTE_FIELDS, QUADRANTS, displayTitle, staffingIcons, typeBarText, type Card } from '../model/card';
 import { parseMarkup, type Run } from '../model/markup';
 import type { AssetCache } from './assets';
 import { cssFont, cssFontForStyle, type FontConfig } from './fonts';
@@ -186,12 +186,47 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
   const gameRuns = parseMarkup(card.fields.gameText ?? '');
   const loreRuns = parseMarkup(card.fields.lore ?? '');
   const reqRuns = parseMarkup(card.fields.requirements ?? '');
+  const staffing = card.type === 'ship' ? staffingIcons(card) : [];
   const icons = await loadIcons(ctx, [
     ...iconIds(gameRuns),
     ...iconIds(loreRuns),
     ...iconIds(reqRuns),
     ...card.skills.map((s) => s.icon),
+    ...staffing,
   ]);
+
+  // ship staffing icons over the artwork
+  if (t.staffing && staffing.length) {
+    const sl = t.staffing;
+    const size = sl.size * W;
+    staffing.slice(0, sl.max).forEach((id, i) => {
+      const img = icons.get(id);
+      if (!img) return;
+      const cx = sl.cx * W;
+      const cy = (sl.y0 + sl.step * i) * H;
+      g.drawImage(img, cx - size / 2, cy - size / 2, size, size);
+    });
+  }
+
+  // mission quadrant badge
+  const quadrant = card.type === 'mission' ? QUADRANTS[(card.fields.quadrant ?? '').toUpperCase()] : undefined;
+  if (t.quadrant && quadrant) {
+    const q = t.quadrant;
+    const cx = q.cx * W;
+    const cy = q.cy * H;
+    const r = q.r * W;
+    g.save();
+    g.beginPath();
+    g.arc(cx, cy, r, 0, Math.PI * 2);
+    g.fillStyle = q.fill;
+    g.fill();
+    g.font = `normal 400 ${px(q.sizePt)}px ${fonts.title}`;
+    g.fillStyle = '#ffffff';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillText(quadrant, cx, cy + r * 0.05);
+    g.restore();
+  }
 
   const flowSizePx = px(t.flow.sizePt);
   const lineHeightPx = t.flow.lineHeight * H;

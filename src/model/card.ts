@@ -35,7 +35,7 @@ export interface Card {
 export interface FieldDef {
   id: string;
   label: string;
-  kind: 'text' | 'number' | 'multiline' | 'checkbox';
+  kind: 'text' | 'number' | 'multiline' | 'checkbox' | 'staffing' | 'quadrant';
   placeholder?: string;
 }
 
@@ -60,6 +60,7 @@ export const FIELD_DEFS: Record<CardType, FieldDef[]> = {
     { id: 'cost', label: 'Cost', kind: 'number' },
     { id: 'subtitle', label: 'Subtitle', kind: 'text' },
     { id: 'shipClass', label: 'Class', kind: 'text', placeholder: 'Galaxy Class' },
+    { id: 'staffing', label: 'Staffing', kind: 'staffing' },
     { id: 'range', label: 'Range', kind: 'number' },
     { id: 'weapons', label: 'Weapons', kind: 'number' },
     { id: 'shields', label: 'Shields', kind: 'number' },
@@ -70,6 +71,7 @@ export const FIELD_DEFS: Record<CardType, FieldDef[]> = {
   interrupt: [],
   mission: [
     { id: 'subtitle', label: 'Subtitle', kind: 'text' },
+    { id: 'quadrant', label: 'Quadrant', kind: 'quadrant' },
     { id: 'points', label: 'Points', kind: 'number' },
     { id: 'span', label: 'Span', kind: 'number' },
     { id: 'requirements', label: 'Requirements', kind: 'multiline', placeholder: 'Diplomacy, Leadership, and Cunning>30' },
@@ -140,4 +142,15 @@ export function typeBarText(card: Card): string {
 export function displayTitle(card: Card): string {
   const t = card.fields.title ?? '';
   return card.fields.unique === '1' ? `•${t}` : t;
+}
+
+/** Quadrant letters as printed on mission cards. */
+export const QUADRANTS: Record<string, string> = { A: 'Α', B: 'Β', G: 'Γ', D: 'Δ' };
+
+/** Staffing is stored as a comma-separated list of icon ids. */
+export function staffingIcons(card: Card): string[] {
+  return (card.fields.staffing ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
 }

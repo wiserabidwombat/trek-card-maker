@@ -37,6 +37,10 @@ export interface Template {
   lore: { sizePt: number };
   skills?: { x0: number; y0: number; x1: number; rowHeight: number; bulletSize: number } | null;
   requirements?: (Box & { sizePt: number }) | null;
+  /** Ship staffing icon slots: centred at cx, first at y0, then every `step`; icon width `size` (fractions). */
+  staffing?: { cx: number; y0: number; step: number; size: number; max: number } | null;
+  /** Mission quadrant badge: disc centre/radius (fractions of width for r) and the letter size. */
+  quadrant?: { cx: number; cy: number; r: number; fill: string; sizePt: number } | null;
 }
 
 export interface Frame {
