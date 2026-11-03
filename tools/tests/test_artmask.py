@@ -50,3 +50,19 @@ def test_small_varying_icon_outside_art_is_ignored():
         frames.append(f)
     bbox, _ = compute_art_mask(frames)
     assert bbox == (10, 30, 130, 90)
+
+
+def test_edge_band_limits_overlay_and_bbox_can_be_given():
+    H, W = 200, 140
+    frames = []
+    for seed in range(4):
+        rng = np.random.default_rng(seed)
+        f = np.full((H, W, 3), 90, np.uint8)
+        f[20:100, 10:130] = rng.integers(0, 255, (80, 120, 3), np.uint8)
+        f[55:65, 60:80] = 200  # constant blob deep inside the art
+        f[20:24, 10:130] = 30  # constant strip along the top edge
+        frames.append(f)
+    bbox, overlay = compute_art_mask(frames, bbox=(10, 20, 130, 100), edge_band=0.15)
+    assert bbox == (10, 20, 130, 100)
+    assert overlay[60, 70, 3] == 0  # deep-inside constant pixels are not kept
+    assert overlay[21, 70, 3] == 255  # edge strip is kept

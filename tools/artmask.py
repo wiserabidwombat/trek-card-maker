@@ -28,23 +28,33 @@ def compute_art_mask(
     top_fraction: float = 0.6,
     row_threshold: float = 0.3,
     col_threshold: float = 0.3,
+    bbox: tuple[int, int, int, int] | None = None,
+    edge_band: float = 0.0,
 ):
+    """Return (bbox, overlay).
+
+    ``bbox`` may be given to reuse a known art box (then only the overlay is computed).
+    ``edge_band`` limits the overlay to pixels within that fraction of the box width/height
+    from its edges, which is where frame elements (ragged edges, bars) intrude on the art.
+    """
     stack = np.stack(frames).astype(np.float32)
     std = stack.std(axis=0).max(axis=2)
     varying = _majority3x3(std > threshold)
     h, w = varying.shape
-    limit = int(h * top_fraction)
-    top = varying[:limit, :]
-    # Rows that are mostly varying belong to the artwork; small varying icons elsewhere are ignored.
-    row_frac = top.mean(axis=1)
-    rows = np.nonzero(row_frac > row_threshold)[0]
-    if len(rows) == 0:
-        raise ValueError("no varying region found")
-    y0, y1 = int(rows.min()), int(rows.max()) + 1
-    col_frac = top[y0:y1, :].mean(axis=0)
-    cols = np.nonzero(col_frac > col_threshold)[0]
-    x0, x1 = int(cols.min()), int(cols.max()) + 1
-    bbox = (x0, y0, x1, y1)
+    if bbox is None:
+        limit = int(h * top_fraction)
+        top = varying[:limit, :]
+        # Rows that are mostly varying belong to the artwork; small varying icons elsewhere are ignored.
+        row_frac = top.mean(axis=1)
+        rows = np.nonzero(row_frac > row_threshold)[0]
+        if len(rows) == 0:
+            raise ValueError("no varying region found")
+        y0, y1 = int(rows.min()), int(rows.max()) + 1
+        col_frac = top[y0:y1, :].mean(axis=0)
+        cols = np.nonzero(col_frac > col_threshold)[0]
+        x0, x1 = int(cols.min()), int(cols.max()) + 1
+        bbox = (x0, y0, x1, y1)
+    x0, y0, x1, y1 = bbox
 
     median = np.median(stack, axis=0).astype(np.uint8)
     overlay = np.zeros((h, w, 4), np.uint8)
@@ -56,5 +66,11 @@ def compute_art_mask(
     frame_inside[y1:, :] = False
     frame_inside[:, :x0] = False
     frame_inside[:, x1:] = False
+    if edge_band > 0:
+        bx = int((x1 - x0) * edge_band)
+        by = int((y1 - y0) * edge_band)
+        inner = np.zeros((h, w), bool)
+        inner[y0 + by : y1 - by, x0 + bx : x1 - bx] = True
+        frame_inside &= ~inner
     overlay[..., 3] = np.where(frame_inside, 255, 0).astype(np.uint8)
     return bbox, overlay

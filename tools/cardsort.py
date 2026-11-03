@@ -79,8 +79,8 @@ def line_roles(ctype: str, lines: Iterable[Line]) -> list[tuple[str, Line]]:
         (x0, y0, _x1, _y1), text, font, size = line
         t = text.strip()
         role = "body"
-        if x0 > 0.94 and size < 4.5:
-            role = "legal"
+        if size < 4.5 and (_x1 - x0) < 0.035 and (_y1 - y0) > 0.08:
+            role = "legal"  # the vertical "NOT ENDORSED" disclaimer
         elif y0 > 0.93 and size <= 4.5:
             role = "collector"
         elif is_title_font(font):

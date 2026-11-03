@@ -306,15 +306,15 @@ def main() -> int:
         ctype, fam = key.split(".")
         templates[key] = derive_template(ctype, fam, [roles_by_frame[i] for i in idxs], families[fam]["refWidthPt"])
 
-    # ---------------- pass 2: art masks per (type, family, affiliation) ----------------
+    # ---------------- pass 2: art boxes per (type, family), overlays per affiliation group ----------------
+    MIN_GROUP = 4
+    EDGE_BAND = 0.15
     by_group: dict[str, list[int]] = defaultdict(list)
     for i, fr in enumerate(frames):
         by_group[f"{fr['type']}.{fr['family']}.{fr['affiliation']}"].append(i)
-    art_boxes_by_tf: dict[str, list[list[float]]] = defaultdict(list)
-    for gkey, idxs in by_group.items():
-        if len(idxs) < 2:
-            continue
-        arrs = []
+
+    def load_group(idxs: list[int]) -> list[np.ndarray]:
+        arrs: list[np.ndarray] = []
         shape = None
         for i in idxs[:MAX_MASK_FRAMES]:
             a = np.array(Image.open(os.path.join(out, frames[i]["file"])).convert("RGB"))
@@ -322,35 +322,49 @@ def main() -> int:
                 shape = a.shape
             if a.shape == shape:
                 arrs.append(a)
-        if len(arrs) < 2:
+        return arrs
+
+    art_box_px: dict[str, tuple[int, int, int, int]] = {}
+    for key, idxs in by_tf.items():
+        # the largest affiliation group has the most artwork variance and gives the reliable box
+        groups = sorted((g for g in by_group if g.startswith(key + ".")), key=lambda g: -len(by_group[g]))
+        for g in groups:
+            arrs = load_group(by_group[g])
+            if len(arrs) < 2:
+                continue
+            try:
+                bbox, _ = compute_art_mask(arrs)
+            except ValueError:
+                continue
+            art_box_px[key] = bbox
+            h, w = arrs[0].shape[:2]
+            templates[key]["artBox"] = [round(bbox[0] / w, 4), round(bbox[1] / h, 4), round(bbox[2] / w, 4), round(bbox[3] / h, 4)]
+            break
+        if key not in art_box_px:
+            templates[key]["artBox"] = DEFAULT_ART_BOX
+            log(f"warn: {key} has no usable group; using default art box")
+
+    for gkey, idxs in by_group.items():
+        tf = gkey.rsplit(".", 1)[0]
+        if len(idxs) < MIN_GROUP or tf not in art_box_px:
             continue
-        try:
-            (x0, y0, x1, y1), overlay = compute_art_mask(arrs)
-        except ValueError:
-            log(f"warn: no art region found for {gkey}")
+        arrs = load_group(idxs)
+        if len(arrs) < MIN_GROUP:
             continue
-        h, w = arrs[0].shape[:2]
-        art_box = [round(x0 / w, 4), round(y0 / h, 4), round(x1 / w, 4), round(y1 / h, 4)]
+        _bbox, overlay = compute_art_mask(arrs, bbox=art_box_px[tf], edge_band=EDGE_BAND)
         overlay_file = f"overlays/{gkey}.png"
         Image.fromarray(overlay, "RGBA").save(os.path.join(out, overlay_file))
-        tf = gkey.rsplit(".", 1)[0]
-        art_boxes_by_tf[tf].append(art_box)
         for i in idxs:
-            frames[i]["artBox"] = art_box
             frames[i]["overlay"] = overlay_file
 
     for key, t in templates.items():
-        boxes = art_boxes_by_tf.get(key)
-        t["artBox"] = [round(statistics.median(b[i] for b in boxes), 4) for i in range(4)] if boxes else DEFAULT_ART_BOX
-        if not boxes:
-            log(f"warn: {key} has no group with 2+ frames; using default art box")
         if key in overrides:
             t = deep_merge(t, overrides[key])
             templates[key] = t
         if args.review and by_tf[key]:
             fr = frames[by_tf[key][0]]
             img = Image.open(os.path.join(out, fr["file"])).convert("RGB")
-            draw_template_review(img, t, fr["artBox"] or t["artBox"], os.path.join(out, "review", f"template_{key}.png"))
+            draw_template_review(img, t, t["artBox"], os.path.join(out, "review", f"template_{key}.png"))
 
     if args.review and icon_review:
         cols = 12

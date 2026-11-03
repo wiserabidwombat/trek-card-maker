@@ -210,3 +210,13 @@ def test_mission_requirement_line_not_mistaken_for_attribute():
         rl.setdefault(r, []).append(l[1])
     assert rl["requirement"] == ["Cunning>36, and"]
     assert rl["body"] == ["When you complete"]
+
+
+def test_std_vertical_legal_line_is_not_body():
+    lines = [
+        L(0.9306, 0.6943, 0.9479, 0.8523, "NOT ENDORSED BY CBS OR PAR. PIC.", "Futura_LT_Condensed", 3.1),
+        L(0.1706, 0.6952, 0.8805, 0.7233, "When this", "Futura_LT_Condensed", 7.0),
+    ]
+    roles = {r: l[1] for r, l in line_roles("event", lines)}
+    assert roles["legal"].startswith("NOT ENDORSED")
+    assert roles["body"] == "When this"

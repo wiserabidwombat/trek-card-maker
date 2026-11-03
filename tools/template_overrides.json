@@ -1,1 +1,14 @@
-{}
+{
+  "ship.hires": {
+    "staffing": { "cx": 0.0666, "y0": 0.168, "step": 0.0546, "size": 0.054, "max": 4 }
+  },
+  "ship.std": {
+    "staffing": { "cx": 0.105, "y0": 0.195, "step": 0.0505, "size": 0.054, "max": 4 }
+  },
+  "mission.hires": {
+    "quadrant": { "cx": 0.0685, "cy": 0.572, "r": 0.049, "fill": "#0d1f3c", "sizePt": 15 }
+  },
+  "mission.std": {
+    "quadrant": { "cx": 0.098, "cy": 0.5755, "r": 0.051, "fill": "#0d1f3c", "sizePt": 15 }
+  }
+}
