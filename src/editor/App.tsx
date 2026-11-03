@@ -197,13 +197,19 @@ function Editor({ catalog }: { catalog: Catalog }) {
           if (blob) userImage = await assets.getBlobImage(card.image.blobKey, blob);
         }
         try {
-          const r = await renderCard(card, { catalog, frame: fr, template: templateFor(catalog, fr), fonts, assets, userImage, base: FRAMES_BASE, profile });
-          items.push({ canvas: r.canvas, copies: card.copies });
+          const textSink: import('../render/textOps').TextOp[] = [];
+          const r = await renderCard(card, { catalog, frame: fr, template: templateFor(catalog, fr), fonts, assets, userImage, base: FRAMES_BASE, profile, textSink });
+          items.push({ canvas: r.canvas, copies: card.copies, textOps: r.textOps });
         } catch {
           skipped.push(card.name || card.fields.title || card.id);
         }
       }
-      const bytes = await buildSheetPdf(items, profile.lossless);
+      const userFonts: { title?: ArrayBuffer; body?: ArrayBuffer } = {};
+      for (const slot of ['title', 'body'] as const) {
+        const blob = await getUserFont(slot);
+        if (blob) userFonts[slot] = await blob.arrayBuffer();
+      }
+      const bytes = await buildSheetPdf(items, profile.lossless, { userFonts });
       downloadBytes(bytes, profileName === 'inkjet' ? 'trek-cards-sheet-inkjet.pdf' : 'trek-cards-sheet.pdf');
       if (skipped.length) setNotice(`Skipped (could not render): ${skipped.join(', ')}`);
     } catch (e) {

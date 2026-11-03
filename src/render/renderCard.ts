@@ -5,7 +5,8 @@ import { parseMarkup, type Run } from '../model/markup';
 import { skillText } from '../model/skills';
 import { missionIconPositions, slotPlacement } from './iconLayout';
 import type { AssetCache } from './assets';
-import { cssFont, cssFontForStyle, type FontConfig } from './fonts';
+import { cssFont, cssFontForStyle, specForRole, specForStyle, type FontConfig } from './fonts';
+import type { TextOp, TextSpec } from './textOps';
 import { boxToPx, cardBorderPx, cropDraw, ptToPx, type PxRect } from './geometry';
 import { SCREEN_PROFILE, profiledPt, sharpenPixels, type RenderProfile } from './printProfile';
 import { fitFlow, layoutRuns, type Measure, type PlacedLine, type Style } from './textLayout';
@@ -20,11 +21,50 @@ export interface RenderContext {
   base: string; // URL prefix for catalog files, e.g. '/frames/'
   /** Printer-specific adjustments; the screen preview uses the laser (neutral) profile. */
   profile?: RenderProfile;
+  /** When given, text is recorded here (card-pixel coordinates) instead of painted on the canvas. */
+  textSink?: TextOp[];
 }
 
 export interface RenderResult {
   canvas: HTMLCanvasElement;
   overflow: boolean;
+  /** The recorded text when a sink was given, offset to the finished card's coordinates. */
+  textOps?: TextOp[];
+}
+
+/**
+ * Paint a run of text, or record it. `g.font` must already be set; the run is measured with it so
+ * alignment resolves to a left edge that the PDF can reuse.
+ */
+function putText(
+  g: CanvasRenderingContext2D,
+  sink: TextOp[] | undefined,
+  text: string,
+  spec: TextSpec,
+  sizePx: number,
+  x: number,
+  baseline: number,
+  align: 'left' | 'center' | 'right',
+  colour: string,
+): void {
+  const width = g.measureText(text).width;
+  const left = align === 'center' ? x - width / 2 : align === 'right' ? x - width : x;
+  if (sink) {
+    sink.push({ text, spec, sizePx, x: left, y: baseline, colour });
+    return;
+  }
+  g.textAlign = 'left';
+  g.textBaseline = 'alphabetic';
+  g.fillStyle = colour;
+  g.fillText(text, left, baseline);
+}
+
+/** Baseline that centres `text` vertically on `cy` with the current font. */
+function middleBaseline(g: CanvasRenderingContext2D, text: string, cy: number): number {
+  const m = g.measureText(text);
+  const asc = m.actualBoundingBoxAscent || 0;
+  const desc = m.actualBoundingBoxDescent || 0;
+  return cy + (asc - desc) / 2;
 }
 
 // Pure black: many inkjet drivers print near-black as a mix of colour inks, which blurs small text.
@@ -81,6 +121,7 @@ function iconIds(runs: Run[]): string[] {
 
 function drawBoxText(
   g: CanvasRenderingContext2D,
+  sink: TextOp[] | undefined,
   text: string,
   box: TextBox,
   rect: PxRect,
@@ -100,15 +141,13 @@ function drawBoxText(
     width = g.measureText(t).width;
   }
   const align = opts.align ?? box.align;
-  g.textBaseline = 'alphabetic';
-  g.textAlign = align;
   const x = opts.x ?? (align === 'center' ? rect.x + rect.w / 2 : align === 'right' ? rect.x + rect.w : rect.x);
-  g.fillStyle = TEXT_COLOUR;
-  g.fillText(t, x, rect.y + rect.h * BASELINE_RATIO);
+  putText(g, sink, t, specForRole(box.font, fonts), px, x, rect.y + rect.h * BASELINE_RATIO, align, TEXT_COLOUR);
 }
 
 function drawPlacedLines(
   g: CanvasRenderingContext2D,
+  sink: TextOp[] | undefined,
   lines: PlacedLine[],
   originX: number,
   originY: number,
@@ -117,9 +156,6 @@ function drawPlacedLines(
   icons: Map<string, IconImage>,
   align: 'left' | 'center',
 ): void {
-  g.textBaseline = 'alphabetic';
-  g.textAlign = 'left';
-  g.fillStyle = TEXT_COLOUR;
   for (const pl of lines) {
     const baseline = originY + pl.y + pl.lineHeightPx * 0.8;
     const offset = align === 'center' ? (width - pl.line.width) / 2 : 0;
@@ -133,13 +169,14 @@ function drawPlacedLines(
       }
       if (!piece.text) continue;
       g.font = cssFontForStyle(piece.style, pl.sizePx, fonts);
-      g.fillText(piece.text, x, baseline);
+      putText(g, sink, piece.text, specForStyle(piece.style, fonts), pl.sizePx, x, baseline, 'left', TEXT_COLOUR);
     }
   }
 }
 
 export async function renderCard(card: Card, ctx: RenderContext): Promise<RenderResult> {
   const { frame, template: t } = ctx;
+  const sink = ctx.textSink;
   const profile = ctx.profile ?? SCREEN_PROFILE;
   const fonts: FontConfig = profile.heavierText ? { ...ctx.fonts, heavier: true } : ctx.fonts;
   const W = frame.w;
@@ -199,7 +236,7 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
     const rect = boxToPx(box, W, H);
     // title/subtitle may extend to the right edge of the frame's title bar
     const maxWidth = role === 'title' || role === 'subtitle' ? W * 0.95 - rect.x : rect.w;
-    drawBoxText(g, text, box, rect, px(box.sizePt), fonts, { maxWidth });
+    drawBoxText(g, sink, text, box, rect, px(box.sizePt), fonts, { maxWidth });
   }
 
   // attributes: label left, value right-aligned within the box
@@ -211,9 +248,9 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
       const rect = boxToPx(box, W, H);
       const label = fieldId.toUpperCase();
       const size = px(box.sizePt);
-      drawBoxText(g, label, box, rect, size, fonts, { align: 'left', maxWidth: rect.w * 0.75 });
+      drawBoxText(g, sink, label, box, rect, size, fonts, { align: 'left', maxWidth: rect.w * 0.75 });
       const value = card.fields[fieldId] ?? '';
-      if (value) drawBoxText(g, value, box, rect, size, fonts, { align: 'right' });
+      if (value) drawBoxText(g, sink, value, box, rect, size, fonts, { align: 'right' });
     });
   }
 
@@ -258,13 +295,8 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
     const strip = t.missionAffiliations;
     const titleBox = t.boxes.title;
     const size = px((titleBox?.sizePt ?? 8) * 1.05);
-    g.save();
     g.font = cssFont('title', size, fonts);
-    g.fillStyle = '#ffffff';
-    g.textAlign = 'center';
-    g.textBaseline = 'middle';
-    g.fillText(hqLabel, W / 2, strip.cy * H);
-    g.restore();
+    putText(g, sink, hqLabel, specForRole('title', fonts), size, W / 2, middleBaseline(g, hqLabel, strip.cy * H), 'center', '#ffffff');
   }
 
   // mission affiliation icons along the bottom strip, centred (a headquarters label takes their place)
@@ -347,7 +379,7 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
       const baseline = y + rowH * 0.8;
       if (img) g.drawImage(img, x, baseline - bullet * 0.95, bullet, bullet);
       g.font = cssFontForStyle(style, flowSizePx, fonts);
-      g.fillText(text, x + bullet + gap, baseline);
+      putText(g, sink, text, specForStyle(style, fonts), flowSizePx, x + bullet + gap, baseline, 'left', TEXT_COLOUR);
       x += itemW + bullet * 1.2;
     }
     flowTop = Math.max(flowTop, y + rowH + rowH * 0.15);
@@ -366,7 +398,7 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
       sizePx: size,
       lineHeightPx,
     }));
-    drawPlacedLines(g, placed, rect.x, rect.y, rect.w, fonts, icons, 'center');
+    drawPlacedLines(g, sink, placed, rect.x, rect.y, rect.w, fonts, icons, 'center');
     flowTop = Math.max(flowTop, rect.y + lines.length * lineHeightPx + lineHeightPx * 0.2);
   }
 
@@ -385,9 +417,18 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
     measure,
     flowSizePx * 1.1,
   );
-  drawPlacedLines(g, fit.lines, flowRect.x, flowTop, flowRect.w, fonts, icons, 'left');
+  drawPlacedLines(g, sink, fit.lines, flowRect.x, flowTop, flowRect.w, fonts, icons, 'left');
 
-  return { canvas: withCardBorder(canvas, t), overflow: fit.overflow };
+  const card_ = withCardBorder(canvas, t);
+  if (sink) {
+    // recorded positions are frame pixels; the finished card has the border around the frame
+    const { pad } = cardBorderPx(t, W);
+    for (const op of sink) {
+      op.x += pad;
+      op.y += pad;
+    }
+  }
+  return { canvas: card_, overflow: fit.overflow, ...(sink ? { textOps: sink } : {}) };
 }
 
 /**

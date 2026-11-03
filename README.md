@@ -75,11 +75,15 @@ Open the printed URL (default `http://localhost:5173`).
     headquarters missions; leave points empty for those.
 - **Preview**: live render; *Download PNG* saves the single card. A badge warns when game text
   had to be shrunk to fit.
-- **Export print sheet** asks whether the sheet is for a **laser** or an **inkjet** printer. Inkjets
+- **Export print sheet** writes every piece of card text as real PDF text (fonts embedded and
+  subset), so it prints at the printer's own resolution on any printer and the PDF is searchable;
+  only the frame, art and icons are raster. A custom font loaded under **Fonts…** is embedded as
+  is and used for every weight of its slot, so bold keywords stay regular unless the bundled fonts
+  are used. The dialog also asks whether the sheet is for a **laser** or an **inkjet** printer. Inkjets
   spread ink on the paper, so the inkjet profile uses heavier body text (Light → Regular,
   Regular → Medium), makes text under 7.5 pt about 5% larger, sharpens the icons and embeds the
-  cards losslessly (a bigger file). Text is always pure black so the printer uses only the black
-  cartridge. On either printer, use matte photo paper or coated card stock, set the driver to its
+  card rasters losslessly (a bigger file). Text is always pure black so the printer uses only the
+  black cartridge. On either printer, use matte photo paper or coated card stock, set the driver to its
   Best or Photo quality, and print at 100%.
 
 ## Fonts

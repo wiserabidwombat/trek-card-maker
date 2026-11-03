@@ -1,6 +1,7 @@
 import type { FontRole } from '../catalog/types';
 import type { Style } from './textLayout';
 import { bodyWeight } from './printProfile';
+import type { TextSpec } from './textOps';
 
 export interface FontConfig {
   title: string; // CSS family, quoted if needed
@@ -14,6 +15,30 @@ export const DEFAULT_FONTS: FontConfig = { title: '"Exo 2"', body: '"Fira Sans C
 export function cssFontForStyle(style: Style, sizePx: number, fonts: FontConfig): string {
   const weight = bodyWeight(style, !!fonts.heavier);
   return `${style.italic ? 'italic' : 'normal'} ${weight} ${sizePx}px ${fonts.body}`;
+}
+
+/** The font variant a body style resolves to (mirrors cssFontForStyle). */
+export function specForStyle(style: Style, fonts: FontConfig): TextSpec {
+  return { family: 'body', weight: bodyWeight(style, !!fonts.heavier), italic: !!style.italic };
+}
+
+/** The font variant a role resolves to (mirrors cssFont). */
+export function specForRole(role: FontRole, fonts: FontConfig): TextSpec {
+  switch (role) {
+    case 'title':
+      return { family: 'title', weight: 700, italic: true };
+    case 'body':
+      return specForStyle({ bold: false, italic: false }, fonts);
+    case 'bodyBold':
+    case 'bodyBoldSC':
+      return specForStyle({ bold: true, italic: false }, fonts);
+    case 'bodyItalic':
+      return specForStyle({ bold: false, italic: true }, fonts);
+    case 'bodyBoldItalic':
+      return specForStyle({ bold: true, italic: true }, fonts);
+    case 'bodyLightItalic':
+      return specForStyle({ bold: false, italic: true, light: true }, fonts);
+  }
 }
 
 export function cssFont(role: FontRole, sizePx: number, fonts: FontConfig): string {
