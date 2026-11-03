@@ -460,6 +460,14 @@ label {
   }
 }
 
+button.danger {
+  border-color: #7a2e2e;
+  color: #f1b0b0;
+}
+button.danger:hover:not(:disabled) {
+  background: #4a1f1f;
+}
+
 /* base-frame picker and icon lists */
 .variant-grid {
   display: grid;

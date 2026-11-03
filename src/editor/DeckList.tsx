@@ -8,6 +8,7 @@ interface Props {
   onNew: () => void;
   onDuplicate: (id: string) => void;
   onDelete: (id: string) => void;
+  onClearAll: () => void;
   onCopiesChange: (id: string, copies: number) => void;
   onExportPdf: () => void;
   onExportJson: () => void;
@@ -63,6 +64,9 @@ export function DeckList(p: Props) {
           Import deck (JSON)…
           <input type="file" accept="application/json,.json" onChange={(e) => e.target.files?.[0] && p.onImportJson(e.target.files[0])} />
         </label>
+        <button className="danger" onClick={p.onClearAll} disabled={p.busy || !p.cards.length} title="Delete every card and its image">
+          Clear all…
+        </button>
       </div>
     </aside>
   );

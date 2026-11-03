@@ -8,7 +8,7 @@ import { AssetCache } from '../render/assets';
 import { DEFAULT_FONTS, ensureFontsLoaded, registerUserFont, type FontConfig } from '../render/fonts';
 import { renderCard } from '../render/renderCard';
 import { buildSheetPdf, downloadBytes } from '../export/exportPdf';
-import { deleteCard, getImage, getUserFont, listCards, putCard, putImage } from '../store/db';
+import { clearCardsAndImages, deleteCard, getImage, getUserFont, listCards, putCard, putImage } from '../store/db';
 import { parseDeck, remapFrames, serializeDeck } from '../store/deckJson';
 import { DeckList } from './DeckList';
 import { FieldsForm } from './FieldsForm';
@@ -154,6 +154,25 @@ function Editor({ catalog }: { catalog: Catalog }) {
     if (!rest.length) addCard();
   };
 
+  const clearAll = async () => {
+    const n = cards.length;
+    if (!n) return;
+    const ok = window.confirm(
+      `Delete all ${n} card${n === 1 ? '' : 's'} and their images? This cannot be undone. Export the deck first if you want to keep them.`,
+    );
+    if (!ok) return;
+    for (const timer of saveTimers.current.values()) window.clearTimeout(timer);
+    saveTimers.current.clear();
+    for (const c of cards) if (c.image) assets.dropBlob(c.image.blobKey);
+    const removed = await clearCardsAndImages();
+    const first = catalog.frames.find((fr) => fr.type === 'personnel') ?? catalog.frames[0];
+    const fresh = newCard(first.type, first.id);
+    setCards([fresh]);
+    setCurrentId(fresh.id);
+    await putCard(fresh);
+    setNotice(`Removed ${removed} card${removed === 1 ? '' : 's'}.`);
+  };
+
   const exportPdf = async () => {
     setExporting(true);
     setNotice(null);
@@ -243,6 +262,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
             if (c) addCard(c);
           }}
           onDelete={removeCard}
+          onClearAll={clearAll}
           onCopiesChange={(id, copies) => {
             const c = cards.find((x) => x.id === id);
             if (c) updateCard({ ...c, copies });

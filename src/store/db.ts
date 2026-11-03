@@ -1,10 +1,24 @@
-import { createStore, get, set, del, keys, getMany } from 'idb-keyval';
+import { createStore, get, set, del, keys, getMany, delMany } from 'idb-keyval';
 import type { Card } from '../model/card';
 
 const store = createStore('trek-card-maker', 'kv');
 
 const CARD_PREFIX = 'card:';
 const FONT_PREFIX = 'font:';
+const IMAGE_PREFIX = 'img-';
+
+/** Keys that belong to cards and their images; fonts and anything else are left alone. */
+export function isCardOrImageKey(key: unknown): key is string {
+  return typeof key === 'string' && (key.startsWith(CARD_PREFIX) || key.startsWith(IMAGE_PREFIX));
+}
+
+/** Remove every stored card and image. Returns how many cards were removed. */
+export async function clearCardsAndImages(): Promise<number> {
+  const all = await keys(store);
+  const doomed = all.filter(isCardOrImageKey);
+  await delMany(doomed, store);
+  return doomed.filter((k) => k.startsWith(CARD_PREFIX)).length;
+}
 
 export async function listCards(): Promise<Card[]> {
   const all = (await keys(store)).filter((k): k is string => typeof k === 'string' && k.startsWith(CARD_PREFIX));
@@ -46,5 +60,5 @@ export function deleteUserFont(slot: 'title' | 'body'): Promise<void> {
 
 export function newImageKey(): string {
   const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : String(Date.now());
-  return `img-${id}`;
+  return `${IMAGE_PREFIX}${id}`;
 }
