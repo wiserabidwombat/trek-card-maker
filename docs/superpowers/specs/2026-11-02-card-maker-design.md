@@ -179,7 +179,8 @@ selection with per-card copy counts.
 
 ## Export
 
-- Sheet: US Letter 612×792 pt, 3×3 grid of 180×252 pt (2.5"×3.5"), no gutters, centered
+- Sheet: US Letter 612×792 pt, 3×3 grid of 178.58×249.45 pt (63×88 mm, as TrekCC prints; changed
+  from 2.5"×3.5" on 2026-11-03 after measuring their sheets), no gutters, centered
   (36 pt left/right, 18 pt top/bottom margins). Cut marks: short hairlines in the margins aligned
   to every grid line, like the TrekCC sheets.
 - Each selected card is rendered once at native size, encoded as JPEG (q 95), embedded with

@@ -1,5 +1,7 @@
 export const LETTER = { w: 612, h: 792 };
-export const CARD = { w: 180, h: 252 }; // 2.5" x 3.5" in PDF points
+/** 63 x 88 mm, the size TrekCC prints (and standard CCG sleeves take), in PDF points. */
+export const MM = 72 / 25.4;
+export const CARD = { w: 63 * MM, h: 88 * MM }; // 178.58 x 249.45 pt
 export const GRID = { cols: 3, rows: 3 };
 export const MARGIN = { x: (LETTER.w - GRID.cols * CARD.w) / 2, y: (LETTER.h - GRID.rows * CARD.h) / 2 };
 export const PER_PAGE = GRID.cols * GRID.rows;

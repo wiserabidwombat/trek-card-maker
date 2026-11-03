@@ -5,7 +5,11 @@ describe('layoutSheet', () => {
   it('places the first card top-left in PDF coordinates (origin bottom-left)', () => {
     const [s] = layoutSheet(1);
     expect(s).toEqual({ page: 0, x: MARGIN.x, y: LETTER.h - MARGIN.y - CARD.h, w: CARD.w, h: CARD.h });
-    expect(s.y).toBe(522);
+    expect(CARD.w).toBeCloseTo(178.58, 2);
+    expect(CARD.h).toBeCloseTo(249.45, 2);
+    expect(MARGIN.x).toBeCloseTo(38.13, 2); // centred, as on the TrekCC HiRes sheets
+    expect(MARGIN.y).toBeCloseTo(21.83, 2);
+    expect(s.y).toBeCloseTo(520.72, 2);
   });
 
   it('fills rows left to right, then the next row down', () => {
@@ -13,7 +17,7 @@ describe('layoutSheet', () => {
     expect(slots[1].x).toBe(MARGIN.x + CARD.w);
     expect(slots[3].x).toBe(MARGIN.x);
     expect(slots[3].y).toBe(LETTER.h - MARGIN.y - 2 * CARD.h);
-    expect(slots[4].x).toBe(216);
+    expect(slots[4].x).toBeCloseTo(216.71, 2);
   });
 
   it('starts a new page after nine cards', () => {

@@ -4,8 +4,8 @@ A local web app for designing custom **Star Trek Customizable Card Game, Second 
 Pick a clean base frame (one per card type and affiliation, built from The Continuing Committee's
 free-to-print virtual card PDFs), add the rulebook's *Other Icons*, staffing, mission affiliations
 and skills from lists, fill in the card text, drop in your own artwork (with crop, zoom and
-rotate), and export a US Letter print sheet (3×3 cards, 2.5"×3.5", cut marks) as a PDF at the
-frames' native resolution.
+rotate), and export a US Letter print sheet (3×3 cards at 63×88 mm, the TrekCC size, with cut
+marks) as a PDF at the frames' native resolution.
 
 Everything runs in your browser. Cards and images are stored in the browser's IndexedDB; a JSON
 export lets you back them up or move them to another machine.
