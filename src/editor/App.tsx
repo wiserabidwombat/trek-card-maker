@@ -10,6 +10,7 @@ import { renderCard } from '../render/renderCard';
 import { buildSheetPdf, downloadBytes } from '../export/exportPdf';
 import { PROFILES, type PrintProfile } from '../render/printProfile';
 import { ExportDialog } from './ExportDialog';
+import { HelpDialog } from './HelpDialog';
 import { clearCardsAndImages, deleteCard, getImage, getUserFont, listCards, putCard, putImage } from '../store/db';
 import { parseDeck, remapFrames, serializeDeck } from '../store/deckJson';
 import { DeckList } from './DeckList';
@@ -51,6 +52,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
   const [showFonts, setShowFonts] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [showExport, setShowExport] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const saveTimers = useRef(new Map<string, number>());
 
@@ -259,6 +261,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
             {notice}
           </span>
         )}
+        <button onClick={() => setShowHelp(true)}>Help</button>
         <button onClick={() => setShowFonts(true)}>Fonts…</button>
       </header>
       <div className="columns">
@@ -290,6 +293,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
         <Preview render={render} filename={current?.name || current?.fields.title || 'card'} />
       </div>
       {showFonts && <FontSettings fonts={fonts} onChange={setFonts} onClose={() => setShowFonts(false)} />}
+      {showHelp && <HelpDialog catalog={catalog} onClose={() => setShowHelp(false)} />}
       {showExport && (
         <ExportDialog cardCount={cards.reduce((n, c) => n + Math.max(0, c.copies), 0)} onExport={exportPdf} onCancel={() => setShowExport(false)} />
       )}
