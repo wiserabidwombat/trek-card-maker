@@ -24,6 +24,10 @@ COLUMN = {"hires": (0.0, 0.56, 0.14, 0.88), "std": (0.0, 0.56, 0.18, 0.86)}
 MISSION_BAND = (0.10, 0.855, 0.90, 0.935)
 # the emblem inside the top-left affiliation disc of a HiRes personnel frame (inside its ring)
 CORNER_EMBLEM = (0.03, 0.0, 0.11, 0.102)
+# the dark disc behind that emblem (centre, radius as fractions of width), just inside the bracket arcs
+CORNER_DISC = (0.0735, 0.0546, 0.0627)
+HI_SIZE = 96  # px, composed high-resolution inline icon (ring + disc)
+HI_DISC = 0.8  # disc diameter as a fraction of the ring diameter
 MAX_GROUP = 40
 MAX_SLOTS = 4
 RING_INNER = 0.66  # icon disc / ring boundary as a fraction of the ring radius (mirrored in src/render/iconLayout.ts)
@@ -72,6 +76,26 @@ def _sheet(items: list[tuple[np.ndarray, str]], path: str, cell: int = 96, cols:
         sheet.paste(im, (x + 4, y + 2), im)
         d.text((x + 2, y + cell + 6), lab[:20], fill="black")
     sheet.save(path)
+
+
+def cleanest_ring(ring_dir: str) -> str | None:
+    """The HiRes ring whose opaque pixels are least colourful: a plain silver ring with no sliver
+    of a coloured frame border caught in the crop."""
+    best: tuple[float, str] | None = None
+    if not os.path.isdir(ring_dir):
+        return None
+    for name in sorted(os.listdir(ring_dir)):
+        if not name.startswith("hires."):
+            continue
+        a = np.asarray(Image.open(os.path.join(ring_dir, name)).convert("RGBA")).astype(int)
+        opaque = a[..., 3] > 128
+        if not opaque.any():
+            continue
+        rgb = a[..., :3][opaque]
+        spread = float((rgb.max(axis=1) - rgb.min(axis=1)).mean())
+        if best is None or spread < best[0]:
+            best = (spread, os.path.join(ring_dir, name))
+    return best[1] if best else None
 
 
 def collect_skills(roles_by_frame: list[list]) -> list[str]:
@@ -415,6 +439,39 @@ def build_base_catalog(
             _sheet(mission_review[:240], os.path.join(review_dir, "icons_mission.png"))
 
     extra_icons.sort(key=lambda i: i["id"])
+    # ---- high-resolution inline icons: a silver socket ring around the emblem disc ----
+    hi_files: dict[str, str] = {}
+    ring_src = cleanest_ring(os.path.join(out, "rings"))
+    if ring_src:
+        log(f"hi-res inline ring source: {os.path.basename(ring_src)}")
+        ring_img = Image.open(ring_src).convert("RGBA").resize((HI_SIZE, HI_SIZE), Image.LANCZOS)
+
+        def compose(disc: np.ndarray) -> Image.Image:
+            d = int(HI_SIZE * HI_DISC)
+            disc_img = Image.fromarray(disc, "RGBA").resize((d, d), Image.LANCZOS)
+            canvas = Image.new("RGBA", (HI_SIZE, HI_SIZE), (0, 0, 0, 0))
+            canvas.paste(disc_img, ((HI_SIZE - d) // 2, (HI_SIZE - d) // 2), disc_img)
+            canvas.alpha_composite(ring_img)
+            return canvas
+
+        # Other Icons: the socket crops already are emblem-on-dark discs
+        for name, (_score, crop) in best.items():
+            img = compose(crop)
+            file = f"icons/hi-{name}.png"
+            img.save(os.path.join(out, file))
+            hi_files[name] = file
+        # affiliations: the disc behind the corner emblem of that affiliation's HiRes personnel frames
+        for (ctype, fam, variant), med in group_medians.items():
+            if ctype != "personnel" or fam != "hires":
+                continue
+            h, w = med.shape[:2]
+            cx, cy, r = CORNER_DISC[0] * w, CORNER_DISC[1] * h, CORNER_DISC[2] * w
+            img = compose(crop_disc(med, cx, cy, r))
+            file = f"icons/hi-{variant}.png"
+            img.save(os.path.join(out, file))
+            hi_files[variant] = file
+        log(f"hi-res inline icons: {sorted(hi_files)}")
+
     skills = collect_skills(roles_by_frame)
     log(f"skills ({len(skills)}): {skills}")
-    return {"frames": base_frames, "icons": extra_icons, "skills": skills}
+    return {"frames": base_frames, "icons": extra_icons, "skills": skills, "hi": hi_files}

@@ -8,6 +8,8 @@ import { AssetCache } from '../render/assets';
 import { DEFAULT_FONTS, ensureFontsLoaded, registerUserFont, type FontConfig } from '../render/fonts';
 import { renderCard } from '../render/renderCard';
 import { buildSheetPdf, downloadBytes } from '../export/exportPdf';
+import { PROFILES, type PrintProfile } from '../render/printProfile';
+import { ExportDialog } from './ExportDialog';
 import { clearCardsAndImages, deleteCard, getImage, getUserFont, listCards, putCard, putImage } from '../store/db';
 import { parseDeck, remapFrames, serializeDeck } from '../store/deckJson';
 import { DeckList } from './DeckList';
@@ -48,6 +50,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
   const [loaded, setLoaded] = useState(false);
   const [showFonts, setShowFonts] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [showExport, setShowExport] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const saveTimers = useRef(new Map<string, number>());
 
@@ -173,9 +176,11 @@ function Editor({ catalog }: { catalog: Catalog }) {
     setNotice(`Removed ${removed} card${removed === 1 ? '' : 's'}.`);
   };
 
-  const exportPdf = async () => {
+  const exportPdf = async (profileName: PrintProfile) => {
+    setShowExport(false);
     setExporting(true);
     setNotice(null);
+    const profile = PROFILES[profileName];
     try {
       const items = [];
       const skipped: string[] = [];
@@ -192,14 +197,14 @@ function Editor({ catalog }: { catalog: Catalog }) {
           if (blob) userImage = await assets.getBlobImage(card.image.blobKey, blob);
         }
         try {
-          const r = await renderCard(card, { catalog, frame: fr, template: templateFor(catalog, fr), fonts, assets, userImage, base: FRAMES_BASE });
+          const r = await renderCard(card, { catalog, frame: fr, template: templateFor(catalog, fr), fonts, assets, userImage, base: FRAMES_BASE, profile });
           items.push({ canvas: r.canvas, copies: card.copies });
         } catch {
           skipped.push(card.name || card.fields.title || card.id);
         }
       }
-      const bytes = await buildSheetPdf(items);
-      downloadBytes(bytes, 'trek-cards-sheet.pdf');
+      const bytes = await buildSheetPdf(items, profile.lossless);
+      downloadBytes(bytes, profileName === 'inkjet' ? 'trek-cards-sheet-inkjet.pdf' : 'trek-cards-sheet.pdf');
       if (skipped.length) setNotice(`Skipped (could not render): ${skipped.join(', ')}`);
     } catch (e) {
       setNotice(`Export failed: ${e instanceof Error ? e.message : String(e)}`);
@@ -267,7 +272,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
             const c = cards.find((x) => x.id === id);
             if (c) updateCard({ ...c, copies });
           }}
-          onExportPdf={exportPdf}
+          onExportPdf={() => setShowExport(true)}
           onExportJson={exportJson}
           onImportJson={importJson}
         />
@@ -279,6 +284,9 @@ function Editor({ catalog }: { catalog: Catalog }) {
         <Preview render={render} filename={current?.name || current?.fields.title || 'card'} />
       </div>
       {showFonts && <FontSettings fonts={fonts} onChange={setFonts} onClose={() => setShowFonts(false)} />}
+      {showExport && (
+        <ExportDialog cardCount={cards.reduce((n, c) => n + Math.max(0, c.copies), 0)} onExport={exportPdf} onCancel={() => setShowExport(false)} />
+      )}
     </div>
   );
 }

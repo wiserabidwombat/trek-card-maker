@@ -7,6 +7,7 @@ import { missionIconPositions, slotPlacement } from './iconLayout';
 import type { AssetCache } from './assets';
 import { cssFont, cssFontForStyle, type FontConfig } from './fonts';
 import { boxToPx, cardBorderPx, cropDraw, ptToPx, type PxRect } from './geometry';
+import { SCREEN_PROFILE, profiledPt, sharpenPixels, type RenderProfile } from './printProfile';
 import { fitFlow, layoutRuns, type Measure, type PlacedLine, type Style } from './textLayout';
 
 export interface RenderContext {
@@ -17,6 +18,8 @@ export interface RenderContext {
   assets: AssetCache;
   userImage?: HTMLImageElement;
   base: string; // URL prefix for catalog files, e.g. '/frames/'
+  /** Printer-specific adjustments; the screen preview uses the laser (neutral) profile. */
+  profile?: RenderProfile;
 }
 
 export interface RenderResult {
@@ -24,28 +27,52 @@ export interface RenderResult {
   overflow: boolean;
 }
 
-const TEXT_COLOUR = '#141414';
+// Pure black: many inkjet drivers print near-black as a mix of colour inks, which blurs small text.
+const TEXT_COLOUR = '#000000';
 const SKILL_BULLET = 'skill-dot';
 const BASELINE_RATIO = 0.78; // baseline position inside a text box, as a fraction of its height
 
+type IconImage = HTMLImageElement | HTMLCanvasElement;
+
+/** The high-resolution twin when the catalog has one, else the icon's own file. */
 function iconFile(catalog: Catalog, id: string): string | undefined {
-  return catalog.icons.find((i) => i.id === id)?.file;
+  const def = catalog.icons.find((i) => i.id === id);
+  return def?.hi ?? def?.file;
 }
 
-async function loadIcons(ctx: RenderContext, ids: Iterable<string>): Promise<Map<string, HTMLImageElement>> {
-  const map = new Map<string, HTMLImageElement>();
+function sharpened(img: HTMLImageElement): IconImage {
+  const c = document.createElement('canvas');
+  c.width = img.naturalWidth;
+  c.height = img.naturalHeight;
+  const g = c.getContext('2d');
+  if (!g || !c.width || !c.height) return img;
+  g.drawImage(img, 0, 0);
+  const data = g.getImageData(0, 0, c.width, c.height);
+  data.data.set(sharpenPixels(data.data, c.width, c.height));
+  g.putImageData(data, 0, 0);
+  return c;
+}
+
+async function loadIcons(ctx: RenderContext, ids: Iterable<string>): Promise<Map<string, IconImage>> {
+  const map = new Map<string, IconImage>();
+  const sharpen = (ctx.profile ?? SCREEN_PROFILE).sharpenIcons;
   await Promise.all(
     [...new Set(ids)].map(async (id) => {
       const file = iconFile(ctx.catalog, id);
       if (!file) return;
       try {
-        map.set(id, await ctx.assets.getImage(ctx.base + file));
+        const img = await ctx.assets.getImage(ctx.base + file);
+        map.set(id, sharpen ? sharpened(img) : img);
       } catch {
         /* missing icon: skipped */
       }
     }),
   );
   return map;
+}
+
+function naturalSize(img: IconImage): { w: number; h: number } {
+  return img instanceof HTMLCanvasElement ? { w: img.width, h: img.height } : { w: img.naturalWidth, h: img.naturalHeight };
 }
 
 function iconIds(runs: Run[]): string[] {
@@ -87,7 +114,7 @@ function drawPlacedLines(
   originY: number,
   width: number,
   fonts: FontConfig,
-  icons: Map<string, HTMLImageElement>,
+  icons: Map<string, IconImage>,
   align: 'left' | 'center',
 ): void {
   g.textBaseline = 'alphabetic';
@@ -112,7 +139,9 @@ function drawPlacedLines(
 }
 
 export async function renderCard(card: Card, ctx: RenderContext): Promise<RenderResult> {
-  const { frame, template: t, fonts } = ctx;
+  const { frame, template: t } = ctx;
+  const profile = ctx.profile ?? SCREEN_PROFILE;
+  const fonts: FontConfig = profile.heavierText ? { ...ctx.fonts, heavier: true } : ctx.fonts;
   const W = frame.w;
   const H = frame.h;
   const canvas = document.createElement('canvas');
@@ -148,7 +177,7 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
     }
   }
 
-  const px = (pt: number) => ptToPx(pt, t.refWidthPt, W);
+  const px = (pt: number) => ptToPx(profiledPt(pt, profile), t.refWidthPt, W);
   const measure: Measure = (text, style, sizePx) => {
     g.font = cssFontForStyle(style, sizePx, fonts);
     return g.measureText(text).width;
@@ -246,9 +275,10 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
       if (!img) return;
       const p = positions[i];
       // fit the emblem into a p.w square: wide marks fill the width, tall ones the height
-      const scale = p.w / Math.max(img.naturalWidth, img.naturalHeight);
-      const w = img.naturalWidth * scale;
-      const h = img.naturalHeight * scale;
+      const nat = naturalSize(img);
+      const scale = p.w / Math.max(nat.w, nat.h);
+      const w = nat.w * scale;
+      const h = nat.h * scale;
       g.drawImage(img, p.cx - w / 2, p.cy - h / 2, w, h);
     });
   }

@@ -58,7 +58,7 @@ export function validateCatalog(json: unknown): Catalog {
   const icons = json.icons.map((ic, i) => {
     need(isRecord(ic) && typeof ic.id === 'string' && typeof ic.file === 'string', `icons[${i}] invalid`);
     const group = (groups as string[]).includes(String(ic.group)) ? (ic.group as IconGroup) : 'inline';
-    return { id: ic.id, file: ic.file, w: Number(ic.w) || 0, h: Number(ic.h) || 0, group };
+    return { id: ic.id, file: ic.file, w: Number(ic.w) || 0, h: Number(ic.h) || 0, group, hi: typeof ic.hi === 'string' ? ic.hi : null };
   });
   const skills = Array.isArray(json.skills) ? json.skills.filter((s): s is string => typeof s === 'string') : [];
   return {

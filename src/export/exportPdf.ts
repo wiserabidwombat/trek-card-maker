@@ -6,14 +6,14 @@ export interface SheetItem {
   copies: number;
 }
 
-function canvasToJpeg(canvas: HTMLCanvasElement, quality = 0.95): Promise<Uint8Array> {
+function canvasToBytes(canvas: HTMLCanvasElement, type: 'image/jpeg' | 'image/png', quality = 0.95): Promise<Uint8Array> {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
         if (!blob) return reject(new Error('Could not encode card image'));
         blob.arrayBuffer().then((b) => resolve(new Uint8Array(b)), reject);
       },
-      'image/jpeg',
+      type,
       quality,
     );
   });
@@ -22,6 +22,8 @@ function canvasToJpeg(canvas: HTMLCanvasElement, quality = 0.95): Promise<Uint8A
 export interface JpegItem {
   jpeg: Uint8Array;
   copies: number;
+  /** When true `jpeg` holds PNG bytes (lossless, for inkjet output). */
+  png?: boolean;
 }
 
 /** Build a US Letter print sheet from pre-encoded JPEGs: 3x3 cards per page with cut marks. */
@@ -31,7 +33,7 @@ export async function buildSheetPdfFromJpegs(items: JpegItem[]): Promise<Uint8Ar
   const placements: { img: Awaited<ReturnType<PDFDocument['embedJpg']>> }[] = [];
   for (const item of items) {
     if (item.copies <= 0) continue;
-    const img = await doc.embedJpg(item.jpeg);
+    const img = item.png ? await doc.embedPng(item.jpeg) : await doc.embedJpg(item.jpeg);
     for (let i = 0; i < item.copies; i++) placements.push({ img });
   }
   const slots = layoutSheet(placements.length);
@@ -51,12 +53,13 @@ export async function buildSheetPdfFromJpegs(items: JpegItem[]): Promise<Uint8Ar
   return doc.save();
 }
 
-/** Build a US Letter print sheet from rendered card canvases. */
-export async function buildSheetPdf(items: SheetItem[]): Promise<Uint8Array> {
+/** Build a US Letter print sheet from rendered card canvases (JPEG q0.95, or PNG when lossless). */
+export async function buildSheetPdf(items: SheetItem[], lossless = false): Promise<Uint8Array> {
   const encoded: JpegItem[] = [];
   for (const item of items) {
     if (item.copies <= 0) continue;
-    encoded.push({ jpeg: await canvasToJpeg(item.canvas), copies: item.copies });
+    const bytes = await canvasToBytes(item.canvas, lossless ? 'image/png' : 'image/jpeg');
+    encoded.push({ jpeg: bytes, copies: item.copies, png: lossless });
   }
   return buildSheetPdfFromJpegs(encoded);
 }

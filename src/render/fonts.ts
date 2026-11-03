@@ -1,15 +1,18 @@
 import type { FontRole } from '../catalog/types';
 import type { Style } from './textLayout';
+import { bodyWeight } from './printProfile';
 
 export interface FontConfig {
   title: string; // CSS family, quoted if needed
   body: string;
+  /** Inkjet profile: Light -> Regular, Regular -> Medium. */
+  heavier?: boolean;
 }
 
 export const DEFAULT_FONTS: FontConfig = { title: '"Exo 2"', body: '"Fira Sans Condensed"' };
 
 export function cssFontForStyle(style: Style, sizePx: number, fonts: FontConfig): string {
-  const weight = style.bold ? 700 : style.light ? 300 : 400;
+  const weight = bodyWeight(style, !!fonts.heavier);
   return `${style.italic ? 'italic' : 'normal'} ${weight} ${sizePx}px ${fonts.body}`;
 }
 
@@ -41,7 +44,11 @@ const STYLE_VARIANTS: Style[] = [
 
 export async function ensureFontsLoaded(fonts: FontConfig): Promise<void> {
   if (typeof document === 'undefined' || !('fonts' in document)) return;
-  const specs = [cssFont('title', 40, fonts), ...STYLE_VARIANTS.map((s) => cssFontForStyle(s, 40, fonts))];
+  const specs = [
+    cssFont('title', 40, fonts),
+    ...STYLE_VARIANTS.map((s) => cssFontForStyle(s, 40, fonts)),
+    ...STYLE_VARIANTS.map((s) => cssFontForStyle(s, 40, { ...fonts, heavier: true })),
+  ];
   await Promise.all(
     specs.map((spec) =>
       document.fonts.load(spec).catch(() => {

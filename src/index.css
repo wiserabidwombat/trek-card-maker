@@ -460,6 +460,31 @@ label {
   }
 }
 
+.modal.narrow {
+  max-width: 520px;
+}
+.profile-choice {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+}
+.profile-choice label {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border: 1px solid #2a3344;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.profile-choice label.on {
+  border-color: #6fb3ff;
+  background: #1a2538;
+}
+.profile-choice input {
+  margin-top: 3px;
+}
+
 button.danger {
   border-color: #7a2e2e;
   color: #f1b0b0;

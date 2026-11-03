@@ -91,6 +91,8 @@ export interface IconDef {
   w: number;
   h: number;
   group: IconGroup;
+  /** Composed high-resolution twin of a small inline icon, used wherever the icon is drawn. */
+  hi?: string | null;
 }
 
 export interface Catalog {

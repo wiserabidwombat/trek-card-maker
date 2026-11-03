@@ -36,7 +36,8 @@ was matched to). The extractor writes:
 - `public/frames/rings/*.png` the empty socket ring per affiliation, drawn under each Other Icon
 - `public/frames/icons/big-*.png` full-size Other Icons cropped from the frames and named by
   matching against the rulebook's icon list; `icons/mission-*.png` affiliation icons for the
-  mission strip; the small `icons/*.png` stay for inline `{icon:…}` use
+  mission strip; `icons/hi-*.png` 96 px versions of the inline icons (ring plus emblem), used in
+  game text and staffing in place of the small `icons/*.png` originals wherever one exists
 - `public/frames/overlays/*.png` the frame edges that overlap the art area, drawn back on top of your image
 - `public/frames/catalog.json` the base frames, one layout template per card type and family
   (text boxes from the PDFs' own text layer, socket slots and strip geometry measured from the
@@ -74,6 +75,12 @@ Open the printed URL (default `http://localhost:5173`).
     headquarters missions; leave points empty for those.
 - **Preview**: live render; *Download PNG* saves the single card. A badge warns when game text
   had to be shrunk to fit.
+- **Export print sheet** asks whether the sheet is for a **laser** or an **inkjet** printer. Inkjets
+  spread ink on the paper, so the inkjet profile uses heavier body text (Light → Regular,
+  Regular → Medium), makes text under 7.5 pt about 5% larger, sharpens the icons and embeds the
+  cards losslessly (a bigger file). Text is always pure black so the printer uses only the black
+  cartridge. On either printer, use matte photo paper or coated card stock, set the driver to its
+  Best or Photo quality, and print at 100%.
 
 ## Fonts
 

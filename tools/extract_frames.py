@@ -429,6 +429,19 @@ def finish(args, out, overrides, refs, frames, roles_by_frame, templates, art_bo
         if key in overrides:
             templates[key] = deep_merge(t, overrides[key])
 
+    hi = base.get("hi", {})
+    for ic in inline_icons:
+        # the small inline icons keep their ids; a composed high-resolution twin is attached when one exists
+        base_id = ic["id"][:-2] if ic["id"].endswith("-b") else ic["id"]
+        if base_id in hi:
+            ic["hi"] = hi[base_id]
+    # ids that only exist as a composed icon (no small original in the PDFs, e.g. klingon) become inline icons too
+    have = {ic["id"] for ic in inline_icons}
+    for name, file in sorted(hi.items()):
+        if name not in have:
+            with Image.open(os.path.join(out, file)) as im:
+                w, h = im.size
+            inline_icons.append({"id": name, "file": file, "w": w, "h": h, "group": "inline", "hi": file})
     catalog = {
         "generatedAt": time.strftime("%Y-%m-%dT%H:%M:%S"),
         "families": families,
