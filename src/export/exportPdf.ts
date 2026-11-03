@@ -19,14 +19,19 @@ function canvasToJpeg(canvas: HTMLCanvasElement, quality = 0.95): Promise<Uint8A
   });
 }
 
-/** Build a US Letter print sheet: 3x3 cards per page with cut marks. */
-export async function buildSheetPdf(items: SheetItem[]): Promise<Uint8Array> {
+export interface JpegItem {
+  jpeg: Uint8Array;
+  copies: number;
+}
+
+/** Build a US Letter print sheet from pre-encoded JPEGs: 3x3 cards per page with cut marks. */
+export async function buildSheetPdfFromJpegs(items: JpegItem[]): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
   doc.setTitle('Trek Card Maker print sheet');
   const placements: { img: Awaited<ReturnType<PDFDocument['embedJpg']>> }[] = [];
   for (const item of items) {
     if (item.copies <= 0) continue;
-    const img = await doc.embedJpg(await canvasToJpeg(item.canvas));
+    const img = await doc.embedJpg(item.jpeg);
     for (let i = 0; i < item.copies; i++) placements.push({ img });
   }
   const slots = layoutSheet(placements.length);
@@ -44,6 +49,16 @@ export async function buildSheetPdf(items: SheetItem[]): Promise<Uint8Array> {
   });
   if (!pages.length) doc.addPage([LETTER.w, LETTER.h]);
   return doc.save();
+}
+
+/** Build a US Letter print sheet from rendered card canvases. */
+export async function buildSheetPdf(items: SheetItem[]): Promise<Uint8Array> {
+  const encoded: JpegItem[] = [];
+  for (const item of items) {
+    if (item.copies <= 0) continue;
+    encoded.push({ jpeg: await canvasToJpeg(item.canvas), copies: item.copies });
+  }
+  return buildSheetPdfFromJpegs(encoded);
 }
 
 export function downloadBytes(bytes: Uint8Array, filename: string, mime = 'application/pdf'): void {
