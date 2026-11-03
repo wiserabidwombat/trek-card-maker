@@ -9,6 +9,7 @@ import { cssFont, cssFontForStyle, specForRole, specForStyle, type FontConfig } 
 import type { TextOp, TextSpec } from './textOps';
 import { boxToPx, cardBorderPx, cropDraw, ptToPx, type PxRect } from './geometry';
 import { SCREEN_PROFILE, profiledPt, sharpenPixels, type RenderProfile } from './printProfile';
+import { INK_BLACK, inkColour } from './ink';
 import { fitFlow, layoutRuns, type Measure, type PlacedLine, type Style } from './textLayout';
 
 export interface RenderContext {
@@ -68,7 +69,7 @@ function middleBaseline(g: CanvasRenderingContext2D, text: string, cy: number): 
 }
 
 // Pure black: many inkjet drivers print near-black as a mix of colour inks, which blurs small text.
-const TEXT_COLOUR = '#000000';
+const TEXT_COLOUR = INK_BLACK;
 const SKILL_BULLET = 'skill-dot';
 const BASELINE_RATIO = 0.78; // baseline position inside a text box, as a fraction of its height
 
@@ -142,7 +143,7 @@ function drawBoxText(
   }
   const align = opts.align ?? box.align;
   const x = opts.x ?? (align === 'center' ? rect.x + rect.w / 2 : align === 'right' ? rect.x + rect.w : rect.x);
-  putText(g, sink, t, specForRole(box.font, fonts), px, x, rect.y + rect.h * BASELINE_RATIO, align, TEXT_COLOUR);
+  putText(g, sink, t, specForRole(box.font, fonts), px, x, rect.y + rect.h * BASELINE_RATIO, align, inkColour(box.colour));
 }
 
 function drawPlacedLines(
@@ -155,6 +156,7 @@ function drawPlacedLines(
   fonts: FontConfig,
   icons: Map<string, IconImage>,
   align: 'left' | 'center',
+  colour: string = TEXT_COLOUR,
 ): void {
   for (const pl of lines) {
     const baseline = originY + pl.y + pl.lineHeightPx * 0.8;
@@ -169,7 +171,7 @@ function drawPlacedLines(
       }
       if (!piece.text) continue;
       g.font = cssFontForStyle(piece.style, pl.sizePx, fonts);
-      putText(g, sink, piece.text, specForStyle(piece.style, fonts), pl.sizePx, x, baseline, 'left', TEXT_COLOUR);
+      putText(g, sink, piece.text, specForStyle(piece.style, fonts), pl.sizePx, x, baseline, 'left', colour);
     }
   }
 }
@@ -363,7 +365,7 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
     let x = x0;
     let y = s.y0 * H;
     const style: Style = { bold: true, italic: false };
-    g.fillStyle = TEXT_COLOUR;
+    const skillColour = inkColour(s.colour);
     g.textAlign = 'left';
     g.textBaseline = 'alphabetic';
     for (const skill of card.skills) {
@@ -379,7 +381,7 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
       const baseline = y + rowH * 0.8;
       if (img) g.drawImage(img, x, baseline - bullet * 0.95, bullet, bullet);
       g.font = cssFontForStyle(style, flowSizePx, fonts);
-      putText(g, sink, text, specForStyle(style, fonts), flowSizePx, x + bullet + gap, baseline, 'left', TEXT_COLOUR);
+      putText(g, sink, text, specForStyle(style, fonts), flowSizePx, x + bullet + gap, baseline, 'left', skillColour);
       x += itemW + bullet * 1.2;
     }
     flowTop = Math.max(flowTop, y + rowH + rowH * 0.15);
@@ -398,7 +400,7 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
       sizePx: size,
       lineHeightPx,
     }));
-    drawPlacedLines(g, sink, placed, rect.x, rect.y, rect.w, fonts, icons, 'center');
+    drawPlacedLines(g, sink, placed, rect.x, rect.y, rect.w, fonts, icons, 'center', inkColour(r.colour));
     flowTop = Math.max(flowTop, rect.y + lines.length * lineHeightPx + lineHeightPx * 0.2);
   }
 
@@ -417,7 +419,7 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
     measure,
     flowSizePx * 1.1,
   );
-  drawPlacedLines(g, sink, fit.lines, flowRect.x, flowTop, flowRect.w, fonts, icons, 'left');
+  drawPlacedLines(g, sink, fit.lines, flowRect.x, flowTop, flowRect.w, fonts, icons, 'left', inkColour(t.flow.colour));
 
   const card_ = withCardBorder(canvas, t);
   if (sink) {

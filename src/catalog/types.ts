@@ -23,6 +23,8 @@ export interface TextBox extends Box {
   font: FontRole;
   sizePt: number;
   align: 'left' | 'center' | 'right';
+  /** Text colour printed on the originals ("#rrggbb"); black when absent. */
+  colour?: string;
 }
 
 export type ArtBox = [number, number, number, number];
@@ -47,10 +49,10 @@ export interface Template {
   refWidthPt: number;
   artBox: ArtBox;
   boxes: Record<string, TextBox>;
-  flow: Box & { sizePt: number; lineHeight: number };
+  flow: Box & { sizePt: number; lineHeight: number; colour?: string };
   lore: { sizePt: number };
-  skills?: { x0: number; y0: number; x1: number; rowHeight: number; bulletSize: number } | null;
-  requirements?: (Box & { sizePt: number }) | null;
+  skills?: { x0: number; y0: number; x1: number; rowHeight: number; bulletSize: number; colour?: string } | null;
+  requirements?: (Box & { sizePt: number; colour?: string }) | null;
   /** Ship staffing icon slots: centred at cx, first at y0, then every `step`; icon width `size` (fractions). */
   staffing?: { cx: number; y0: number; step: number; size: number; max: number } | null;
   /** Mission quadrant badge: disc centre/radius (fractions of width for r) and the letter size. */

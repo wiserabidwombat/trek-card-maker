@@ -11,7 +11,8 @@ from collections import Counter
 from typing import Iterable
 
 Box = tuple[float, float, float, float]
-Line = tuple[Box, str, str, float]
+# (box, text, font, size) plus an optional 5th element: the text colour as "#rrggbb"
+Line = tuple[Box, str, str, float] | tuple[Box, str, str, float, str]
 
 TYPE_WORDS = {"Dilemma": "dilemma", "Event": "event", "Interrupt": "interrupt", "Equipment": "equipment"}
 PERSONNEL_ATTRS = ("Integrity", "Cunning", "Strength")
@@ -56,10 +57,10 @@ def font_role(font: str) -> str:
 
 def classify_type(lines: Iterable[Line]) -> str:
     lines = list(lines)
-    for box, text, _font, _size in lines:
+    for box, text, *_rest in lines:
         if text.strip() in TYPE_WORDS and 0.45 <= box[1] <= 0.62:
             return TYPE_WORDS[text.strip()]
-    texts = [t.strip().upper() for b, t, _f, _s in lines if b[1] > 0.85]
+    texts = [t.strip().upper() for b, t, *_rest in lines if b[1] > 0.85]
     if any(t.startswith(tuple(a.upper() for a in PERSONNEL_ATTRS)) for t in texts):
         return "personnel"
     if any(t.startswith(tuple(a.upper() for a in SHIP_ATTRS)) for t in texts):
@@ -76,7 +77,7 @@ def line_roles(ctype: str, lines: Iterable[Line]) -> list[tuple[str, Line]]:
     ordered = _sorted(lines)
     roles: list[tuple[str, Line]] = []
     for line in ordered:
-        (x0, y0, _x1, _y1), text, font, size = line
+        (x0, y0, _x1, _y1), text, font, size = line[:4]
         t = text.strip()
         role = "body"
         if size < 4.5 and (_x1 - x0) < 0.035 and (_y1 - y0) > 0.08:
@@ -162,16 +163,38 @@ def merge_attr_lines(lines: list[Line], gap: float = 0.1) -> list[Line]:
     out: list[Line] = []
     for line in sorted(lines, key=lambda l: l[0][0]):
         if out and line[0][0] - out[-1][0][2] < gap:
-            (x0, y0, x1, y1), text, font, size = out[-1]
+            (x0, y0, x1, y1), text, font, size = out[-1][:4]
             b = line[0]
-            out[-1] = ((x0, min(y0, b[1]), max(x1, b[2]), max(y1, b[3])), f"{text} {line[1]}", font, size)
+            merged = ((x0, min(y0, b[1]), max(x1, b[2]), max(y1, b[3])), f"{text} {line[1]}", font, size)
+            out[-1] = merged + tuple(out[-1][4:])  # keep the colour of the first piece
         else:
             out.append(line)
     return out
 
 
+def line_colour(lines: Iterable[Line]) -> str | None:
+    """Most common recorded colour among ``lines`` (None when the lines carry no colour)."""
+    counts: dict[str, int] = {}
+    for l in lines:
+        if len(l) > 4 and isinstance(l[4], str):
+            counts[l[4]] = counts.get(l[4], 0) + 1
+    return max(counts, key=counts.get) if counts else None
+
+
+def _with_colour(entry: dict | None, lines: Iterable[Line]) -> dict | None:
+    if entry is None:
+        return None
+    c = line_colour(lines)
+    if c:
+        entry["colour"] = c
+    return entry
+
+
 def derive_template(ctype: str, family: str, cards: list[list[tuple[str, Line]]], ref_width_pt: float) -> dict:
     by_role: dict[str, list[Line]] = {}
+    body_lines: list[Line] = []
+    skill_lines: list[Line] = []
+    req_lines: list[Line] = []
     per_card_first_body_y: list[float] = []
     per_card_body_x0: list[float] = []
     per_card_body_x1: list[float] = []
@@ -199,6 +222,7 @@ def derive_template(ctype: str, family: str, cards: list[list[tuple[str, Line]]]
             if r == "collector":
                 collector_y0.append(l[0][1])
         bodies = [l for r, l in card if r == "body"]
+        body_lines.extend(bodies)
         if bodies:
             per_card_first_body_y.append(bodies[0][0][1])
             per_card_body_x0.append(min(l[0][0] for l in bodies))
@@ -212,6 +236,7 @@ def derive_template(ctype: str, family: str, cards: list[list[tuple[str, Line]]]
                 else:
                     body_sizes.append(l[3])
         skills = [l for r, l in card if r == "skill"]
+        skill_lines.extend(skills)
         if skills:
             skill_first_y.append(skills[0][0][1])
             skill_x0.append(min(l[0][0] for l in skills))
@@ -219,6 +244,7 @@ def derive_template(ctype: str, family: str, cards: list[list[tuple[str, Line]]]
             ys = sorted({round(l[0][1], 4) for l in skills})
             skill_gaps.extend(b - a for a, b in zip(ys, ys[1:]) if 0.015 < b - a < 0.06)
         reqs = [l for r, l in card if r == "requirement"]
+        req_lines.extend(reqs)
         if reqs:
             req_boxes.append(
                 (
@@ -231,7 +257,8 @@ def derive_template(ctype: str, family: str, cards: list[list[tuple[str, Line]]]
             req_sizes.extend(l[3] for l in reqs)
 
     boxes = {
-        role: _box_entry(role, lines, "center" if role in CENTERED else "left") for role, lines in by_role.items()
+        role: _with_colour(_box_entry(role, lines, "center" if role in CENTERED else "left"), lines)
+        for role, lines in by_role.items()
     }
 
     flow_size = _most_common(body_sizes, 7.0)
@@ -276,8 +303,8 @@ def derive_template(ctype: str, family: str, cards: list[list[tuple[str, Line]]]
         "refWidthPt": ref_width_pt,
         "artBox": None,
         "boxes": boxes,
-        "flow": flow,
+        "flow": _with_colour(flow, body_lines),
         "lore": lore,
-        "skills": skills,
-        "requirements": requirements,
+        "skills": _with_colour(skills, skill_lines),
+        "requirements": _with_colour(requirements, req_lines),
     }

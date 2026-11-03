@@ -68,7 +68,8 @@ def deep_merge(base: dict, override: dict) -> dict:
     return out
 
 
-def page_lines(page: pymupdf.Page) -> list[tuple[pymupdf.Rect, str, str, float]]:
+def page_lines(page: pymupdf.Page) -> list[tuple[pymupdf.Rect, str, str, float, str]]:
+    """Text lines with their placement, first font, size and colour ("#rrggbb" of the first printed span)."""
     out = []
     for block in page.get_text("dict")["blocks"]:
         for line in block.get("lines", []):
@@ -76,7 +77,9 @@ def page_lines(page: pymupdf.Page) -> list[tuple[pymupdf.Rect, str, str, float]]
             text = "".join(s["text"] for s in spans).strip()
             if not text:
                 continue
-            out.append((pymupdf.Rect(line["bbox"]), text, spans[0]["font"], round(spans[0]["size"], 1)))
+            inked = next((s for s in spans if s["text"].strip()), spans[0])
+            colour = f"#{int(inked.get('color', 0)) & 0xFFFFFF:06x}"
+            out.append((pymupdf.Rect(line["bbox"]), text, spans[0]["font"], round(spans[0]["size"], 1), colour))
     return out
 
 
@@ -245,7 +248,7 @@ def main() -> int:
                 rect = rects[0]
                 emitted_xrefs.add(xref)
                 family_widths[fam].append(rect.width)
-                inside = [(norm_rect(r, rect), t, f, s) for r, t, f, s in lines if rect.contains(r)]
+                inside = [(norm_rect(r, rect), t, f, s, c) for r, t, f, s, c in lines if rect.contains(r)]
                 ctype = classify_type(inside)
                 roles = line_roles(ctype, inside)
                 title = next((l[1] for r, l in roles if r == "title"), "")
