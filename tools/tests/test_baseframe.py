@@ -17,11 +17,12 @@ def _blank(colour=(80, 90, 100)):
 
 
 def _socket(a, cx, cy, r):
+    """Grey ring (0.82-1.0 r) around a black gap (0.6-0.82 r) around a coloured icon."""
     yy, xx = np.mgrid[:H, :W]
     d = np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2)
-    a[(d <= r) & (d >= 0.8 * r)] = (220, 220, 220)
-    inner = d < 0.8 * r
-    a[inner] = (np.random.default_rng(1).integers(0, 255, (inner.sum(), 3))).astype(np.uint8)
+    a[d < 0.6 * r] = (200, 170, 40)
+    a[(d >= 0.6 * r) & (d < 0.84 * r)] = (10, 10, 10)
+    a[(d >= 0.84 * r) & (d <= r)] = (190, 190, 195)
 
 
 def test_median_removes_sparse_sockets():
@@ -36,8 +37,26 @@ def test_socket_present_detects_ring():
     a = _blank()
     slot = {"cx": 30 / W, "cy": 150 / H, "size": 30 / W}
     assert not socket_present(a, slot, W, H)
+    light = _blank((180, 185, 190))  # plain light column texture
+    assert not socket_present(light, slot, W, H)
     _socket(a, 30, 150, 15)
     assert socket_present(a, slot, W, H)
+
+
+def test_socket_present_with_clean_reference_ignores_ring_colour():
+    from baseframe import slot_diff
+
+    a = _blank((120, 110, 100))
+    slot = {"cx": 30 / W, "cy": 150 / H, "size": 30 / W}
+    clean = 230 / H
+    assert slot_diff(a, slot, W, H, clean) < 1
+    assert not socket_present(a, slot, W, H, clean)
+    _socket(a, 30, 150, 15)
+    yy, xx = np.mgrid[:H, :W]
+    d = np.sqrt((xx - 30) ** 2 + (yy - 150) ** 2)
+    a[(d >= 12.6) & (d <= 15)] = (150, 110, 60)  # bronze ring
+    assert slot_diff(a, slot, W, H, clean) > 40
+    assert socket_present(a, slot, W, H, clean)
 
 
 def test_patch_slot_from_donor_and_shift():

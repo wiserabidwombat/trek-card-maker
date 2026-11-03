@@ -14,6 +14,6 @@ describe('iconLayout', () => {
   it('places ring and inner icon in a slot', () => {
     const { ring, icon } = slotPlacement({ cx: 0.1, cy: 0.5, size: 0.08 }, 1000, 1400);
     expect(ring).toEqual({ cx: 100, cy: 700, w: 80 });
-    expect(icon.w).toBeCloseTo(57.6);
+    expect(icon.w).toBeCloseTo(52.8);
   });
 });

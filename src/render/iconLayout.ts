@@ -16,8 +16,11 @@ export function missionIconPositions(n: number, strip: MissionStrip, W: number, 
   return out;
 }
 
+/** Icon disc / ring boundary as a fraction of the ring radius; mirrors RING_INNER in tools/pass3.py. */
+export const RING_INNER = 0.66;
+
 /** Ring and icon placement for socket `slot`; the icon disc is `inner` of the ring diameter. */
-export function slotPlacement(slot: IconSlot, W: number, H: number, inner = 0.72): { ring: IconPlacement; icon: IconPlacement } {
+export function slotPlacement(slot: IconSlot, W: number, H: number, inner = RING_INNER): { ring: IconPlacement; icon: IconPlacement } {
   const cx = slot.cx * W;
   const cy = slot.cy * H;
   const ring = slot.size * W;

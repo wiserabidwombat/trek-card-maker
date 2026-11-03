@@ -14,7 +14,7 @@ from collections import Counter, defaultdict
 import numpy as np
 from PIL import Image, ImageDraw
 
-from baseframe import clean_strip, fill_art_box, median_frame, patch_slot, socket_present
+from baseframe import clean_strip, fill_art_box, median_frame, patch_slot, slot_diff, socket_bands, socket_present
 from iconcrop import crop_box_rgba, crop_disc, crop_ring, merge_boxes, sharpness, strip_blobs, tight_crop
 from refs import nearest_reference
 from slots import detect_slots, measure_strip, refine_slot, regularize_slots
@@ -24,7 +24,7 @@ COLUMN = {"hires": (0.0, 0.56, 0.14, 0.88), "std": (0.0, 0.56, 0.18, 0.86)}
 MISSION_BAND = (0.10, 0.855, 0.90, 0.935)
 MAX_GROUP = 40
 MAX_SLOTS = 4
-RING_INNER = 0.72
+RING_INNER = 0.66  # icon disc / ring boundary as a fraction of the ring radius (mirrored in src/render/iconLayout.ts)
 OTHER_ICONS = [
     "command",
     "staff",
@@ -40,8 +40,9 @@ OTHER_ICONS = [
     "voyager",
 ]
 AFFILIATION_ICONS = ["bajoran", "borg", "cardassian", "dominion", "federation", "ferengi", "klingon", "romulan", "starfleet", "non-aligned"]
-SOCKET_MATCH_MAX = 70.0
-STRIP_MATCH_MAX = 90.0
+SOCKET_MATCH_MAX = 160.0  # names were all correct up to ~150 on the calibration sheet; the socket test is the guard
+STRIP_MATCH_MAX = 130.0
+REF_INNER = 0.33  # the icon disc inside a rulebook reference icon (its ring sits at ~0.42); matches RING_INNER crops
 MIN_SKILL_COUNT = 5
 LABELS = {"non-aligned": "Non-Aligned", "deep-space-nine": "Deep Space Nine"}
 
@@ -97,7 +98,9 @@ def build_base_catalog(
     refs: dict[str, np.ndarray],
     review: bool,
     log,
+    overrides: dict | None = None,
 ) -> dict:
+    overrides = overrides or {}
     for sub in ("base", os.path.join("base", "thumbs"), "rings", "icons"):
         os.makedirs(os.path.join(out, sub), exist_ok=True)
     cache: dict[int, np.ndarray] = {}
@@ -147,6 +150,11 @@ def build_base_catalog(
     # ---- slots per family (from the largest personnel group) ----
     slots_by_family: dict[str, list[dict]] = {}
     for fam in ("hires", "std"):
+        manual = overrides.get(f"personnel.{fam}", {}).get("iconSlots")
+        if manual:
+            slots_by_family[fam] = [dict(s) for s in manual]
+            log(f"slots {fam}: from template_overrides.json {manual}")
+            continue
         cands = [(k, members_of(k)) for k in groups if k[0] == "personnel"]
         cands = [(k, m) for k, (f, m) in cands if f == fam and len(m) >= 3]
         if not cands:
@@ -162,6 +170,11 @@ def build_base_catalog(
             slots_by_family[fam] = regularize_slots(refined, MAX_SLOTS)
             log(f"slots {fam} from {key[1]} ({len(idxs)} frames): raw={raw} -> {slots_by_family[fam]}")
         free(idxs)
+    def clean_cy_for(fam: str) -> float:
+        slots = slots_by_family[fam]
+        step = (slots[1]["cy"] - slots[0]["cy"]) if len(slots) > 1 else 0.07
+        return slots[-1]["cy"] + step
+
     for fam, slots in slots_by_family.items():
         if f"personnel.{fam}" in templates:
             templates[f"personnel.{fam}"]["iconSlots"] = slots
@@ -218,12 +231,23 @@ def build_base_catalog(
         notes = []
         slots = slots_by_family.get(fam, []) if ctype in ("personnel", "ship") else []
         if slots:
-            step_px = int(round((slots[1]["cy"] - slots[0]["cy"]) * H)) if len(slots) > 1 else int(0.07 * H)
+            clean_cy = clean_cy_for(fam)
             donor = group_medians.get(("ship", fam, variant)) if ctype == "personnel" else group_medians.get(("personnel", fam, variant))
+            # every slot is rebuilt from clean texture: the other type's median where that slot is
+            # clean there, else the column texture below the last slot
             for s in slots:
-                if socket_present(base, s, W, H):
-                    use = donor if donor is not None and not socket_present(donor, s, W, H) else None
-                    notes.append(f"slot@{s['cy']}:{patch_slot(base, s, W, H, use, step_px)}")
+                if slot_diff(base, s, W, H, clean_cy) < 12:
+                    continue  # already plain texture
+                use = donor if donor is not None and slot_diff(donor, s, W, H, clean_cy) < 12 else None
+                step_px = int(round((clean_cy - s["cy"]) * H))
+                notes.append(f"slot@{s['cy']}:{patch_slot(base, s, W, H, use, step_px)}")
+        if ctype == "personnel" and fam == "std":
+            # the older sets' erased skill bullets leave pale halos at the top-left of the text
+            # box; copy the parchment from further right over that strip
+            x0, y0, x1, y1 = int(0.155 * W), int(0.595 * H), int(0.26 * W), int(0.69 * H)
+            shift = int(0.11 * W)
+            base[y0:y1, x0:x1] = base[y0:y1, x0 + shift : x1 + shift].copy()
+            notes.append("skill-halo:shift")
         if ctype == "mission":
             fam_missions = [i for i in mission_sets[fam]][:MAX_GROUP]
             band = (0, int(0.85 * H), W, int(0.94 * H))
@@ -238,13 +262,26 @@ def build_base_catalog(
         if ctype in ("personnel", "ship") and slots:
             rkey = (fam, variant)
             if rkey not in rings:
-                for s in slots:
-                    if socket_present(med, s, W, H):
-                        r_outer = s["size"] * W / 2
-                        ring = crop_ring(med, s["cx"] * W, s["cy"] * H, r_outer, RING_INNER * r_outer)
-                        rings[rkey] = f"rings/{fam}.{variant}.png"
-                        Image.fromarray(ring, "RGBA").save(os.path.join(out, rings[rkey]))
-                        break
+                clean_cy = clean_cy_for(fam)
+                # the median first; if its sockets washed out, any member frame with a socket
+                # the socket whose dark gap is darkest holds the smallest icon, so its ring crop
+                # carries no icon remnant
+                sources = [med] + [load(i) for i in idxs]
+                best_ring = None
+                for src in sources:
+                    for s in slots:
+                        if not socket_present(src, s, W, H, clean_cy):
+                            continue
+                        gap = socket_bands(src, s, W, H)[0]
+                        if best_ring is None or gap < best_ring[0]:
+                            best_ring = (gap, src, s)
+                if best_ring is not None:
+                    _gap, src, hit = best_ring
+                    r_outer = hit["size"] * W / 2
+                    ring = crop_ring(src, hit["cx"] * W, hit["cy"] * H, r_outer, RING_INNER * r_outer)
+                    rings[rkey] = f"rings/{fam}.{variant}.png"
+                    Image.fromarray(ring, "RGBA").save(os.path.join(out, rings[rkey]))
+                free(idxs)
             ring_file = rings.get(rkey)
         src = frames[idxs[0]]
         base_frames.append(
@@ -281,29 +318,35 @@ def build_base_catalog(
 
     # ---- socket icons (hires frames of every affiliation) ----
     extra_icons: list[dict] = []
-    other_refs = {k: v for k, v in refs.items() if k in OTHER_ICONS}
+    def ref_inner(ref: np.ndarray) -> np.ndarray:
+        h, w = ref.shape[:2]
+        return crop_disc(ref[..., :3], (w - 1) / 2, (h - 1) / 2, REF_INNER * w)
+
+    other_refs = {k: ref_inner(v) for k, v in refs.items() if k in OTHER_ICONS}
     best: dict[str, tuple[float, np.ndarray]] = {}
     matched_review: list[tuple[np.ndarray, str]] = []
     unmatched_review: list[tuple[np.ndarray, str]] = []
     if other_refs:
         fam = "hires" if "hires" in slots_by_family else "std"
         slots = slots_by_family.get(fam, [])
+        clean_cy = clean_cy_for(fam)
         for i, fr in enumerate(frames):
             if fr["type"] not in ("personnel", "ship") or fr["family"] != fam:
                 continue
             arr = load(i)
             H, W = arr.shape[:2]
             for si, s in enumerate(slots):
-                if not socket_present(arr, s, W, H):
+                if not socket_present(arr, s, W, H, clean_cy):
                     continue
                 r = s["size"] * W / 2 * RING_INNER
                 crop = crop_disc(arr, s["cx"] * W, s["cy"] * H, r)
                 name, dist = nearest_reference(crop, other_refs)
                 lab = f"{name} {dist:.0f} {fr['id'][-7:]}/{si}"
                 if dist <= SOCKET_MATCH_MAX:
-                    sh = sharpness(crop)
-                    if name not in best or sh > best[name][0]:
-                        best[name] = (sh, crop)
+                    # the most canonical crop per name is the closest match; sharpness breaks ties
+                    score = -dist + sharpness(crop) * 1e-4
+                    if name not in best or score > best[name][0]:
+                        best[name] = (score, crop)
                     matched_review.append((crop, lab))
                 else:
                     unmatched_review.append((crop, lab))
@@ -313,7 +356,13 @@ def build_base_catalog(
             Image.fromarray(crop, "RGBA").save(os.path.join(out, file))
             extra_icons.append({"id": f"big-{name}", "file": file, "w": crop.shape[1], "h": crop.shape[0], "group": "other"})
         missing = sorted(set(OTHER_ICONS) - set(best))
-        log(f"socket icons: {sorted(best)}; missing {missing}; unmatched crops {len(unmatched_review)}")
+        for name in missing:
+            # no card in the sources carries it: use the rulebook's own (smaller) image
+            crop = other_refs[name]
+            file = f"icons/big-{name}.png"
+            Image.fromarray(crop, "RGBA").save(os.path.join(out, file))
+            extra_icons.append({"id": f"big-{name}", "file": file, "w": crop.shape[1], "h": crop.shape[0], "group": "other"})
+        log(f"socket icons: {sorted(best)}; from rulebook (no source card): {missing}; unmatched crops {len(unmatched_review)}")
         if review:
             matched_review.sort(key=lambda t: t[1])
             _sheet(matched_review[:240], os.path.join(review_dir, "icons_sockets.png"))
@@ -342,7 +391,13 @@ def build_base_catalog(
             file = f"icons/mission-{name}.png"
             Image.fromarray(crop, "RGBA").save(os.path.join(out, file))
             extra_icons.append({"id": f"mission-{name}", "file": file, "w": crop.shape[1], "h": crop.shape[0], "group": "missionAffiliation"})
-        log(f"mission icons: {sorted(best_m)}; missing {sorted(set(AFFILIATION_ICONS) - set(best_m))}")
+        missing_m = sorted(set(AFFILIATION_ICONS) - set(best_m))
+        for name in missing_m:
+            crop = aff_refs[name]
+            file = f"icons/mission-{name}.png"
+            Image.fromarray(crop, "RGBA").save(os.path.join(out, file))
+            extra_icons.append({"id": f"mission-{name}", "file": file, "w": crop.shape[1], "h": crop.shape[0], "group": "missionAffiliation"})
+        log(f"mission icons: {sorted(best_m)}; from rulebook (no source mission): {missing_m}")
         if review:
             mission_review.sort(key=lambda t: t[1])
             _sheet(mission_review[:240], os.path.join(review_dir, "icons_mission.png"))

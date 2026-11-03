@@ -163,6 +163,7 @@ def main() -> int:
     ap.add_argument("--out", required=True)
     ap.add_argument("--rulebook", default="", help="rulebook PDF; names the icon crops and supplies missing icons")
     ap.add_argument("--review", action="store_true")
+    ap.add_argument("--pass3-only", action="store_true", help="skip PDF reading; rebuild base frames from the last run's source_frames.json")
     ap.add_argument("--limit", type=int, default=0, help="max PDFs to process (0 = all)")
     args = ap.parse_args()
 
@@ -178,6 +179,12 @@ def main() -> int:
         log(f"rulebook reference icons: {len(refs)}")
     else:
         log("warn: no --rulebook given; socket and mission icons will not be named")
+
+    dump_path = os.path.join(out, "source_frames.json")
+    if args.pass3_only:
+        with open(dump_path, encoding="utf-8") as f:
+            dump = json.load(f)
+        return finish(args, out, overrides, refs, dump["frames"], dump["roles"], dump["templates"], {k: tuple(v) for k, v in dump["artBoxPx"].items()}, dump["families"], dump["inlineIcons"])
 
     pdfs = sorted(os.path.join(args.pdf_dir, f) for f in os.listdir(args.pdf_dir) if f.lower().endswith(".pdf"))
     if args.limit:
@@ -398,12 +405,24 @@ def main() -> int:
             d.text((x + 4, y + 72), digest, fill="black")
         sheet.save(os.path.join(out, "review", "icons.png"))
 
+    inline_icons = [dict(i, group="inline") for i in sorted(icons.values(), key=lambda i: i["id"])]
+    with open(dump_path, "w", encoding="utf-8") as f:
+        json.dump(
+            {"frames": frames, "roles": roles_by_frame, "templates": templates, "artBoxPx": art_box_px, "families": families, "inlineIcons": inline_icons},
+            f,
+        )
+    return finish(args, out, overrides, refs, frames, roles_by_frame, templates, art_box_px, families, inline_icons)
+
+
+def finish(args, out, overrides, refs, frames, roles_by_frame, templates, art_box_px, families, inline_icons) -> int:
+    """Pass 3 and catalog output; also the entry point of --pass3-only."""
+    if args.review:
+        os.makedirs(os.path.join(out, "review"), exist_ok=True)
     # ---------------- pass 3: variants, base frames, rings, full-size icons ----------------
-    base = build_base_catalog(frames, roles_by_frame, templates, art_box_px, out, refs, args.review, log)
+    base = build_base_catalog(frames, roles_by_frame, templates, art_box_px, out, refs, args.review, log, overrides)
     for key, t in templates.items():
         if key in overrides:
             templates[key] = deep_merge(t, overrides[key])
-    inline_icons = [dict(i, group="inline") for i in sorted(icons.values(), key=lambda i: i["id"])]
 
     catalog = {
         "generatedAt": time.strftime("%Y-%m-%dT%H:%M:%S"),
@@ -420,7 +439,7 @@ def main() -> int:
     by_type: dict[str, int] = defaultdict(int)
     for fr in frames:
         by_type[fr["type"]] += 1
-    log(f"done: {len(frames)} source frames -> {len(base['frames'])} base frames, {len(icons)} inline icons, templates={sorted(templates)}")
+    log(f"done: {len(frames)} source frames -> {len(base['frames'])} base frames, {len(inline_icons)} inline icons, templates={sorted(templates)}")
     log("by type: " + ", ".join(f"{k}={v}" for k, v in sorted(by_type.items())))
     unresolved = sorted({fr["affiliation"] for fr in frames if fr["affiliation"].startswith("cluster-")})
     if unresolved:
