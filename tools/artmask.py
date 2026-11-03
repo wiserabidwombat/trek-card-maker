@@ -22,19 +22,28 @@ def _majority3x3(mask: np.ndarray) -> np.ndarray:
     return total >= 5
 
 
-def compute_art_mask(frames: list[np.ndarray], threshold: float = 14.0, top_fraction: float = 0.6):
+def compute_art_mask(
+    frames: list[np.ndarray],
+    threshold: float = 14.0,
+    top_fraction: float = 0.6,
+    row_threshold: float = 0.3,
+    col_threshold: float = 0.3,
+):
     stack = np.stack(frames).astype(np.float32)
     std = stack.std(axis=0).max(axis=2)
     varying = _majority3x3(std > threshold)
     h, w = varying.shape
     limit = int(h * top_fraction)
-    top = varying.copy()
-    top[limit:, :] = False
-    ys, xs = np.nonzero(top)
-    if len(ys) == 0:
+    top = varying[:limit, :]
+    # Rows that are mostly varying belong to the artwork; small varying icons elsewhere are ignored.
+    row_frac = top.mean(axis=1)
+    rows = np.nonzero(row_frac > row_threshold)[0]
+    if len(rows) == 0:
         raise ValueError("no varying region found")
-    x0, x1 = int(xs.min()), int(xs.max()) + 1
-    y0, y1 = int(ys.min()), int(ys.max()) + 1
+    y0, y1 = int(rows.min()), int(rows.max()) + 1
+    col_frac = top[y0:y1, :].mean(axis=0)
+    cols = np.nonzero(col_frac > col_threshold)[0]
+    x0, x1 = int(cols.min()), int(cols.max()) + 1
     bbox = (x0, y0, x1, y1)
 
     median = np.median(stack, axis=0).astype(np.uint8)

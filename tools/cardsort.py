@@ -59,10 +59,10 @@ def classify_type(lines: Iterable[Line]) -> str:
     for box, text, _font, _size in lines:
         if text.strip() in TYPE_WORDS and 0.45 <= box[1] <= 0.62:
             return TYPE_WORDS[text.strip()]
-    texts = [t.strip() for _b, t, _f, _s in lines]
-    if any(t.startswith(PERSONNEL_ATTRS) for t in texts):
+    texts = [t.strip().upper() for b, t, _f, _s in lines if b[1] > 0.85]
+    if any(t.startswith(tuple(a.upper() for a in PERSONNEL_ATTRS)) for t in texts):
         return "personnel"
-    if any(t.startswith(SHIP_ATTRS) for t in texts):
+    if any(t.startswith(tuple(a.upper() for a in SHIP_ATTRS)) for t in texts):
         return "ship"
     return "mission"
 
@@ -75,31 +75,30 @@ def line_roles(ctype: str, lines: Iterable[Line]) -> list[tuple[str, Line]]:
     """Assign a role to every line, preserving reading order."""
     ordered = _sorted(lines)
     roles: list[tuple[str, Line]] = []
-    has_subtitle = any(
-        is_title_font(f) and s < 7.5 and 0.045 <= b[1] < 0.12 for b, _t, f, s in ordered
-    )
     for line in ordered:
         (x0, y0, _x1, _y1), text, font, size = line
         t = text.strip()
         role = "body"
         if x0 > 0.94 and size < 4.5:
             role = "legal"
-        elif y0 > 0.95 and size <= 4.5:
+        elif y0 > 0.93 and size <= 4.5:
             role = "collector"
         elif is_title_font(font):
-            if y0 < 0.08 and x0 < 0.21 and t.isdigit():
+            if y0 < 0.1 and x0 < 0.24 and t.isdigit():
                 role = "cost"
             elif size >= 12:
                 role = "points"
             elif y0 > 0.9:
                 role = "span"
-            elif size >= 7.5 and (y0 < 0.05 or (not has_subtitle and y0 < 0.08)):
+            elif size >= 7.5 and y0 < 0.1:
                 role = "title"
-            elif y0 < 0.12:
+            elif y0 < 0.13:
                 role = "subtitle"
             else:
                 role = "body"
-        elif y0 > 0.88 and (font_role(font) == "bodyBoldSC" or t.startswith(ATTR_WORDS)):
+        elif y0 > 0.85 and (
+            font_role(font) == "bodyBoldSC" or t.upper().startswith(tuple(a.upper() for a in ATTR_WORDS))
+        ):
             role = "attr"
         elif ctype != "mission" and 0.5 <= y0 <= 0.6 and font_role(font) != "title":
             role = "typeBar"
@@ -108,7 +107,11 @@ def line_roles(ctype: str, lines: Iterable[Line]) -> list[tuple[str, Line]]:
     if ctype == "personnel":
         type_bar_y = next((l[0][3] for r, l in roles if r == "typeBar"), 0.5)
         body_start = next(
-            (l[0][1] for r, l in roles if r == "body" and l[0][0] <= 0.15 and l[0][1] > type_bar_y),
+            (
+                l[0][1]
+                for r, l in roles
+                if r == "body" and l[0][1] > type_bar_y and (l[0][0] <= 0.15 or l[0][2] - l[0][0] > 0.45)
+            ),
             1.0,
         )
         roles = [
@@ -117,7 +120,7 @@ def line_roles(ctype: str, lines: Iterable[Line]) -> list[tuple[str, Line]]:
         ]
     elif ctype == "mission":
         body_start = next(
-            (l[0][1] for r, l in roles if r == "body" and l[0][0] < 0.1 and l[0][1] > 0.5), 1.0
+            (l[0][1] for r, l in roles if r == "body" and l[0][0] < 0.15 and l[0][1] > 0.5), 1.0
         )
         roles = [
             ("requirement", l) if r == "body" and 0.5 < l[0][1] < body_start - 1e-6 else (r, l)
@@ -138,11 +141,17 @@ def _most_common(values: Iterable[float], default: float) -> float:
     return Counter(values).most_common(1)[0][0]
 
 
-def _box_entry(lines: list[Line], align: str) -> dict:
+ROLE_FONTS = {
+    "cost": "title", "title": "title", "subtitle": "title", "points": "title", "span": "title",
+    "typeBar": "bodyBold", "collector": "bodyBold",
+}
+
+
+def _box_entry(role: str, lines: list[Line], align: str) -> dict:
     box = median_box(l[0] for l in lines)
-    fonts = Counter(font_role(l[2]) for l in lines).most_common(1)[0][0]
+    font = ROLE_FONTS.get(role, "bodyBoldSC" if role.startswith("attr") else "body")
     size = _most_common((l[3] for l in lines), 7.0)
-    return {"x0": box[0], "y0": box[1], "x1": box[2], "y1": box[3], "font": fonts, "sizePt": size, "align": align}
+    return {"x0": box[0], "y0": box[1], "x1": box[2], "y1": box[3], "font": font, "sizePt": size, "align": align}
 
 
 CENTERED = {"cost", "points", "span", "typeBar"}
@@ -163,6 +172,8 @@ def derive_template(ctype: str, family: str, cards: list[list[tuple[str, Line]]]
     req_boxes: list[Box] = []
     req_sizes: list[float] = []
     attr_y0: list[float] = []
+    collector_y0: list[float] = []
+    last_body_y1: list[float] = []
 
     for card in cards:
         attrs = sorted((l for r, l in card if r == "attr"), key=lambda l: l[0][0])
@@ -172,11 +183,14 @@ def derive_template(ctype: str, family: str, cards: list[list[tuple[str, Line]]]
         for r, l in card:
             if r in ("cost", "title", "subtitle", "typeBar", "points", "span", "collector"):
                 by_role.setdefault(r, []).append(l)
+            if r == "collector":
+                collector_y0.append(l[0][1])
         bodies = [l for r, l in card if r == "body"]
         if bodies:
             per_card_first_body_y.append(bodies[0][0][1])
             per_card_body_x0.append(min(l[0][0] for l in bodies))
             per_card_body_x1.append(max(l[0][2] for l in bodies))
+            last_body_y1.append(max(l[0][3] for l in bodies))
             ys = sorted({round(l[0][1], 4) for l in bodies})
             line_gaps.extend(b - a for a, b in zip(ys, ys[1:]) if 0.015 < b - a < 0.06)
             for l in bodies:
@@ -204,12 +218,20 @@ def derive_template(ctype: str, family: str, cards: list[list[tuple[str, Line]]]
             req_sizes.extend(l[3] for l in reqs)
 
     boxes = {
-        role: _box_entry(lines, "center" if role in CENTERED else "left") for role, lines in by_role.items()
+        role: _box_entry(role, lines, "center" if role in CENTERED else "left") for role, lines in by_role.items()
     }
 
     flow_size = _most_common(body_sizes, 7.0)
     line_height = round(statistics.median(line_gaps), 4) if line_gaps else round(flow_size / ref_width_pt * 0.73, 4)
-    flow_y1 = round(statistics.median(attr_y0) - 0.01, 4) if attr_y0 else 0.95
+    if attr_y0:
+        limit = statistics.median(attr_y0) - 0.01
+    elif collector_y0:
+        limit = statistics.median(collector_y0) - 0.02
+    else:
+        limit = 0.95
+    if last_body_y1 and not attr_y0:
+        limit = min(limit, max(last_body_y1) + line_height)
+    flow_y1 = round(limit, 4)
     flow = {
         "x0": round(statistics.median(per_card_body_x0), 4) if per_card_body_x0 else 0.136,
         "y0": round(statistics.median(per_card_first_body_y), 4) if per_card_first_body_y else 0.65,

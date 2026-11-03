@@ -37,3 +37,16 @@ def test_bottom_half_variation_is_ignored():
         frames.append(f)
     bbox, _ = compute_art_mask(frames)
     assert bbox == (10, 20, 130, 60)
+
+
+def test_small_varying_icon_outside_art_is_ignored():
+    H, W = 200, 140
+    frames = []
+    for seed in range(3):
+        rng = np.random.default_rng(seed)
+        f = np.full((H, W, 3), 90, np.uint8)
+        f[5:15, 5:15] = rng.integers(0, 255, (10, 10, 3), np.uint8)  # varying type icon in title bar
+        f[30:90, 10:130] = rng.integers(0, 255, (60, 120, 3), np.uint8)
+        frames.append(f)
+    bbox, _ = compute_art_mask(frames)
+    assert bbox == (10, 30, 130, 90)

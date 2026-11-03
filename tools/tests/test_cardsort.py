@@ -144,7 +144,7 @@ def test_derive_template_dilemma():
     assert abs(t["flow"]["y0"] - 0.656) < 1e-6
     assert abs(t["flow"]["lineHeight"] - 0.032) < 1e-6
     assert t["flow"]["x0"] == 0.136
-    assert t["flow"]["y1"] == 0.95
+    assert abs(t["flow"]["y1"] - (0.793 + 0.032)) < 1e-6  # last body line + one line, under collector-0.02
     assert t["flow"]["sizePt"] == 7
     assert t["lore"]["sizePt"] == 6.5
     assert t["skills"] is None
@@ -173,3 +173,40 @@ def test_derive_template_personnel_has_skills_and_attrs():
     assert t["boxes"]["attr2"]["x0"] == 0.763
     assert t["boxes"]["attr0"]["font"] == "bodyBoldSC"
     assert abs(t["flow"]["y1"] - (0.907 - 0.01)) < 1e-6
+
+
+def test_std_family_uppercase_attrs_and_title_position():
+    lines = [
+        L(0.2595, 0.0523, 0.411, 0.0864, "•Seska", "CrilleeTee", 8.5),
+        L(0.2049, 0.0593, 0.2189, 0.0924, "1", "CrilleeTee", 8.2),
+        L(0.2889, 0.0911, 0.6483, 0.1171, "Complicated Loyalties", "CrilleeTee", 6.5),
+        L(0.4138, 0.5349, 0.5862, 0.5688, "Cardassian", "Futura_LT_Condensed", 8.0),
+        L(0.2135, 0.6251, 0.3322, 0.6547, "Engineer", "Futura_LT_Condensed", 7.0),
+        L(0.1706, 0.6952, 0.8805, 0.7233, "When this personnel", "Futura_LT_Condensed", 7.0),
+        L(0.1706, 0.8866, 0.3248, 0.9168, "INTEGRITY 2", "Futura_LT_Condensed", 7.0),
+        L(0.4532, 0.8866, 0.609, 0.9168, "CUNNING 7", "Futura_LT_Condensed", 7.0),
+        L(0.8349, 0.9499, 0.9036, 0.9653, "56 V 31", "Futura_LT_Condensed", 3.7),
+    ]
+    assert classify_type(lines) == "personnel"
+    rl = line_roles("personnel", lines)
+    roles = {r: l[1] for r, l in rl}
+    assert roles["title"] == "•Seska" and roles["cost"] == "1" and roles["subtitle"] == "Complicated Loyalties"
+    assert [l[1] for r, l in rl if r == "attr"] == ["INTEGRITY 2", "CUNNING 7"]
+    assert [l[1] for r, l in rl if r == "skill"] == ["Engineer"]
+    assert roles["collector"] == "56 V 31"
+
+
+def test_mission_requirement_line_not_mistaken_for_attribute():
+    lines = [
+        L(0.2222, 0.0539, 0.5379, 0.086, "•Argaya System", "CrilleeTee", 8.0),
+        L(0.8503, 0.5472, 0.9434, 0.6054, "30", "CrilleeTee", 14.5),
+        L(0.2393, 0.5944, 0.7448, 0.624, "Cunning>36, and", "Futura_LT_Condensed", 7.0),
+        L(0.1111, 0.67, 0.8273, 0.698, "When you complete", "Futura_LT_Condensed", 7.0),
+        L(0.4837, 0.9185, 0.5131, 0.9586, "3", "CrilleeTee", 10.0),
+    ]
+    assert classify_type(lines) == "mission"
+    rl = {}
+    for r, l in line_roles("mission", lines):
+        rl.setdefault(r, []).append(l[1])
+    assert rl["requirement"] == ["Cunning>36, and"]
+    assert rl["body"] == ["When you complete"]
