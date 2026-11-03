@@ -1,7 +1,7 @@
 # Star Trek CCG 2nd Edition Card Maker — Design
 
 Date: 2026-11-02
-Status: draft for review
+Status: implemented 2026-11-02 (see README for usage)
 
 ## Goal
 
@@ -25,9 +25,13 @@ type bar, species/class, skills, game text, lore, attributes, points, span and c
 PDF text drawn on top, so the text layer gives exact box geometry and font sizes per card type.
 
 Baked into the frame image (and therefore part of a chosen frame): the original artwork (covered
-by the user's image), affiliation icon top-left, era icon strip (personnel), staffing icons
-(ships), quadrant letter and affiliation icons (missions), dilemma type icon. Separate small
-images in the PDFs (skill bullets, a few icons) are extracted as overlayable icons.
+by the user's image), affiliation icon top-left, era icon strip (personnel), affiliation icons
+at the bottom of missions, dilemma type icon. Ship staffing icons and the mission quadrant letter
+sit inside the art area, so the app covers them with the user's image and draws its own (a
+`staffing` icon list and a `quadrant` field, slots measured per family in
+`tools/template_overrides.json`). Older (744×1039) sets also bake the skill bullets into the
+frame; the extractor erases those red dots. Separate small images in the PDFs (skill bullets,
+affiliation/era/staffing icons) are extracted as overlayable icons.
 
 Fonts in the PDFs (Crillee, Futura Condensed family) are commercial and subset-embedded, so the
 app ships with open lookalikes and a settings slot for user-supplied TTF/OTF files.
