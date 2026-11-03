@@ -1,18 +1,21 @@
 import { useState } from 'react';
-import type { Catalog } from '../catalog/types';
+import type { Catalog, Template } from '../catalog/types';
+import { iconsInGroup } from '../catalog/types';
 import { FRAMES_BASE } from '../catalog/useCatalog';
-import { fieldsFor, staffingIcons, type Card, type FieldDef } from '../model/card';
+import { fieldsFor, maxIcons, staffingIcons, type Card, type FieldDef } from '../model/card';
+import { IconsSection } from './IconsSection';
 import { SkillsEditor } from './SkillsEditor';
 
 interface Props {
   card: Card;
   catalog: Catalog;
+  template: Template | null;
   onChange: (card: Card) => void;
 }
 
 const STAFFING_CHOICES = ['command', 'staff'];
 
-export function FieldsForm({ card, catalog, onChange }: Props) {
+export function FieldsForm({ card, catalog, template, onChange }: Props) {
   const [iconTarget, setIconTarget] = useState<string | null>(null);
   const setField = (id: string, value: string) =>
     onChange({ ...card, fields: { ...card.fields, [id]: value }, updatedAt: Date.now() });
@@ -44,7 +47,7 @@ export function FieldsForm({ card, catalog, onChange }: Props) {
             </div>
             {iconTarget === f.id && (
               <div className="icon-palette">
-                {catalog.icons.map((ic) => (
+                {iconsInGroup(catalog, 'inline').map((ic) => (
                   <button key={ic.id} title={ic.id} onClick={() => insertIcon(f.id, ic.id)}>
                     <img src={FRAMES_BASE + ic.file} alt={ic.id} />
                   </button>
@@ -119,8 +122,26 @@ export function FieldsForm({ card, catalog, onChange }: Props) {
       </div>
       {rest.filter((f) => f.id === 'title' || f.id === 'unique' || f.id === 'subtitle' || f.id === 'species' || f.id === 'shipClass' || f.id === 'staffing').map(renderField)}
       {compact.length > 0 && <div className="compact-row">{compact.map(renderField)}</div>}
+      {(card.type === 'personnel' || card.type === 'ship') && (
+        <IconsSection
+          title="Other icons"
+          choices={iconsInGroup(catalog, 'other')}
+          value={card.icons}
+          max={maxIcons(card.type, template)}
+          onChange={(icons) => onChange({ ...card, icons, updatedAt: Date.now() })}
+        />
+      )}
+      {card.type === 'mission' && (
+        <IconsSection
+          title="Affiliations"
+          choices={iconsInGroup(catalog, 'missionAffiliation')}
+          value={card.icons}
+          max={maxIcons(card.type, template)}
+          onChange={(icons) => onChange({ ...card, icons, updatedAt: Date.now() })}
+        />
+      )}
       {card.type === 'personnel' && (
-        <SkillsEditor skills={card.skills} icons={catalog.icons} onChange={(skills) => onChange({ ...card, skills, updatedAt: Date.now() })} />
+        <SkillsEditor skills={card.skills} names={catalog.skills} onChange={(skills) => onChange({ ...card, skills, updatedAt: Date.now() })} />
       )}
       {rest.filter((f) => f.id === 'requirements' || f.id === 'gameText' || f.id === 'lore' || f.id === 'collectorInfo').map(renderField)}
     </section>

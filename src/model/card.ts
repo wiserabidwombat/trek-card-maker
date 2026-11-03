@@ -1,8 +1,19 @@
-import type { CardType } from '../catalog/types';
+import type { CardType, Template } from '../catalog/types';
+import type { Skill } from './skills';
 
-export interface Skill {
-  icon: string;
-  text: string;
+export type { Skill } from './skills';
+
+/** How many list icons a card of this type can carry: socket count, 5 for missions, else 0. */
+export function maxIcons(type: CardType, template: Pick<Template, 'iconSlots'> | null | undefined): number {
+  if (type === 'personnel' || type === 'ship') return template?.iconSlots?.length ?? 0;
+  if (type === 'mission') return 5;
+  return 0;
+}
+
+/** Icon ids a card may carry: Other Icons (personnel, ship) or affiliations (mission). */
+export function iconsKeepAcross(from: CardType, to: CardType): boolean {
+  const slotTypes: CardType[] = ['personnel', 'ship'];
+  return slotTypes.includes(from) && slotTypes.includes(to);
 }
 
 /** Crop rectangle in source-image pixels. */
@@ -27,6 +38,8 @@ export interface Card {
   frameId: string;
   fields: Record<string, string>;
   skills: Skill[];
+  /** Other Icons (personnel, ship: big-*) or affiliation icons (mission: mission-*), in draw order. */
+  icons: string[];
   image?: CardImage;
   copies: number;
   updatedAt: number;
@@ -106,6 +119,7 @@ export function newCard(type: CardType, frameId: string): Card {
     frameId,
     fields: emptyFields(type),
     skills: [],
+    icons: [],
     copies: 1,
     updatedAt: Date.now(),
   };
@@ -122,6 +136,7 @@ export function changeType(card: Card, type: CardType, frameId: string): Card {
     frameId,
     fields,
     skills: type === 'personnel' ? card.skills : [],
+    icons: iconsKeepAcross(card.type, type) ? card.icons : [],
     updatedAt: Date.now(),
   };
 }

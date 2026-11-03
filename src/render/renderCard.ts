@@ -1,7 +1,9 @@
 import type { Catalog, Frame, Template, TextBox } from '../catalog/types';
 import { artBoxFor } from '../catalog/types';
-import { ATTRIBUTE_FIELDS, QUADRANTS, displayTitle, staffingIcons, typeBarText, type Card } from '../model/card';
+import { ATTRIBUTE_FIELDS, QUADRANTS, displayTitle, maxIcons, staffingIcons, typeBarText, type Card } from '../model/card';
 import { parseMarkup, type Run } from '../model/markup';
+import { skillText } from '../model/skills';
+import { missionIconPositions, slotPlacement } from './iconLayout';
 import type { AssetCache } from './assets';
 import { cssFont, cssFontForStyle, type FontConfig } from './fonts';
 import { boxToPx, coverDraw, ptToPx, type PxRect } from './geometry';
@@ -23,6 +25,7 @@ export interface RenderResult {
 }
 
 const TEXT_COLOUR = '#141414';
+const SKILL_BULLET = 'skill-dot';
 const BASELINE_RATIO = 0.78; // baseline position inside a text box, as a fraction of its height
 
 function iconFile(catalog: Catalog, id: string): string | undefined {
@@ -187,13 +190,47 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
   const loreRuns = parseMarkup(card.fields.lore ?? '');
   const reqRuns = parseMarkup(card.fields.requirements ?? '');
   const staffing = card.type === 'ship' ? staffingIcons(card) : [];
+  const listIcons = card.icons.slice(0, maxIcons(card.type, t));
   const icons = await loadIcons(ctx, [
     ...iconIds(gameRuns),
     ...iconIds(loreRuns),
     ...iconIds(reqRuns),
-    ...card.skills.map((s) => s.icon),
+    SKILL_BULLET,
     ...staffing,
+    ...listIcons,
   ]);
+
+  // Other Icons in the socket column (personnel, ship): ring, then icon
+  if ((card.type === 'personnel' || card.type === 'ship') && t.iconSlots && listIcons.length) {
+    let ring: HTMLImageElement | null = null;
+    if (frame.ring) {
+      try {
+        ring = await ctx.assets.getImage(ctx.base + frame.ring);
+      } catch {
+        /* ring optional */
+      }
+    }
+    listIcons.forEach((id, i) => {
+      const slot = t.iconSlots![i];
+      if (!slot) return;
+      const p = slotPlacement(slot, W, H);
+      if (ring) g.drawImage(ring, p.ring.cx - p.ring.w / 2, p.ring.cy - p.ring.w / 2, p.ring.w, p.ring.w);
+      const img = icons.get(id);
+      if (img) g.drawImage(img, p.icon.cx - p.icon.w / 2, p.icon.cy - p.icon.w / 2, p.icon.w, p.icon.w);
+    });
+  }
+
+  // mission affiliation icons along the bottom strip, centred
+  if (card.type === 'mission' && t.missionAffiliations && listIcons.length) {
+    const positions = missionIconPositions(listIcons.length, t.missionAffiliations, W, H);
+    listIcons.forEach((id, i) => {
+      const img = icons.get(id);
+      if (!img) return;
+      const p = positions[i];
+      const h = p.w * (img.naturalHeight / img.naturalWidth);
+      g.drawImage(img, p.cx - p.w / 2, p.cy - h / 2, p.w, h);
+    });
+  }
 
   // ship staffing icons over the artwork
   if (t.staffing && staffing.length) {
@@ -247,7 +284,7 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
     g.textAlign = 'left';
     g.textBaseline = 'alphabetic';
     for (const skill of card.skills) {
-      const text = skill.text.trim();
+      const text = skillText(skill);
       if (!text) continue;
       const w = measure(text, style, flowSizePx);
       const itemW = bullet + gap + w;
@@ -255,7 +292,7 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
         x = x0;
         y += rowH;
       }
-      const img = icons.get(skill.icon);
+      const img = icons.get(SKILL_BULLET);
       const baseline = y + rowH * 0.8;
       if (img) g.drawImage(img, x, baseline - bullet * 0.95, bullet, bullet);
       g.font = cssFontForStyle(style, flowSizePx, fonts);

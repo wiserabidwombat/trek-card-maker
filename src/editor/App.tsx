@@ -8,7 +8,7 @@ import { DEFAULT_FONTS, ensureFontsLoaded, registerUserFont, type FontConfig } f
 import { renderCard } from '../render/renderCard';
 import { buildSheetPdf, downloadBytes } from '../export/exportPdf';
 import { deleteCard, getImage, getUserFont, listCards, putCard, putImage } from '../store/db';
-import { parseDeck, serializeDeck } from '../store/deckJson';
+import { parseDeck, remapFrames, serializeDeck } from '../store/deckJson';
 import { DeckList } from './DeckList';
 import { FieldsForm } from './FieldsForm';
 import { FontSettings } from './FontSettings';
@@ -70,10 +70,19 @@ function Editor({ catalog }: { catalog: Catalog }) {
         }
       }
       await ensureFontsLoaded(f);
-      const saved = await listCards();
+      const stored = await listCards();
       if (cancelled) return;
       setFonts(f);
-      if (saved.length) {
+      if (stored.length) {
+        // cards saved against an older catalog (per-card frames, text skills) are moved to base frames
+        const { cards: saved, remapped } = remapFrames(
+          stored.map((c) => ({ ...c, icons: Array.isArray(c.icons) ? c.icons : [], skills: (c.skills ?? []).map((s) => ('name' in s ? s : { name: String((s as { text?: string }).text ?? ''), count: 1 })) })),
+          catalog,
+        );
+        if (remapped) {
+          for (const c of saved) await putCard(c);
+          setNotice(`${remapped} card${remapped === 1 ? '' : 's'} moved to the new base frames; check their frame and icons.`);
+        }
         setCards(saved);
         setCurrentId(saved[saved.length - 1].id);
       } else {
@@ -187,14 +196,16 @@ function Editor({ catalog }: { catalog: Catalog }) {
 
   const importJson = async (file: File) => {
     try {
-      const { cards: incoming, images } = parseDeck(await file.text());
+      const parsed = parseDeck(await file.text());
+      const { cards: incoming, remapped } = remapFrames(parsed.cards, catalog);
+      const images = parsed.images;
       for (const [key, url] of Object.entries(images)) await putImage(key, await dataUrlToBlob(url));
       const existing = new Set(cards.map((c) => c.id));
       const fresh = incoming.map((c) => (existing.has(c.id) ? { ...c, id: newCard(c.type, c.frameId).id } : c));
       for (const c of fresh) await putCard(c);
       setCards((cs) => [...cs, ...fresh]);
       if (fresh.length) setCurrentId(fresh[fresh.length - 1].id);
-      setNotice(`Imported ${fresh.length} card${fresh.length === 1 ? '' : 's'}.`);
+      setNotice(`Imported ${fresh.length} card${fresh.length === 1 ? '' : 's'}${remapped ? ` (${remapped} moved to base frames)` : ''}.`);
     } catch (e) {
       setNotice(`Import failed: ${e instanceof Error ? e.message : String(e)}`);
     }
@@ -238,7 +249,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
         <FramePicker catalog={catalog} selectedId={current?.frameId ?? ''} onSelect={selectFrame} />
         <div className="middle">
           {current && frame && template && <ImageSection card={current} frame={frame} template={template} assets={assets} onChange={updateCard} />}
-          {current && <FieldsForm card={current} catalog={catalog} onChange={updateCard} />}
+          {current && <FieldsForm card={current} catalog={catalog} template={template} onChange={updateCard} />}
         </div>
         <Preview render={render} filename={current?.name || current?.fields.title || 'card'} />
       </div>

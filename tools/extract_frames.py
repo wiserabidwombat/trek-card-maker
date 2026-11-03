@@ -30,9 +30,11 @@ from PIL import Image, ImageDraw
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from affiliation import AFFILIATION_TABLE, cluster_colours, nearest_affiliation, sample_features  # noqa: E402
+from affiliation import AFFILIATION_ALIASES, AFFILIATION_TABLE, cluster_colours, nearest_cluster, sample_features  # noqa: E402
 from artmask import compute_art_mask, erase_red_dots  # noqa: E402
 from cardsort import classify_type, derive_template, family_for, line_roles  # noqa: E402
+from pass3 import build_base_catalog  # noqa: E402
+from refs import load_reference_icons  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ICON_MIN, ICON_MAX = 8, 40
@@ -159,6 +161,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--pdf-dir", required=True)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--rulebook", default="", help="rulebook PDF; names the icon crops and supplies missing icons")
     ap.add_argument("--review", action="store_true")
     ap.add_argument("--limit", type=int, default=0, help="max PDFs to process (0 = all)")
     args = ap.parse_args()
@@ -169,6 +172,12 @@ def main() -> int:
 
     icon_names = load_json(os.path.join(HERE, "icon_names.json"))
     overrides = load_json(os.path.join(HERE, "template_overrides.json"))
+    refs = {}
+    if args.rulebook:
+        refs = load_reference_icons(args.rulebook, os.path.join(HERE, "rulebook_icons.json"))
+        log(f"rulebook reference icons: {len(refs)}")
+    else:
+        log("warn: no --rulebook given; socket and mission icons will not be named")
 
     pdfs = sorted(os.path.join(args.pdf_dir, f) for f in os.listdir(args.pdf_dir) if f.lower().endswith(".pdf"))
     if args.limit:
@@ -276,13 +285,15 @@ def main() -> int:
             continue
         clusters = cluster_colours([features[i] for i in idxs], tol=36.0)
         for k, (centre, members) in enumerate(clusters):
-            name = (
-                nearest_affiliation(centre, AFFILIATION_TABLE, fam)
+            raw = (
+                nearest_cluster(centre, AFFILIATION_TABLE, fam)
                 if any(key.startswith(fam + ":") for key in AFFILIATION_TABLE)
                 else f"cluster-{fam}-{k}"
             )
+            name = AFFILIATION_ALIASES.get(raw, raw)
             for m in members:
                 frames[idxs[m]]["affiliation"] = name
+                frames[idxs[m]]["cluster"] = raw
             cluster_review[f"{fam}-{k}"] = {
                 "centre": list(centre),
                 "name": name,
@@ -387,12 +398,21 @@ def main() -> int:
             d.text((x + 4, y + 72), digest, fill="black")
         sheet.save(os.path.join(out, "review", "icons.png"))
 
+    # ---------------- pass 3: variants, base frames, rings, full-size icons ----------------
+    base = build_base_catalog(frames, roles_by_frame, templates, art_box_px, out, refs, args.review, log)
+    for key, t in templates.items():
+        if key in overrides:
+            templates[key] = deep_merge(t, overrides[key])
+    inline_icons = [dict(i, group="inline") for i in sorted(icons.values(), key=lambda i: i["id"])]
+
     catalog = {
         "generatedAt": time.strftime("%Y-%m-%dT%H:%M:%S"),
         "families": families,
         "templates": templates,
-        "icons": sorted(icons.values(), key=lambda i: i["id"]),
-        "frames": frames,
+        "icons": inline_icons + base["icons"],
+        "skills": base["skills"],
+        "frames": base["frames"],
+        "sourceFrames": len(frames),
     }
     with open(os.path.join(out, "catalog.json"), "w", encoding="utf-8") as f:
         json.dump(catalog, f, indent=1)
@@ -400,7 +420,7 @@ def main() -> int:
     by_type: dict[str, int] = defaultdict(int)
     for fr in frames:
         by_type[fr["type"]] += 1
-    log(f"done: {len(frames)} frames, {len(icons)} icons, templates={sorted(templates)}")
+    log(f"done: {len(frames)} source frames -> {len(base['frames'])} base frames, {len(icons)} inline icons, templates={sorted(templates)}")
     log("by type: " + ", ".join(f"{k}={v}" for k, v in sorted(by_type.items())))
     unresolved = sorted({fr["affiliation"] for fr in frames if fr["affiliation"].startswith("cluster-")})
     if unresolved:

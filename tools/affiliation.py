@@ -46,7 +46,7 @@ AFFILIATION_TABLE: dict[str, Vec] = {
 }
 
 # Clusters that are visual variants of the same affiliation.
-AFFILIATION_ALIASES = {"starfleet-ent": "starfleet", "federation-b": "federation"}
+AFFILIATION_ALIASES = {"starfleet-ent": "starfleet", "federation-b": "federation", "starfleet": "federation"}
 
 
 def sample_features(img: np.ndarray, family: str) -> Vec:
@@ -62,12 +62,17 @@ def _dist(a: Vec, b: Vec) -> float:
     return math.sqrt(sum((x - y) ** 2 for x, y in zip(a, b)))
 
 
-def nearest_affiliation(vec: Vec, table: dict[str, Vec], family: str | None = None) -> str:
+def nearest_cluster(vec: Vec, table: dict[str, Vec], family: str | None = None) -> str:
+    """Raw table name (before aliasing) of the closest colour centre."""
     items = [(k, v) for k, v in table.items() if family is None or k.startswith(family + ":")]
     if not items:
         items = list(table.items())
     key = min(items, key=lambda kv: _dist(vec, kv[1]))[0]
-    name = key.split(":", 1)[-1]
+    return key.split(":", 1)[-1]
+
+
+def nearest_affiliation(vec: Vec, table: dict[str, Vec], family: str | None = None) -> str:
+    name = nearest_cluster(vec, table, family)
     return AFFILIATION_ALIASES.get(name, name)
 
 

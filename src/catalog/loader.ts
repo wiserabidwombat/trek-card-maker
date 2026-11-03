@@ -1,4 +1,4 @@
-import type { Catalog, Frame, Template } from './types';
+import type { Catalog, Frame, IconGroup, Template } from './types';
 import { templateKey } from './types';
 
 export class CatalogError extends Error {
@@ -34,11 +34,15 @@ function checkFrame(i: number, f: unknown, templates: Record<string, Template>):
   need(typeof f.w === 'number' && typeof f.h === 'number', `frames[${i}] needs numeric w and h`);
   const frame = f as unknown as Frame;
   need(templateKey(frame) in templates, `frame ${frame.id} has no template ${templateKey(frame)}`);
+  const variant = typeof f.variant === 'string' && f.variant ? f.variant : frame.affiliation;
   return {
     ...frame,
     sourceTitle: typeof f.sourceTitle === 'string' ? f.sourceTitle : '',
     overlay: typeof f.overlay === 'string' ? f.overlay : null,
     artBox: Array.isArray(f.artBox) && f.artBox.length === 4 ? (f.artBox as Frame['artBox']) : null,
+    variant,
+    label: typeof f.label === 'string' && f.label ? f.label : frame.id,
+    ring: typeof f.ring === 'string' ? f.ring : null,
   };
 }
 
@@ -50,14 +54,18 @@ export function validateCatalog(json: unknown): Catalog {
   const templates: Record<string, Template> = {};
   for (const [key, t] of Object.entries(json.templates)) templates[key] = checkTemplate(key, t);
   const frames = json.frames.map((f, i) => checkFrame(i, f, templates));
+  const groups: IconGroup[] = ['inline', 'other', 'missionAffiliation'];
   const icons = json.icons.map((ic, i) => {
     need(isRecord(ic) && typeof ic.id === 'string' && typeof ic.file === 'string', `icons[${i}] invalid`);
-    return { id: ic.id, file: ic.file, w: Number(ic.w) || 0, h: Number(ic.h) || 0 };
+    const group = (groups as string[]).includes(String(ic.group)) ? (ic.group as IconGroup) : 'inline';
+    return { id: ic.id, file: ic.file, w: Number(ic.w) || 0, h: Number(ic.h) || 0, group };
   });
+  const skills = Array.isArray(json.skills) ? json.skills.filter((s): s is string => typeof s === 'string') : [];
   return {
     generatedAt: typeof json.generatedAt === 'string' ? json.generatedAt : '',
     templates,
     icons,
     frames,
+    skills,
   };
 }

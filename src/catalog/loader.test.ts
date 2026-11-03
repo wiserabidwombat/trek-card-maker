@@ -50,6 +50,33 @@ describe('validateCatalog', () => {
     expect(artBoxFor(c.frames[0], templateFor(c, c.frames[0]))).toEqual([0.02, 0.12, 0.95, 0.53]);
   });
 
+  it('fills defaults for variant, label, ring, icon group and skills', () => {
+    const c = validateCatalog(minimal);
+    expect(c.frames[0].variant).toBe('none');
+    expect(c.frames[0].label).toBe('Set-001');
+    expect(c.frames[0].ring).toBeNull();
+    expect(c.icons[0].group).toBe('inline');
+    expect(c.skills).toEqual([]);
+  });
+
+  it('keeps variant, label, ring, slots, strip and skills when present', () => {
+    const rich = {
+      ...minimal,
+      skills: ['Honor', 'Leadership'],
+      templates: { 'dilemma.hires': { ...minimal.templates['dilemma.hires'], iconSlots: [{ cx: 0.07, cy: 0.64, size: 0.08 }], missionAffiliations: { cy: 0.89, step: 0.147, size: 0.08 } } },
+      icons: [{ id: 'big-earth', file: 'icons/big-earth.png', w: 60, h: 60, group: 'other' }],
+      frames: [{ ...minimal.frames[0], variant: 'dual', label: 'Dual', ring: 'rings/hires.none.png' }],
+    };
+    const c = validateCatalog(rich);
+    expect(c.frames[0].variant).toBe('dual');
+    expect(c.frames[0].label).toBe('Dual');
+    expect(c.frames[0].ring).toBe('rings/hires.none.png');
+    expect(c.icons[0].group).toBe('other');
+    expect(c.skills).toEqual(['Honor', 'Leadership']);
+    expect(c.templates['dilemma.hires'].iconSlots).toHaveLength(1);
+    expect(c.templates['dilemma.hires'].missionAffiliations?.step).toBe(0.147);
+  });
+
   it('rejects a catalog without frames', () => {
     const { frames: _f, ...rest } = minimal;
     expect(() => validateCatalog(rest)).toThrow(CatalogError);

@@ -459,3 +459,43 @@ label {
     grid-template-columns: 200px 260px 1fr 360px;
   }
 }
+
+/* base-frame picker and icon lists */
+.variant-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+  overflow: auto;
+}
+.variant-grid .thumb span {
+  text-transform: capitalize;
+}
+.icon-check {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0;
+}
+.icon-check button {
+  width: 44px;
+  height: 44px;
+  padding: 4px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background: #1c2230;
+}
+.icon-check button img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.icon-check button.on {
+  border-color: #6fb3ff;
+  background: #243149;
+}
+.icon-check button:disabled {
+  opacity: 0.35;
+}
+.skill-row input.count {
+  width: 48px;
+}

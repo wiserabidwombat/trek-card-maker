@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { newCard, changeType, typeBarText, displayTitle, COMMON_FIELDS, FIELD_DEFS, fieldsFor, staffingIcons, QUADRANTS } from './card';
+import { newCard, changeType, typeBarText, displayTitle, COMMON_FIELDS, FIELD_DEFS, fieldsFor, staffingIcons, QUADRANTS, maxIcons } from './card';
 
 describe('card model', () => {
   it('creates a card with every field initialised to an empty string', () => {
@@ -7,6 +7,7 @@ describe('card model', () => {
     const ids = [...COMMON_FIELDS, ...FIELD_DEFS.personnel].map((f) => f.id);
     for (const id of ids) expect(c.fields[id]).toBe('');
     expect(c.skills).toEqual([]);
+    expect(c.icons).toEqual([]);
     expect(c.copies).toBe(1);
     expect(c.frameId).toBe('Set-001');
     expect(c.type).toBe('personnel');
@@ -16,12 +17,15 @@ describe('card model', () => {
     const c = newCard('personnel', 'A');
     c.fields.title = 'Worf';
     c.fields.species = 'Klingon';
-    c.skills = [{ icon: 'skill-dot', text: 'Honor' }];
+    c.skills = [{ name: 'Honor', count: 1 }];
+    c.icons = ['big-staff', 'big-earth'];
     const d = changeType(c, 'ship', 'B');
     expect(d.fields.title).toBe('Worf');
     expect(d.fields.species).toBeUndefined();
     expect(d.fields.shipClass).toBe('');
     expect(d.skills).toEqual([]);
+    expect(d.icons).toEqual(['big-staff', 'big-earth']);
+    expect(changeType(c, 'mission', 'C').icons).toEqual([]);
     expect(d.frameId).toBe('B');
     expect(d.id).toBe(c.id);
   });
@@ -60,6 +64,13 @@ describe('ship and mission extras', () => {
     s.fields.staffing = 'command, staff,,staff ';
     expect(staffingIcons(s)).toEqual(['command', 'staff', 'staff']);
     expect(staffingIcons(newCard('ship', 'A'))).toEqual([]);
+  });
+  it('maxIcons follows the template slots, 5 for missions, 0 otherwise', () => {
+    const t = { iconSlots: [{ cx: 0, cy: 0, size: 0 }, { cx: 0, cy: 0, size: 0 }] };
+    expect(maxIcons('personnel', t)).toBe(2);
+    expect(maxIcons('ship', { iconSlots: null })).toBe(0);
+    expect(maxIcons('mission', t)).toBe(5);
+    expect(maxIcons('event', t)).toBe(0);
   });
   it('maps quadrant codes to Greek letters', () => {
     expect(QUADRANTS.A).toBe('Α');

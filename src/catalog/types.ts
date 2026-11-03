@@ -27,6 +27,20 @@ export interface TextBox extends Box {
 
 export type ArtBox = [number, number, number, number];
 
+/** A socket in the icon column: centre and ring diameter as fractions (size relative to width). */
+export interface IconSlot {
+  cx: number;
+  cy: number;
+  size: number;
+}
+
+/** Mission affiliation strip: icons centred on the card at cy, every `step`, `size` wide (fractions of W/H). */
+export interface MissionStrip {
+  cy: number;
+  step: number;
+  size: number;
+}
+
 export interface Template {
   type: CardType;
   family: Family;
@@ -41,6 +55,10 @@ export interface Template {
   staffing?: { cx: number; y0: number; step: number; size: number; max: number } | null;
   /** Mission quadrant badge: disc centre/radius (fractions of width for r) and the letter size. */
   quadrant?: { cx: number; cy: number; r: number; fill: string; sizePt: number } | null;
+  /** Other Icons sockets (personnel, ship), top to bottom. */
+  iconSlots?: IconSlot[] | null;
+  /** Mission affiliation icon strip geometry. */
+  missionAffiliations?: MissionStrip | null;
 }
 
 export interface Frame {
@@ -56,13 +74,21 @@ export interface Frame {
   thumb: string;
   overlay: string | null;
   artBox: ArtBox | null;
+  /** Affiliation, mission type, dilemma type or 'default'. */
+  variant: string;
+  label: string;
+  /** Empty socket ring drawn under each Other Icon (personnel, ship). */
+  ring: string | null;
 }
+
+export type IconGroup = 'inline' | 'other' | 'missionAffiliation';
 
 export interface IconDef {
   id: string;
   file: string;
   w: number;
   h: number;
+  group: IconGroup;
 }
 
 export interface Catalog {
@@ -70,6 +96,16 @@ export interface Catalog {
   templates: Record<string, Template>;
   icons: IconDef[];
   frames: Frame[];
+  /** Standard skill names, as found in the source cards. */
+  skills: string[];
+}
+
+export function framesOfType(c: Catalog, type: CardType): Frame[] {
+  return c.frames.filter((f) => f.type === type);
+}
+
+export function iconsInGroup(c: Catalog, group: IconGroup): IconDef[] {
+  return c.icons.filter((i) => i.group === group);
 }
 
 export function templateKey(f: Pick<Frame, 'type' | 'family'>): string {

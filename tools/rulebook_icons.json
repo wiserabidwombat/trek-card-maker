@@ -1,0 +1,36 @@
+{
+  "3": {
+    "command": "command",
+    "staff": "staff",
+    "past": "past",
+    "alternate": "alternate",
+    "future": "future",
+    "Deep Space Nine": "deep-space-nine",
+    "Earth": "earth",
+    "Maquis": "maquis",
+    "Terok Nor": "terok-nor",
+    "The Next Generation": "next-generation",
+    "The Original Series": "original-series",
+    "Voyager": "voyager"
+  },
+  "5": {
+    "headquarters": "headquarters",
+    "planet": "planet",
+    "space": "space"
+  },
+  "6": {
+    "dual": "dual",
+    "planet": "dilemma-planet",
+    "space": "dilemma-space",
+    "Bajoran": "bajoran",
+    "Borg": "borg",
+    "Cardassian": "cardassian",
+    "Dominion": "dominion",
+    "Federation": "federation",
+    "Ferengi": "ferengi",
+    "Klingon": "klingon",
+    "Romulan": "romulan",
+    "Starfleet": "starfleet",
+    "Non-Aligned": "non-aligned"
+  }
+}
