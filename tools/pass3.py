@@ -22,6 +22,8 @@ from variants import dilemma_variant, mission_variant, pick_family
 
 COLUMN = {"hires": (0.0, 0.56, 0.14, 0.88), "std": (0.0, 0.56, 0.18, 0.86)}
 MISSION_BAND = (0.10, 0.855, 0.90, 0.935)
+# the emblem inside the top-left affiliation disc of a HiRes personnel frame (inside its ring)
+CORNER_EMBLEM = (0.03, 0.0, 0.11, 0.102)
 MAX_GROUP = 40
 MAX_SLOTS = 4
 RING_INNER = 0.66  # icon disc / ring boundary as a fraction of the ring radius (mirrored in src/render/iconLayout.ts)
@@ -392,16 +394,27 @@ def build_base_catalog(
             Image.fromarray(crop, "RGBA").save(os.path.join(out, file))
             extra_icons.append({"id": f"mission-{name}", "file": file, "w": crop.shape[1], "h": crop.shape[0], "group": "missionAffiliation"})
         missing_m = sorted(set(AFFILIATION_ICONS) - set(best_m))
+        from_corner: list[str] = []
         for name in missing_m:
-            crop = aff_refs[name]
+            # no source mission lists this affiliation: take the emblem out of the corner disc of
+            # that affiliation's personnel frames (HiRes), else the rulebook's small image
+            med = group_medians.get(("personnel", "hires", name))
+            if med is not None:
+                h, w = med.shape[:2]
+                box = (int(CORNER_EMBLEM[0] * w), int(CORNER_EMBLEM[1] * h), int(CORNER_EMBLEM[2] * w), int(CORNER_EMBLEM[3] * h))
+                crop = tight_crop(crop_box_rgba(med, box, dark=60))
+                from_corner.append(name)
+            else:
+                crop = aff_refs[name]
             file = f"icons/mission-{name}.png"
             Image.fromarray(crop, "RGBA").save(os.path.join(out, file))
             extra_icons.append({"id": f"mission-{name}", "file": file, "w": crop.shape[1], "h": crop.shape[0], "group": "missionAffiliation"})
-        log(f"mission icons: {sorted(best_m)}; from rulebook (no source mission): {missing_m}")
+        log(f"mission icons: {sorted(best_m)}; from personnel corner disc: {from_corner}; from rulebook: {sorted(set(missing_m) - set(from_corner))}")
         if review:
             mission_review.sort(key=lambda t: t[1])
             _sheet(mission_review[:240], os.path.join(review_dir, "icons_mission.png"))
 
+    extra_icons.sort(key=lambda i: i["id"])
     skills = collect_skills(roles_by_frame)
     log(f"skills ({len(skills)}): {skills}")
     return {"frames": base_frames, "icons": extra_icons, "skills": skills}

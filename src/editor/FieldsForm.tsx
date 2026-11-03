@@ -143,7 +143,7 @@ export function FieldsForm({ card, catalog, template, onChange }: Props) {
       {card.type === 'personnel' && (
         <SkillsEditor skills={card.skills} names={catalog.skills} onChange={(skills) => onChange({ ...card, skills, updatedAt: Date.now() })} />
       )}
-      {rest.filter((f) => f.id === 'requirements' || f.id === 'gameText' || f.id === 'lore' || f.id === 'collectorInfo').map(renderField)}
+      {rest.filter((f) => f.id === 'requirements' || f.id === 'hqLabel' || f.id === 'gameText' || f.id === 'lore' || f.id === 'collectorInfo').map(renderField)}
     </section>
   );
 }

@@ -88,6 +88,7 @@ export const FIELD_DEFS: Record<CardType, FieldDef[]> = {
     { id: 'points', label: 'Points', kind: 'number' },
     { id: 'span', label: 'Span', kind: 'number' },
     { id: 'requirements', label: 'Requirements', kind: 'multiline', placeholder: 'Diplomacy, Leadership, and Cunning>30' },
+    { id: 'hqLabel', label: 'Headquarters label (replaces the affiliation icons in the bottom strip)', kind: 'text', placeholder: 'Borg Headquarters' },
   ],
 };
 

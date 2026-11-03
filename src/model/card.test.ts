@@ -54,6 +54,7 @@ describe('card model', () => {
     const ids = fieldsFor('mission').map((f) => f.id);
     expect(ids.slice(0, COMMON_FIELDS.length)).toEqual(COMMON_FIELDS.map((f) => f.id));
     expect(ids).toContain('points');
+    expect(ids).toContain('hqLabel');
     expect(ids).not.toContain('cost');
   });
 });

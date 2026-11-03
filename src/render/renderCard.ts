@@ -220,15 +220,33 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
     });
   }
 
-  // mission affiliation icons along the bottom strip, centred
-  if (card.type === 'mission' && t.missionAffiliations && listIcons.length) {
+  // headquarters missions carry a text label in the strip instead of affiliation icons
+  const hqLabel = card.type === 'mission' ? (card.fields.hqLabel ?? '').trim() : '';
+  if (hqLabel && t.missionAffiliations) {
+    const strip = t.missionAffiliations;
+    const titleBox = t.boxes.title;
+    const size = px((titleBox?.sizePt ?? 8) * 1.05);
+    g.save();
+    g.font = cssFont('title', size, fonts);
+    g.fillStyle = '#ffffff';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillText(hqLabel, W / 2, strip.cy * H);
+    g.restore();
+  }
+
+  // mission affiliation icons along the bottom strip, centred (a headquarters label takes their place)
+  if (card.type === 'mission' && t.missionAffiliations && listIcons.length && !hqLabel) {
     const positions = missionIconPositions(listIcons.length, t.missionAffiliations, W, H);
     listIcons.forEach((id, i) => {
       const img = icons.get(id);
       if (!img) return;
       const p = positions[i];
-      const h = p.w * (img.naturalHeight / img.naturalWidth);
-      g.drawImage(img, p.cx - p.w / 2, p.cy - h / 2, p.w, h);
+      // fit the emblem into a p.w square: wide marks fill the width, tall ones the height
+      const scale = p.w / Math.max(img.naturalWidth, img.naturalHeight);
+      const w = img.naturalWidth * scale;
+      const h = img.naturalHeight * scale;
+      g.drawImage(img, p.cx - w / 2, p.cy - h / 2, w, h);
     });
   }
 

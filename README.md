@@ -67,7 +67,9 @@ Open the printed URL (default `http://localhost:5173`).
   - Personnel: **Skills** from the 23 standard skills with a multiplier (prints as
     "2 Leadership"), or *Custom…* for a house skill.
   - Ships: staffing icons over the art. Missions: **Affiliations** (up to five, centred along the
-    bottom), a quadrant letter, points, span and requirements.
+    bottom), a quadrant letter, points, span and requirements. A **Headquarters label** (for
+    example "Borg Headquarters") replaces the affiliation icons in the bottom strip, as on
+    headquarters missions; leave points empty for those.
 - **Preview**: live render; *Download PNG* saves the single card. A badge warns when game text
   had to be shrunk to fit.
 
@@ -82,6 +84,9 @@ to load your `.ttf`/`.otf` files; they are kept in the browser only.
 - The affiliation icon in the top-left corner belongs to the frame; changing it means picking the
   other affiliation's frame. Mission type and dilemma type are frame variants for the same reason.
 - The headquarters mission frame comes from the single headquarters card in the HiRes sets.
+- No source mission lists the Borg, so the Borg affiliation mark for missions is cut from the
+  corner disc of the Borg personnel frames; Terok Nor appears on no source card and uses the
+  rulebook's small image.
 - Older (non-HiRes) sets had their skill bullets painted into the frame; the extractor erases them.
 - Art is placed with "cover" semantics into a fixed rectangle per card type.
 - Decks saved by the first version (per-card frames, free-text skills) load and import, but their
