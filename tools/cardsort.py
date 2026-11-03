@@ -157,6 +157,19 @@ def _box_entry(role: str, lines: list[Line], align: str) -> dict:
 CENTERED = {"cost", "points", "span", "typeBar"}
 
 
+def merge_attr_lines(lines: list[Line], gap: float = 0.1) -> list[Line]:
+    """Join attribute label/value pieces that sit on one row within ``gap`` into single boxes."""
+    out: list[Line] = []
+    for line in sorted(lines, key=lambda l: l[0][0]):
+        if out and line[0][0] - out[-1][0][2] < gap:
+            (x0, y0, x1, y1), text, font, size = out[-1]
+            b = line[0]
+            out[-1] = ((x0, min(y0, b[1]), max(x1, b[2]), max(y1, b[3])), f"{text} {line[1]}", font, size)
+        else:
+            out.append(line)
+    return out
+
+
 def derive_template(ctype: str, family: str, cards: list[list[tuple[str, Line]]], ref_width_pt: float) -> dict:
     by_role: dict[str, list[Line]] = {}
     per_card_first_body_y: list[float] = []
@@ -176,7 +189,7 @@ def derive_template(ctype: str, family: str, cards: list[list[tuple[str, Line]]]
     last_body_y1: list[float] = []
 
     for card in cards:
-        attrs = sorted((l for r, l in card if r == "attr"), key=lambda l: l[0][0])
+        attrs = merge_attr_lines([l for r, l in card if r == "attr"])
         for i, l in enumerate(attrs[:3]):
             by_role.setdefault(f"attr{i}", []).append(l)
             attr_y0.append(l[0][1])

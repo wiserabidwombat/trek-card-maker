@@ -9,6 +9,7 @@ from cardsort import (  # noqa: E402
     family_for,
     line_roles,
     median_box,
+    merge_attr_lines,
 )
 
 CRIL = "Crillee"
@@ -221,3 +222,21 @@ def test_std_vertical_legal_line_is_not_body():
     roles = {r: l[1] for r, l in line_roles("event", lines)}
     assert roles["legal"].startswith("NOT ENDORSED")
     assert roles["body"] == "When this"
+
+
+def test_ship_attribute_pieces_merge_into_three_boxes():
+    attrs = [
+        L(0.142, 0.907, 0.238, 0.944, "Range", SC, 6.8),
+        L(0.289, 0.907, 0.32, 0.944, "8", SC, 6.8),
+        L(0.45, 0.907, 0.632, 0.944, "Weapons 8", SC, 6.8),
+        L(0.763, 0.907, 0.87, 0.944, "Shields", SC, 6.8),
+        L(0.914, 0.907, 0.934, 0.944, "8", SC, 6.8),
+    ]
+    merged = merge_attr_lines(attrs)
+    assert [m[1] for m in merged] == ["Range 8", "Weapons 8", "Shields 8"]
+    assert merged[0][0] == (0.142, 0.907, 0.32, 0.944)
+    assert merged[2][0] == (0.763, 0.907, 0.934, 0.944)
+    card = [("attr", a) for a in attrs] + [("body", L(0.144, 0.626, 0.856, 0.662, "x", F, 7))]
+    t = derive_template("ship", "hires", [card], 163.5)
+    assert t["boxes"]["attr1"]["x0"] == 0.45
+    assert t["boxes"]["attr2"]["x1"] == 0.934
