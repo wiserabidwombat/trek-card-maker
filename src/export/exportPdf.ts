@@ -24,10 +24,16 @@ function canvasToBytes(canvas: HTMLCanvasElement, type: 'image/jpeg' | 'image/pn
   });
 }
 
+/** PNG files start with these eight bytes; anything else handed to us is treated as JPEG. */
+export function isPng(bytes: Uint8Array): boolean {
+  const sig = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+  return bytes.length >= 8 && sig.every((b, i) => bytes[i] === b);
+}
+
 export interface JpegItem {
   jpeg: Uint8Array;
   copies: number;
-  /** When true `jpeg` holds PNG bytes (lossless, for inkjet output). */
+  /** When true `jpeg` holds PNG bytes (lossless, for inkjet output). The bytes are sniffed anyway: some browsers return PNG when asked for JPEG. */
   png?: boolean;
   textOps?: TextOp[];
   /** Pixel size of the raster, needed to place text ops; defaults to the image's own size. */
@@ -51,7 +57,7 @@ export async function buildSheetPdfFromJpegs(items: JpegItem[], options: SheetOp
   const placements: { img: Awaited<ReturnType<PDFDocument['embedJpg']>>; item: JpegItem }[] = [];
   for (const item of items) {
     if (item.copies <= 0) continue;
-    const img = item.png ? await doc.embedPng(item.jpeg) : await doc.embedJpg(item.jpeg);
+    const img = item.png || isPng(item.jpeg) ? await doc.embedPng(item.jpeg) : await doc.embedJpg(item.jpeg);
     for (let i = 0; i < item.copies; i++) placements.push({ img, item });
   }
   const paper = options.paper ?? 'letter';

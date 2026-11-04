@@ -450,13 +450,23 @@ function withCardBorder(frameCanvas: HTMLCanvasElement, t: Template): HTMLCanvas
   g.fillStyle = '#ffffff';
   g.fillRect(0, 0, W, H);
   g.fillStyle = '#000000';
-  g.beginPath();
-  if (typeof g.roundRect === 'function') g.roundRect(0, 0, W, H, radius);
-  else g.rect(0, 0, W, H);
+  roundedRectPath(g, 0, 0, W, H, radius);
   g.fill();
   g.drawImage(frameCanvas, pad, pad);
   g.strokeStyle = '#231f20';
   g.lineWidth = 1;
   g.strokeRect(pad - 0.5, pad - 0.5, frameCanvas.width + 1, frameCanvas.height + 1);
   return card;
+}
+
+/** A rounded-rectangle path built from arcs, so browsers without CanvasRenderingContext2D.roundRect (Safari < 16, Firefox < 112) get the same corners. */
+export function roundedRectPath(g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
+  const rr = Math.max(0, Math.min(r, w / 2, h / 2));
+  g.beginPath();
+  g.moveTo(x + rr, y);
+  g.arcTo(x + w, y, x + w, y + h, rr);
+  g.arcTo(x + w, y + h, x, y + h, rr);
+  g.arcTo(x, y + h, x, y, rr);
+  g.arcTo(x, y, x + w, y, rr);
+  g.closePath();
 }

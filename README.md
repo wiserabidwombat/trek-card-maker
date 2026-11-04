@@ -132,6 +132,15 @@ npm run build
 cd tools && python -I -X utf8 -m pytest -q   # extractor unit tests
 ```
 
+Cross-browser smoke test (Playwright drives real Firefox and WebKit engines through the welcome
+panel, sample deck, typing, paste, drag reorder, undo, PDF/JSON export and a reload; engines are
+downloaded once):
+
+```bash
+npx playwright install firefox webkit
+npm run test:browsers -- http://localhost:5173/ firefox webkit
+```
+
 Design notes live in `docs/superpowers/specs/` and the implementation plan in `docs/superpowers/plans/`.
 
 The GitHub Actions workflow in `.github/workflows/ci.yml` runs the same checks on every push and

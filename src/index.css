@@ -69,6 +69,11 @@ button.add {
 .file-button input {
   display: none;
 }
+input[type='checkbox'],
+input[type='radio'] {
+  width: auto; /* WebKit otherwise stretches them to the full-width rule below */
+  flex: 0 0 auto;
+}
 input,
 textarea,
 select {
@@ -659,10 +664,15 @@ button.attention {
 }
 .drag-handle {
   cursor: grab;
-  color: var(--muted);
-  padding: 0 2px;
   user-select: none;
-  letter-spacing: -2px;
+  flex: 0 0 10px;
+  height: 18px;
+  color: transparent; /* the glyph is only there for screen readers; the dots are drawn below */
+  font-size: 0;
+  background-image: radial-gradient(circle, var(--muted) 1.2px, transparent 1.4px);
+  background-size: 5px 6px;
+  background-position: 0 0;
+  background-repeat: repeat;
 }
 .drag-handle:active {
   cursor: grabbing;

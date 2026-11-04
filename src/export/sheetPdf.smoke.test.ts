@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { PDFDocument } from 'pdf-lib';
-import { buildSheetPdfFromJpegs } from './exportPdf';
+import { buildSheetPdfFromJpegs, isPng } from './exportPdf';
 import type { TextOp } from '../render/textOps';
 
 // Uses real extracted frames when present; otherwise a tiny generated JPEG is not available in jsdom, so skip.
@@ -42,5 +42,13 @@ describe.skipIf(!available)('print sheet PDF (smoke)', () => {
     expect(doc.getPageCount()).toBe(1);
     expect(doc.getPage(0).getWidth()).toBeCloseTo(595.28, 2);
     expect(doc.getPage(0).getHeight()).toBeCloseTo(841.89, 2);
+  });
+});
+
+describe('isPng', () => {
+  it('recognises the PNG signature and nothing else', () => {
+    expect(isPng(new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0]))).toBe(true);
+    expect(isPng(new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0]))).toBe(false);
+    expect(isPng(new Uint8Array([0x89, 0x50]))).toBe(false);
   });
 });

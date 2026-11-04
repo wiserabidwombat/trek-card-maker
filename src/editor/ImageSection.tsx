@@ -90,7 +90,15 @@ export function ImageSection({ card, frame, template, assets, onChange }: Props)
   // Ctrl+V with a picture on the clipboard sets it as the artwork; text pastes are left to the fields.
   useEffect(() => {
     const onPaste = (e: ClipboardEvent) => {
-      const file = Array.from(e.clipboardData?.files ?? []).find((f) => f.type.startsWith('image/'));
+      const data = e.clipboardData;
+      if (!data) return;
+      // Chromium and Safari list a pasted picture under files; some browsers only expose it as an item.
+      const file =
+        Array.from(data.files).find((f) => f.type.startsWith('image/')) ??
+        Array.from(data.items ?? [])
+          .filter((i) => i.kind === 'file' && i.type.startsWith('image/'))
+          .map((i) => i.getAsFile())
+          .find((f): f is File => !!f);
       if (!file) return;
       e.preventDefault();
       pick(file);
