@@ -651,3 +651,22 @@ button.attention {
 .deck-switcher button {
   padding: 4px 8px;
 }
+
+/* deck list: filter and reordering */
+.deck-filter {
+  width: 100%;
+  margin-bottom: 6px;
+}
+.drag-handle {
+  cursor: grab;
+  color: var(--muted);
+  padding: 0 2px;
+  user-select: none;
+  letter-spacing: -2px;
+}
+.drag-handle:active {
+  cursor: grabbing;
+}
+.deck-list li.dragging {
+  opacity: 0.45;
+}

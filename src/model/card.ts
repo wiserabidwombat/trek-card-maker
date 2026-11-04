@@ -50,6 +50,8 @@ export interface Card {
   updatedAt: number;
   /** The deck this card belongs to; cards saved before decks existed get the default deck on load. */
   deckId?: string;
+  /** Position in the deck list; cards without one are appended on load. */
+  order?: number;
 }
 
 export interface FieldDef {

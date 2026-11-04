@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import type { Card } from '../model/card';
+import { matchesFilter } from '../model/order';
 import { describeBackup, needsNudge, type BackupStatus } from '../store/backup';
 import type { DeckMeta } from '../store/decks';
 
@@ -17,6 +19,8 @@ interface Props {
   onNew: () => void;
   onDuplicate: (id: string) => void;
   onDelete: (id: string) => void;
+  onReorder: (fromId: string, toId: string) => void;
+  onMoveBy: (id: string, delta: number) => void;
   onClearAll: () => void;
   onCopiesChange: (id: string, copies: number) => void;
   onExportPdf: () => void;
@@ -27,6 +31,10 @@ interface Props {
 export function DeckList(p: Props) {
   const total = p.cards.reduce((n, c) => n + Math.max(0, c.copies), 0);
   const nudge = needsNudge(p.backup);
+  const [filter, setFilter] = useState('');
+  const [dragId, setDragId] = useState<string | null>(null);
+  const filtering = filter.trim() !== '';
+  const visible = filtering ? p.cards.filter((c) => matchesFilter(c, filter)) : p.cards;
   return (
     <aside className="deck">
       <div className="deck-head deck-switcher">
@@ -50,10 +58,61 @@ export function DeckList(p: Props) {
           + New
         </button>
       </div>
+      {p.cards.length > 3 && (
+        <input
+          className="deck-filter"
+          type="search"
+          placeholder="Filter cards…"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          aria-label="Filter cards"
+        />
+      )}
+      {filtering && (
+        <p className="muted small">
+          {visible.length} of {p.cards.length} shown
+        </p>
+      )}
       <ul className="deck-list">
-        {p.cards.map((c) => (
-          <li key={c.id} className={c.id === p.currentId ? 'selected' : ''}>
-            <button className="deck-name" onClick={() => p.onSelect(c.id)} title={c.fields.title}>
+        {visible.map((c) => (
+          <li
+            key={c.id}
+            className={[c.id === p.currentId ? 'selected' : '', dragId === c.id ? 'dragging' : ''].join(' ').trim()}
+            onDragOver={(e) => {
+              if (dragId && !filtering) e.preventDefault();
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              if (dragId && dragId !== c.id) p.onReorder(dragId, c.id);
+              setDragId(null);
+            }}
+          >
+            {!filtering && (
+              <span
+                className="drag-handle"
+                draggable
+                title="Drag to reorder (or Alt+↑/↓ with the card focused)"
+                onDragStart={(e) => {
+                  setDragId(c.id);
+                  e.dataTransfer.effectAllowed = 'move';
+                  e.dataTransfer.setData('text/plain', c.id); // Firefox will not start a drag without data
+                }}
+                onDragEnd={() => setDragId(null)}
+              >
+                ⋮⋮
+              </span>
+            )}
+            <button
+              className="deck-name"
+              onClick={() => p.onSelect(c.id)}
+              title={c.fields.title}
+              onKeyDown={(e) => {
+                if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+                  e.preventDefault();
+                  p.onMoveBy(c.id, e.key === 'ArrowUp' ? -1 : 1);
+                }
+              }}
+            >
               <span className="deck-type">{c.type}</span>
               <span>{c.name || c.fields.title || '(untitled)'}</span>
             </button>

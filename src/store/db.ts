@@ -36,7 +36,20 @@ export async function clearCardsAndImages(deckId?: string): Promise<number> {
 export async function listCards(deckId?: string): Promise<Card[]> {
   const all = (await keys(store)).filter((k): k is string => typeof k === 'string' && k.startsWith(CARD_PREFIX));
   const cards = (await getMany<Card>(all, store)).filter((c): c is Card => !!c && (deckId === undefined || c.deckId === deckId));
-  return cards.sort((a, b) => a.updatedAt - b.updatedAt);
+  return cards.sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity) || a.updatedAt - b.updatedAt);
+}
+
+/** Image keys that no card references any more (replaced, removed or undone artwork). */
+export function orphanImageKeys(allKeys: unknown[], cards: Pick<Card, 'image'>[]): string[] {
+  const used = new Set(cards.map((c) => c.image?.blobKey).filter((k): k is string => !!k));
+  return allKeys.filter((k): k is string => typeof k === 'string' && k.startsWith(IMAGE_PREFIX) && !used.has(k));
+}
+
+/** Delete images nothing points at. Artwork edits keep old blobs so undo can bring them back; this sweeps them on the next load. */
+export async function pruneOrphanImages(): Promise<number> {
+  const doomed = orphanImageKeys(await keys(store), await listCards());
+  if (doomed.length) await delMany(doomed, store);
+  return doomed.length;
 }
 
 /**

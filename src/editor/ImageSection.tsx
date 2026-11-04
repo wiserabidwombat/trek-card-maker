@@ -4,7 +4,7 @@ import { artBoxFor } from '../catalog/types';
 import type { AssetCache } from '../render/assets';
 import { centredCrop } from '../render/geometry';
 import { DEFAULT_ART_FILL, type Card, type CropRect } from '../model/card';
-import { deleteImage, getImage, newImageKey, putImage } from '../store/db';
+import { getImage, newImageKey, putImage } from '../store/db';
 import { CropDialog } from './CropDialog';
 
 interface Props {
@@ -76,8 +76,7 @@ export function ImageSection({ card, frame, template, assets, onChange }: Props)
       await putImage(key, file);
       if (card.image) {
         assets.dropBlob(card.image.blobKey);
-        await deleteImage(card.image.blobKey).catch(() => undefined);
-      }
+        }
       onChange({
         ...card,
         image: { blobKey: key, crop: centredCrop(img.naturalWidth, img.naturalHeight, aspect), srcW: img.naturalWidth, srcH: img.naturalHeight },
@@ -130,14 +129,12 @@ export function ImageSection({ card, frame, template, assets, onChange }: Props)
     const key = newImageKey();
     await putImage(key, rotated.blob);
     assets.dropBlob(card.image.blobKey);
-    await deleteImage(card.image.blobKey).catch(() => undefined);
     onChange({ ...card, image: { blobKey: key, crop, srcW: rotated.w, srcH: rotated.h }, updatedAt: Date.now() });
   };
 
   const remove = async () => {
     if (!card.image) return;
     assets.dropBlob(card.image.blobKey);
-    await deleteImage(card.image.blobKey).catch(() => undefined);
     const { image: _drop, ...rest } = card;
     onChange({ ...rest, updatedAt: Date.now() });
   };

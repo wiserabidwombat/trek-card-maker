@@ -15,8 +15,10 @@ import { HelpDialog } from './HelpDialog';
 import { Welcome } from './Welcome';
 import { useBackupStatus } from './useBackupStatus';
 import { recordBackup, recordChange } from '../store/backup';
+import { EMPTY_HISTORY, isTextTarget, popRedo, popUndo, record, redoLabel, undoLabel, type History, type HistoryEntry } from './history';
+import { applyOrder, moveCard, nextOrder, normalizeOrder } from '../model/order';
 import { sampleCards } from './sampleDeck';
-import { clearCardsAndImages, deleteCard, getImage, getUserFont, listCards, loadDecks, putCard, putImage, saveCurrentDeck, saveDecks } from '../store/db';
+import { clearCardsAndImages, deleteCard, getImage, getUserFont, listCards, loadDecks, pruneOrphanImages, putCard, putImage, saveCurrentDeck, saveDecks } from '../store/db';
 import { deckFileName, importedDeckName, newDeckId, uniqueDeckName, type DeckMeta } from '../store/decks';
 import { parseDeck, remapFrames, serializeDeck } from '../store/deckJson';
 import { DeckList } from './DeckList';
@@ -64,6 +66,9 @@ function Editor({ catalog }: { catalog: Catalog }) {
   const [notice, setNotice] = useState<string | null>(null);
   const saveTimers = useRef(new Map<string, number>());
   const backup = useBackupStatus();
+  const [history, setHistory] = useState<History>(EMPTY_HISTORY);
+  const cardsRef = useRef<Card[]>([]);
+  cardsRef.current = cards;
 
   const current = cards.find((c) => c.id === currentId) ?? null;
   const frame = current ? catalog.frames.find((f) => f.id === current.frameId) ?? null : null;
@@ -86,6 +91,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
       }
       await ensureFontsLoaded(f);
       const { decks: registry, currentId: openDeck } = await loadDecks();
+      pruneOrphanImages().catch(() => undefined);
       const stored = await listCards(openDeck);
       if (cancelled) return;
       setFonts(f);
@@ -105,8 +111,10 @@ function Editor({ catalog }: { catalog: Catalog }) {
           for (const c of saved) await putCard(c);
           setNotice(`${remapped} card${remapped === 1 ? '' : 's'} moved to the new base frames; check their frame and icons.`);
         }
-        setCards(saved);
-        setCurrentId(saved[saved.length - 1].id);
+        const ordered = normalizeOrder(saved);
+        for (const c of ordered.changed) await putCard(c);
+        setCards(ordered.cards);
+        setCurrentId(ordered.cards[ordered.cards.length - 1].id);
       } else {
         const first = catalog.frames.find((fr) => fr.type === 'personnel') ?? catalog.frames[0];
         const c = newCard(first.type, first.id, openDeck);
@@ -124,6 +132,8 @@ function Editor({ catalog }: { catalog: Catalog }) {
   const render = useRenderer(current, catalog, fonts, assets);
 
   const updateCard = useCallback((card: Card) => {
+    const before = cardsRef.current.find((c) => c.id === card.id);
+    if (before) setHistory((h) => record(h, { kind: 'edit', before, after: card, at: Date.now() }));
     setCards((cs) => cs.map((c) => (c.id === card.id ? card : c)));
     const timers = saveTimers.current;
     const prev = timers.get(card.id);
@@ -149,6 +159,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
       ? { ...structuredClone(base), id: newCard(base.type, base.frameId).id, name: base.name ? `${base.name} (copy)` : '', updatedAt: Date.now() }
       : newCard(current?.type ?? 'personnel', current?.frameId ?? catalog.frames[0].id, deckId);
     if (base) c.deckId = deckId;
+    c.order = nextOrder(cards);
     if (base?.image) {
       // duplicate the stored image so the copies can be edited independently
       const blob = await getImage(base.image.blobKey);
@@ -160,20 +171,126 @@ function Editor({ catalog }: { catalog: Catalog }) {
     }
     setCards((cs) => [...cs, c]);
     setCurrentId(c.id);
+    setHistory((h) => record(h, { kind: 'add', card: c, at: Date.now() }));
     await putCard(c);
   };
 
   const removeCard = async (id: string) => {
-    const card = cards.find((c) => c.id === id);
+    const index = cards.findIndex((c) => c.id === id);
+    const card = cards[index];
     if (!card) return;
     if (!window.confirm(`Delete "${card.name || card.fields.title || 'this card'}"?`)) return;
+    cancelSave(id);
     const rest = cards.filter((c) => c.id !== id);
     setCards(rest);
     if (currentId === id) setCurrentId(rest.length ? rest[rest.length - 1].id : null);
+    setHistory((h) => record(h, { kind: 'delete', card, index, at: Date.now() }));
     await deleteCard(id);
     recordChange();
     if (!rest.length) addCard();
   };
+
+  const cancelSave = (id: string) => {
+    const timer = saveTimers.current.get(id);
+    if (timer) window.clearTimeout(timer);
+    saveTimers.current.delete(id);
+  };
+
+  /** Move a card to another position in the list (drag and drop, or Alt+arrow). */
+  const reorderIndex = async (from: number, to: number) => {
+    const { cards: next, changed } = moveCard(cards, from, to);
+    if (!changed.length) return;
+    setHistory((h) => record(h, { kind: 'reorder', before: cards.map((c) => c.id), after: next.map((c) => c.id), at: Date.now() }));
+    setCards(next);
+    for (const c of changed) await putCard(c);
+    recordChange();
+  };
+  const reorder = (fromId: string, toId: string) =>
+    reorderIndex(
+      cards.findIndex((c) => c.id === fromId),
+      cards.findIndex((c) => c.id === toId),
+    );
+  const moveBy = (id: string, delta: number) => {
+    const i = cards.findIndex((c) => c.id === id);
+    if (i >= 0) reorderIndex(i, Math.max(0, Math.min(cards.length - 1, i + delta)));
+  };
+
+  /** Put a card back (undo delete / redo add) at a position, or take one out (undo add / redo delete). */
+  const restoreCard = async (card: Card, index: number) => {
+    const next = [...cardsRef.current];
+    next.splice(Math.min(index, next.length), 0, card);
+    setCards(next);
+    setCurrentId(card.id);
+    await putCard(card);
+  };
+  const dropCard = async (id: string) => {
+    cancelSave(id);
+    let next = cardsRef.current.filter((c) => c.id !== id);
+    if (!next.length) {
+      const first = catalog.frames.find((fr) => fr.type === 'personnel') ?? catalog.frames[0];
+      next = [newCard(first.type, first.id, deckId)];
+      await putCard(next[0]);
+    }
+    setCards(next);
+    if (currentId === id) setCurrentId(next[next.length - 1].id);
+    await deleteCard(id);
+  };
+
+  const applyEntry = async (e: HistoryEntry, direction: 'undo' | 'redo') => {
+    const cs = cardsRef.current;
+    if (e.kind === 'edit') {
+      const target = direction === 'undo' ? e.before : e.after;
+      cancelSave(target.id);
+      setCards(cs.some((c) => c.id === target.id) ? cs.map((c) => (c.id === target.id ? target : c)) : [...cs, target]);
+      setCurrentId(target.id);
+      await putCard(target);
+    } else if (e.kind === 'add') {
+      if (direction === 'undo') await dropCard(e.card.id);
+      else await restoreCard(e.card, cs.length);
+    } else if (e.kind === 'delete') {
+      if (direction === 'undo') await restoreCard(e.card, e.index);
+      else await dropCard(e.card.id);
+    } else {
+      const { cards: next, changed } = applyOrder(cs, direction === 'undo' ? e.before : e.after);
+      setCards(next);
+      for (const c of changed) await putCard(c);
+    }
+    recordChange();
+  };
+
+  const undo = async () => {
+    const p = popUndo(history);
+    if (!p) return;
+    setHistory(p.history);
+    await applyEntry(p.entry, 'undo');
+  };
+  const redo = async () => {
+    const p = popRedo(history);
+    if (!p) return;
+    setHistory(p.history);
+    await applyEntry(p.entry, 'redo');
+  };
+  const undoRef = useRef(undo);
+  const redoRef = useRef(redo);
+  undoRef.current = undo;
+  redoRef.current = redo;
+
+  // Ctrl/Cmd+Z and Ctrl/Cmd+Shift+Z (or Ctrl+Y) outside text fields, which keep their own undo.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.altKey || isTextTarget(e.target)) return;
+      const k = e.key.toLowerCase();
+      if (k === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undoRef.current();
+      } else if ((k === 'z' && e.shiftKey) || k === 'y') {
+        e.preventDefault();
+        redoRef.current();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const clearAll = async () => {
     const n = cards.length;
@@ -187,6 +304,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
     for (const c of cards) if (c.image) assets.dropBlob(c.image.blobKey);
     const removed = await clearCardsAndImages(deckId);
     recordChange();
+    setHistory(EMPTY_HISTORY);
     const first = catalog.frames.find((fr) => fr.type === 'personnel') ?? catalog.frames[0];
     const fresh = newCard(first.type, first.id, deckId);
     setCards([fresh]);
@@ -253,6 +371,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
   /** Show a deck: flush nothing (pending saves carry their own deck id), load its cards, and give an empty deck a starter card. */
   const openDeck = async (id: string, preloaded?: Card[]) => {
     setDeckId(id);
+    setHistory(EMPTY_HISTORY);
     await saveCurrentDeck(id);
     let next = preloaded ?? (await listCards(id));
     if (!next.length) {
@@ -261,8 +380,10 @@ function Editor({ catalog }: { catalog: Catalog }) {
       await putCard(starter);
       next = [starter];
     }
-    setCards(next);
-    setCurrentId(next[next.length - 1].id);
+    const ordered = normalizeOrder(next);
+    for (const c of ordered.changed) await putCard(c);
+    setCards(ordered.cards);
+    setCurrentId(ordered.cards[ordered.cards.length - 1].id);
   };
 
   const createDeck = async (wanted?: string): Promise<DeckMeta | null> => {
@@ -311,7 +432,8 @@ function Editor({ catalog }: { catalog: Catalog }) {
   /** Append cards to the deck (fresh ids for any already taken), select the last one, and return what was added. */
   const addCards = async (incoming: Card[], into = deckId, present = cards): Promise<Card[]> => {
     const existing = new Set(present.map((c) => c.id));
-    const fresh = incoming.map((c) => ({ ...c, deckId: into, ...(existing.has(c.id) ? { id: newCard(c.type, c.frameId).id } : {}) }));
+    let order = nextOrder(present);
+    const fresh = incoming.map((c) => ({ ...c, deckId: into, order: order++, ...(existing.has(c.id) ? { id: newCard(c.type, c.frameId).id } : {}) }));
     for (const c of fresh) await putCard(c);
     if (fresh.length) recordChange(fresh.length);
     setCards((cs) => [...cs, ...fresh]);
@@ -369,6 +491,12 @@ function Editor({ catalog }: { catalog: Catalog }) {
             {notice}
           </span>
         )}
+        <button onClick={undo} disabled={!undoLabel(history)} title="Ctrl+Z">
+          {undoLabel(history) ?? 'Undo'}
+        </button>
+        <button onClick={redo} disabled={!redoLabel(history)} title="Ctrl+Shift+Z">
+          {redoLabel(history) ?? 'Redo'}
+        </button>
         <button onClick={() => setShowHelp(true)}>Help</button>
         <button onClick={() => setShowFonts(true)}>Fonts…</button>
       </header>
@@ -391,6 +519,8 @@ function Editor({ catalog }: { catalog: Catalog }) {
             if (c) addCard(c);
           }}
           onDelete={removeCard}
+          onReorder={reorder}
+          onMoveBy={moveBy}
           onClearAll={clearAll}
           onCopiesChange={(id, copies) => {
             const c = cards.find((x) => x.id === id);

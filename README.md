@@ -28,8 +28,10 @@ npm run dev
 Open the printed URL (default `http://localhost:5173`).
 
 - **Cards** (left): the deck switcher (several named decks; **+** makes one, **✎** renames, *Delete
-  deck…* removes it with its cards), your saved cards, copy counts for the print sheet, PDF/JSON
-  export and import. *Export deck (JSON)* writes the current deck with its name; *Import deck
+  deck…* removes it with its cards), your saved cards (drag the ⋮⋮ handle or press Alt+↑/↓ to
+  reorder; a filter box appears once there are more than three), copy counts for the print sheet,
+  PDF/JSON export and import. **Undo** / **Redo** in the top bar (Ctrl+Z / Ctrl+Shift+Z outside a
+  text field) step through edits, new cards, deletions and reorders; a burst of typing is one step. *Export deck (JSON)* writes the current deck with its name; *Import deck
   (JSON)…* creates a new deck from the file and switches to it.
   A line under the buttons says when the deck was last exported and how many saves have happened
   since; after 20 it turns amber as a reminder that the browser holds the only copy.
