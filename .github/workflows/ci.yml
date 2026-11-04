@@ -47,6 +47,10 @@ jobs:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
     needs: [web, extractor]
     runs-on: ubuntu-latest
+    # Pages allows one deployment at a time; queue back-to-back pushes instead of failing the later one.
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
     permissions:
       pages: write
       id-token: write
