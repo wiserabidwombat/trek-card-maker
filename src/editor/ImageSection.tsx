@@ -54,6 +54,7 @@ async function rotateBlob(blob: Blob, rotation: number): Promise<{ blob: Blob; w
 export function ImageSection({ card, frame, template, assets, onChange }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
   const art = artBoxFor(frame, template);
   const artW = (art[2] - art[0]) * frame.w;
   const artH = (art[3] - art[1]) * frame.h;
@@ -85,6 +86,25 @@ export function ImageSection({ card, frame, template, assets, onChange }: Props)
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
+  };
+
+  // Ctrl+V with a picture on the clipboard sets it as the artwork; text pastes are left to the fields.
+  useEffect(() => {
+    const onPaste = (e: ClipboardEvent) => {
+      const file = Array.from(e.clipboardData?.files ?? []).find((f) => f.type.startsWith('image/'));
+      if (!file) return;
+      e.preventDefault();
+      pick(file);
+    };
+    document.addEventListener('paste', onPaste);
+    return () => document.removeEventListener('paste', onPaste);
+  });
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+    const file = Array.from(e.dataTransfer.files).find((f) => f.type.startsWith('image/')) ?? e.dataTransfer.files[0];
+    if (file) pick(file);
   };
 
   const openCrop = async () => {
@@ -125,7 +145,17 @@ export function ImageSection({ card, frame, template, assets, onChange }: Props)
   const lowRes = card.image && card.image.crop.w < artW * 0.9;
 
   return (
-    <section className="image-section">
+    <section
+      className={dragging ? 'image-section dragging' : 'image-section'}
+      onDragOver={(e) => {
+        e.preventDefault();
+        if (!dragging) setDragging(true);
+      }}
+      onDragLeave={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragging(false);
+      }}
+      onDrop={onDrop}
+    >
       <h2>Artwork</h2>
       <div className="row wrap">
         <label className="file-button">
@@ -146,7 +176,7 @@ export function ImageSection({ card, frame, template, assets, onChange }: Props)
         )}
       </div>
       <p className="muted small">
-        Art area is {Math.round(artW)} × {Math.round(artH)} px on this frame.
+        Or drop a picture here, or paste one with Ctrl+V. Art area is {Math.round(artW)} × {Math.round(artH)} px on this frame.
       </p>
       {lowRes && <p className="badge warn">The cropped area is smaller than the art box, so it will be upscaled.</p>}
       {error && <p className="badge error">{error}</p>}

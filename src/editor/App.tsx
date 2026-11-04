@@ -9,6 +9,7 @@ import { DEFAULT_FONTS, ensureFontsLoaded, registerUserFont, type FontConfig } f
 import { renderCard } from '../render/renderCard';
 import { buildSheetPdf, downloadBytes } from '../export/exportPdf';
 import { PROFILES, type PrintProfile } from '../render/printProfile';
+import type { Paper } from '../export/paper';
 import { ExportDialog } from './ExportDialog';
 import { HelpDialog } from './HelpDialog';
 import { Welcome } from './Welcome';
@@ -180,7 +181,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
     setNotice(`Removed ${removed} card${removed === 1 ? '' : 's'}.`);
   };
 
-  const exportPdf = async (profileName: PrintProfile) => {
+  const exportPdf = async (profileName: PrintProfile, paper: Paper) => {
     setShowExport(false);
     setExporting(true);
     setNotice(null);
@@ -213,8 +214,8 @@ function Editor({ catalog }: { catalog: Catalog }) {
         const blob = await getUserFont(slot);
         if (blob) userFonts[slot] = await blob.arrayBuffer();
       }
-      const bytes = await buildSheetPdf(items, profile.lossless, { userFonts });
-      downloadBytes(bytes, profileName === 'inkjet' ? 'trek-cards-sheet-inkjet.pdf' : 'trek-cards-sheet.pdf');
+      const bytes = await buildSheetPdf(items, profile.lossless, { userFonts, paper });
+      downloadBytes(bytes, `trek-cards-sheet${paper === 'a4' ? '-a4' : ''}${profileName === 'inkjet' ? '-inkjet' : ''}.pdf`);
       if (skipped.length) setNotice(`Skipped (could not render): ${skipped.join(', ')}`);
     } catch (e) {
       setNotice(`Export failed: ${e instanceof Error ? e.message : String(e)}`);

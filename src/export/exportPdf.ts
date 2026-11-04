@@ -1,7 +1,8 @@
 import { PDFDocument, rgb } from 'pdf-lib';
 import { hexToRgb01, mapTextOp, type TextOp } from '../render/textOps';
 import { PdfFontRegistry, type UserFontBytes } from './pdfFonts';
-import { cutMarks, layoutSheet, LETTER } from './sheetLayout';
+import { cutMarks, layoutSheet } from './sheetLayout';
+import { PAPERS, type Paper } from './paper';
 
 export interface SheetItem {
   canvas: HTMLCanvasElement;
@@ -38,9 +39,11 @@ export interface SheetOptions {
   userFonts?: UserFontBytes;
   /** Font file loader; tests pass one that reads from disk. */
   loadFont?: (url: string) => Promise<Uint8Array>;
+  /** Sheet size; US Letter unless given. */
+  paper?: Paper;
 }
 
-/** Build a US Letter print sheet from pre-encoded JPEGs: 3x3 cards per page with cut marks. */
+/** Build a print sheet (US Letter or A4) from pre-encoded JPEGs: 3x3 cards per page with cut marks. */
 export async function buildSheetPdfFromJpegs(items: JpegItem[], options: SheetOptions = {}): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
   doc.setTitle('Trek Card Maker print sheet');
@@ -51,12 +54,14 @@ export async function buildSheetPdfFromJpegs(items: JpegItem[], options: SheetOp
     const img = item.png ? await doc.embedPng(item.jpeg) : await doc.embedJpg(item.jpeg);
     for (let i = 0; i < item.copies; i++) placements.push({ img, item });
   }
-  const slots = layoutSheet(placements.length);
+  const paper = options.paper ?? 'letter';
+  const size = PAPERS[paper];
+  const slots = layoutSheet(placements.length, paper);
   const pages: ReturnType<PDFDocument['addPage']>[] = [];
-  const marks = cutMarks();
+  const marks = cutMarks(paper);
   for (const [i, slot] of slots.entries()) {
     while (pages.length <= slot.page) {
-      const page = doc.addPage([LETTER.w, LETTER.h]);
+      const page = doc.addPage([size.w, size.h]);
       for (const m of marks) {
         page.drawLine({ start: { x: m.x1, y: m.y1 }, end: { x: m.x2, y: m.y2 }, thickness: 0.25, color: rgb(0, 0, 0) });
       }
@@ -74,7 +79,7 @@ export async function buildSheetPdfFromJpegs(items: JpegItem[], options: SheetOp
       page.drawText(op.text, { x: p.x, y: p.y, size: p.size, font: await fonts.font(op.spec), color: rgb(r, g, b) });
     }
   }
-  if (!pages.length) doc.addPage([LETTER.w, LETTER.h]);
+  if (!pages.length) doc.addPage([size.w, size.h]);
   return doc.save();
 }
 

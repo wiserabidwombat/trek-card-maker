@@ -4,7 +4,7 @@ A browser app for designing custom **Star Trek Customizable Card Game, Second Ed
 Pick a clean base frame (one per card type and affiliation, built from The Continuing Committee's
 free-to-print virtual card PDFs), add the rulebook's *Other Icons*, staffing, mission affiliations
 and skills from lists, fill in the card text, drop in your own artwork (with crop, zoom and
-rotate), and export a US Letter print sheet (3×3 cards at 63×88 mm, the TrekCC size, with cut
+rotate), and export a US Letter or A4 print sheet (3×3 cards at 63×88 mm, the TrekCC size, with cut
 marks) as a PDF at the frames' native resolution.
 
 Everything runs in your browser; nothing is uploaded. Cards and images are stored in the browser's
@@ -29,7 +29,8 @@ Open the printed URL (default `http://localhost:5173`).
 
 - **Cards** (left): your saved cards, copy counts for the print sheet, PDF/JSON export and import.
 - **Frame**: pick the card type, then the affiliation (or mission/dilemma type).
-- **Artwork**: choose a PNG/JPEG/WebP, then *Adjust crop* to position, zoom and rotate it. The crop
+- **Artwork**: choose a PNG/JPEG/WebP, drop one onto the Artwork section, or paste one with
+  Ctrl+V while the card is selected; then *Adjust crop* to position, zoom and rotate it. The crop
   box matches the frame's art area. Zoom out (or *Fit whole picture*) to get more of the picture
   in: the part of the art area the picture does not cover shows the **Fill** colour (black by
   default). A warning appears if the crop is smaller than the printed area.
@@ -50,7 +51,8 @@ Open the printed URL (default `http://localhost:5173`).
   subset), so it prints at the printer's own resolution on any printer and the PDF is searchable;
   only the frame, art and icons are raster. A custom font loaded under **Fonts…** is embedded as
   is and used for every weight of its slot, so bold keywords stay regular unless the bundled fonts
-  are used. The dialog also asks whether the sheet is for a **laser** or an **inkjet** printer. Inkjets
+  are used. The dialog asks for the paper (**US Letter** or **A4**; the same 3×3 grid is centred on either, so
+  only the margins change) and whether the sheet is for a **laser** or an **inkjet** printer. Inkjets
   spread ink on the paper, so the inkjet profile uses heavier body text (Light → Regular,
   Regular → Medium), makes text under 7.5 pt about 5% larger, sharpens the icons and embeds the
   card rasters losslessly (a bigger file). Text is always pure black so the printer uses only the

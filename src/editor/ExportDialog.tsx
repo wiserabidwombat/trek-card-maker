@@ -1,25 +1,44 @@
 import { useState } from 'react';
 import { loadPrintProfile, savePrintProfile, type PrintProfile } from '../render/printProfile';
+import { loadPaper, PAPER_LIST, PAPERS, savePaper, type Paper } from '../export/paper';
 
 interface Props {
   cardCount: number;
-  onExport: (profile: PrintProfile) => void;
+  onExport: (profile: PrintProfile, paper: Paper) => void;
   onCancel: () => void;
 }
 
 export function ExportDialog({ cardCount, onExport, onCancel }: Props) {
   const [profile, setProfile] = useState<PrintProfile>(loadPrintProfile());
+  const [paper, setPaper] = useState<Paper>(loadPaper());
   const choose = (p: PrintProfile) => {
     setProfile(p);
     savePrintProfile(p);
+  };
+  const choosePaper = (p: Paper) => {
+    setPaper(p);
+    savePaper(p);
   };
   return (
     <div className="modal-backdrop" onClick={onCancel}>
       <div className="modal narrow" onClick={(e) => e.stopPropagation()}>
         <h2>Export print sheet</h2>
         <p className="muted small">
-          {cardCount} card{cardCount === 1 ? '' : 's'} on {Math.max(1, Math.ceil(cardCount / 9))} Letter sheet{cardCount > 9 ? 's' : ''}, 63 × 88 mm each.
+          {cardCount} card{cardCount === 1 ? '' : 's'} on {Math.max(1, Math.ceil(cardCount / 9))} {PAPERS[paper].label} sheet{cardCount > 9 ? 's' : ''}, 63 × 88 mm
+          each.
         </p>
+        <div className="profile-choice paper-choice">
+          {PAPER_LIST.map((p) => (
+            <label key={p} className={paper === p ? 'on' : ''}>
+              <input type="radio" name="paper" checked={paper === p} onChange={() => choosePaper(p)} />
+              <span>
+                <strong>{PAPERS[p].label}</strong>
+                <br />
+                {p === 'letter' ? '8.5 × 11 in' : '210 × 297 mm'}
+              </span>
+            </label>
+          ))}
+        </div>
         <div className="profile-choice">
           <label className={profile === 'laser' ? 'on' : ''}>
             <input type="radio" name="profile" checked={profile === 'laser'} onChange={() => choose('laser')} />
@@ -45,7 +64,7 @@ export function ExportDialog({ cardCount, onExport, onCancel }: Props) {
         <div className="crop-controls">
           <span className="spacer" />
           <button onClick={onCancel}>Cancel</button>
-          <button className="primary" onClick={() => onExport(profile)}>
+          <button className="primary" onClick={() => onExport(profile, paper)}>
             Export PDF
           </button>
         </div>

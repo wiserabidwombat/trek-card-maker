@@ -483,6 +483,8 @@ label {
 }
 .profile-choice input {
   margin-top: 3px;
+  width: auto;
+  flex: 0 0 auto;
 }
 
 button.danger {
@@ -586,4 +588,19 @@ button.danger:hover:not(:disabled) {
 .welcome .row {
   display: flex;
   gap: 8px;
+}
+
+/* artwork drop target */
+.image-section {
+  border: 1px dashed transparent;
+  border-radius: 8px;
+  margin: -1px;
+  padding: 1px;
+}
+.image-section.dragging {
+  border-color: var(--accent);
+  background: #1a2538;
+}
+.paper-choice {
+  grid-template-columns: 1fr 1fr;
 }

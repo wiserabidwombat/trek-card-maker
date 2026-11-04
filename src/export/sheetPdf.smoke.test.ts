@@ -35,4 +35,12 @@ describe.skipIf(!available)('print sheet PDF (smoke)', () => {
     const out = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env.SHEET_SMOKE_OUT;
     if (out) writeFileSync(out, bytes);
   });
+
+  it('makes A4 pages with the grid centred when asked', async () => {
+    const items = [{ jpeg: new Uint8Array(readFileSync(frames[0])), copies: 9, cardW: 1022, cardH: 1464 }];
+    const doc = await PDFDocument.load(await buildSheetPdfFromJpegs(items, { loadFont: loadFontFromDisk, paper: 'a4' }));
+    expect(doc.getPageCount()).toBe(1);
+    expect(doc.getPage(0).getWidth()).toBeCloseTo(595.28, 2);
+    expect(doc.getPage(0).getHeight()).toBeCloseTo(841.89, 2);
+  });
 });
