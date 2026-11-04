@@ -1,0 +1,2245 @@
+{
+ "generatedAt": "2026-11-03T13:12:27",
+ "families": {
+  "std": {
+   "refWidthPt": 178.58
+  },
+  "hires": {
+   "refWidthPt": 163.52
+  }
+ },
+ "templates": {
+  "dilemma.std": {
+   "type": "dilemma",
+   "family": "std",
+   "refWidthPt": 178.58,
+   "artBox": [
+    0.0497,
+    0.1405,
+    0.9073,
+    0.5332
+   ],
+   "boxes": {
+    "cost": {
+     "x0": 0.1998,
+     "y0": 0.0593,
+     "x1": 0.2243,
+     "y1": 0.0924,
+     "font": "title",
+     "sizePt": 8.2,
+     "align": "center",
+     "colour": "#ffffff"
+    },
+    "title": {
+     "x0": 0.2619,
+     "y0": 0.0724,
+     "x1": 0.5995,
+     "y1": 0.1044,
+     "font": "title",
+     "sizePt": 8.0,
+     "align": "left",
+     "colour": "#000000"
+    },
+    "typeBar": {
+     "x0": 0.4322,
+     "y0": 0.5366,
+     "x1": 0.5678,
+     "y1": 0.5705,
+     "font": "bodyBold",
+     "sizePt": 8.0,
+     "align": "center",
+     "colour": "#000000"
+    },
+    "collector": {
+     "x0": 0.8384,
+     "y0": 0.9499,
+     "x1": 0.8955,
+     "y1": 0.9653,
+     "font": "bodyBold",
+     "sizePt": 3.7,
+     "align": "left",
+     "colour": "#000000"
+    }
+   },
+   "flow": {
+    "x0": 0.1659,
+    "y0": 0.6529,
+    "x1": 0.874,
+    "y1": 0.8954,
+    "sizePt": 7.0,
+    "lineHeight": 0.0302,
+    "colour": "#000000"
+   },
+   "lore": {
+    "sizePt": 6.5
+   },
+   "skills": null,
+   "requirements": null,
+   "card": {
+    "borderPt": 0.0,
+    "cornerPt": 0.0
+   }
+  },
+  "event.std": {
+   "type": "event",
+   "family": "std",
+   "refWidthPt": 178.58,
+   "artBox": [
+    0.0497,
+    0.1415,
+    0.9073,
+    0.5332
+   ],
+   "boxes": {
+    "cost": {
+     "x0": 0.1998,
+     "y0": 0.0593,
+     "x1": 0.2243,
+     "y1": 0.0924,
+     "font": "title",
+     "sizePt": 8.2,
+     "align": "center",
+     "colour": "#ffffff"
+    },
+    "title": {
+     "x0": 0.2619,
+     "y0": 0.0726,
+     "x1": 0.6249,
+     "y1": 0.1047,
+     "font": "title",
+     "sizePt": 8.0,
+     "align": "left",
+     "colour": "#000000"
+    },
+    "typeBar": {
+     "x0": 0.4499,
+     "y0": 0.5372,
+     "x1": 0.539,
+     "y1": 0.5711,
+     "font": "bodyBold",
+     "sizePt": 8.0,
+     "align": "center",
+     "colour": "#000000"
+    },
+    "collector": {
+     "x0": 0.8334,
+     "y0": 0.9499,
+     "x1": 0.902,
+     "y1": 0.9653,
+     "font": "bodyBold",
+     "sizePt": 3.7,
+     "align": "left",
+     "colour": "#000000"
+    }
+   },
+   "flow": {
+    "x0": 0.1667,
+    "y0": 0.6524,
+    "x1": 0.8755,
+    "y1": 0.8976,
+    "sizePt": 7.0,
+    "lineHeight": 0.0302,
+    "colour": "#000000"
+   },
+   "lore": {
+    "sizePt": 6.5
+   },
+   "skills": null,
+   "requirements": null,
+   "card": {
+    "borderPt": 0.0,
+    "cornerPt": 0.0
+   }
+  },
+  "interrupt.std": {
+   "type": "interrupt",
+   "family": "std",
+   "refWidthPt": 178.58,
+   "artBox": [
+    0.0497,
+    0.1415,
+    0.9073,
+    0.5332
+   ],
+   "boxes": {
+    "title": {
+     "x0": 0.2246,
+     "y0": 0.0729,
+     "x1": 0.5516,
+     "y1": 0.105,
+     "font": "title",
+     "sizePt": 8.0,
+     "align": "left",
+     "colour": "#000000"
+    },
+    "typeBar": {
+     "x0": 0.4284,
+     "y0": 0.5366,
+     "x1": 0.5716,
+     "y1": 0.5705,
+     "font": "bodyBold",
+     "sizePt": 8.0,
+     "align": "center",
+     "colour": "#000000"
+    },
+    "collector": {
+     "x0": 0.8333,
+     "y0": 0.9499,
+     "x1": 0.9021,
+     "y1": 0.9653,
+     "font": "bodyBold",
+     "sizePt": 3.7,
+     "align": "left",
+     "colour": "#000000"
+    }
+   },
+   "flow": {
+    "x0": 0.1659,
+    "y0": 0.6524,
+    "x1": 0.8653,
+    "y1": 0.8926,
+    "sizePt": 7.0,
+    "lineHeight": 0.0302,
+    "colour": "#000000"
+   },
+   "lore": {
+    "sizePt": 6.5
+   },
+   "skills": null,
+   "requirements": null,
+   "card": {
+    "borderPt": 0.0,
+    "cornerPt": 0.0
+   }
+  },
+  "mission.std": {
+   "type": "mission",
+   "family": "std",
+   "refWidthPt": 178.58,
+   "artBox": [
+    0.0497,
+    0.1405,
+    0.953,
+    0.5996
+   ],
+   "boxes": {
+    "title": {
+     "x0": 0.2222,
+     "y0": 0.0539,
+     "x1": 0.5189,
+     "y1": 0.086,
+     "font": "title",
+     "sizePt": 8.0,
+     "align": "left",
+     "colour": "#000000"
+    },
+    "subtitle": {
+     "x0": 0.2476,
+     "y0": 0.0917,
+     "x1": 0.6159,
+     "y1": 0.1177,
+     "font": "title",
+     "sizePt": 6.5,
+     "align": "left",
+     "colour": "#000000"
+    },
+    "points": {
+     "x0": 0.8503,
+     "y0": 0.5472,
+     "x1": 0.9434,
+     "y1": 0.6054,
+     "font": "title",
+     "sizePt": 14.5,
+     "align": "center",
+     "colour": "#ffffff"
+    },
+    "span": {
+     "x0": 0.4835,
+     "y0": 0.9185,
+     "x1": 0.5133,
+     "y1": 0.9586,
+     "font": "title",
+     "sizePt": 10.0,
+     "align": "center",
+     "colour": "#ffffff"
+    },
+    "collector": {
+     "x0": 0.8333,
+     "y0": 0.9499,
+     "x1": 0.9021,
+     "y1": 0.9653,
+     "font": "bodyBold",
+     "sizePt": 3.7,
+     "align": "left",
+     "colour": "#000000"
+    }
+   },
+   "flow": {
+    "x0": 0.1111,
+    "y0": 0.6698,
+    "x1": 0.8776,
+    "y1": 0.83,
+    "sizePt": 7.0,
+    "lineHeight": 0.0302,
+    "colour": "#000000"
+   },
+   "lore": {
+    "sizePt": 6.5
+   },
+   "skills": null,
+   "requirements": {
+    "x0": 0.2389,
+    "y0": 0.5944,
+    "x1": 0.7481,
+    "y1": 0.654,
+    "sizePt": 7.0,
+    "colour": "#000000"
+   },
+   "quadrant": {
+    "cx": 0.098,
+    "cy": 0.5755,
+    "r": 0.051,
+    "fill": "#0d1f3c",
+    "sizePt": 15
+   },
+   "missionAffiliations": {
+    "cy": 0.8946,
+    "step": 0.1996,
+    "size": 0.1116
+   },
+   "card": {
+    "borderPt": 0.0,
+    "cornerPt": 0.0
+   }
+  },
+  "personnel.std": {
+   "type": "personnel",
+   "family": "std",
+   "refWidthPt": 178.58,
+   "artBox": [
+    0.0497,
+    0.1405,
+    0.9099,
+    0.515
+   ],
+   "boxes": {
+    "attr0": {
+     "x0": 0.1706,
+     "y0": 0.8866,
+     "x1": 0.3249,
+     "y1": 0.9168,
+     "font": "bodyBoldSC",
+     "sizePt": 7.0,
+     "align": "left",
+     "colour": "#ffffff"
+    },
+    "attr1": {
+     "x0": 0.4532,
+     "y0": 0.8866,
+     "x1": 0.609,
+     "y1": 0.9168,
+     "font": "bodyBoldSC",
+     "sizePt": 7.0,
+     "align": "left",
+     "colour": "#ffffff"
+    },
+    "attr2": {
+     "x0": 0.7389,
+     "y0": 0.8866,
+     "x1": 0.8947,
+     "y1": 0.9168,
+     "font": "bodyBoldSC",
+     "sizePt": 7.0,
+     "align": "left",
+     "colour": "#ffffff"
+    },
+    "title": {
+     "x0": 0.2595,
+     "y0": 0.0523,
+     "x1": 0.4362,
+     "y1": 0.0864,
+     "font": "title",
+     "sizePt": 8.5,
+     "align": "left",
+     "colour": "#000000"
+    },
+    "cost": {
+     "x0": 0.2005,
+     "y0": 0.0593,
+     "x1": 0.2248,
+     "y1": 0.0924,
+     "font": "title",
+     "sizePt": 8.2,
+     "align": "center",
+     "colour": "#ffffff"
+    },
+    "subtitle": {
+     "x0": 0.2889,
+     "y0": 0.0911,
+     "x1": 0.5867,
+     "y1": 0.1171,
+     "font": "title",
+     "sizePt": 6.5,
+     "align": "left",
+     "colour": "#000000"
+    },
+    "typeBar": {
+     "x0": 0.4448,
+     "y0": 0.5383,
+     "x1": 0.5551,
+     "y1": 0.5722,
+     "font": "bodyBold",
+     "sizePt": 8.0,
+     "align": "center",
+     "colour": "#000000"
+    },
+    "collector": {
+     "x0": 0.8349,
+     "y0": 0.9499,
+     "x1": 0.9036,
+     "y1": 0.9653,
+     "font": "bodyBold",
+     "sizePt": 3.7,
+     "align": "left",
+     "colour": "#000000"
+    }
+   },
+   "flow": {
+    "x0": 0.1706,
+    "y0": 0.695,
+    "x1": 0.8855,
+    "y1": 0.8766,
+    "sizePt": 7.0,
+    "lineHeight": 0.0302,
+    "colour": "#000000"
+   },
+   "lore": {
+    "sizePt": 6.5
+   },
+   "skills": {
+    "x0": 0.1705,
+    "y0": 0.6251,
+    "x1": 0.8855,
+    "rowHeight": 0.0301,
+    "bulletSize": 0.026,
+    "colour": "#000000"
+   },
+   "requirements": null,
+   "iconSlots": [
+    {
+     "cx": 0.102,
+     "cy": 0.6319,
+     "size": 0.0753
+    },
+    {
+     "cx": 0.102,
+     "cy": 0.6983,
+     "size": 0.0753
+    },
+    {
+     "cx": 0.102,
+     "cy": 0.7647,
+     "size": 0.0753
+    }
+   ],
+   "card": {
+    "borderPt": 0.0,
+    "cornerPt": 0.0
+   }
+  },
+  "equipment.std": {
+   "type": "equipment",
+   "family": "std",
+   "refWidthPt": 178.58,
+   "artBox": [
+    0.0497,
+    0.1405,
+    0.9073,
+    0.5332
+   ],
+   "boxes": {
+    "cost": {
+     "x0": 0.1998,
+     "y0": 0.0593,
+     "x1": 0.2243,
+     "y1": 0.0924,
+     "font": "title",
+     "sizePt": 8.2,
+     "align": "center",
+     "colour": "#ffffff"
+    },
+    "title": {
+     "x0": 0.2587,
+     "y0": 0.0698,
+     "x1": 0.6561,
+     "y1": 0.1019,
+     "font": "title",
+     "sizePt": 8.0,
+     "align": "left",
+     "colour": "#000000"
+    },
+    "typeBar": {
+     "x0": 0.4177,
+     "y0": 0.5349,
+     "x1": 0.5823,
+     "y1": 0.5688,
+     "font": "bodyBold",
+     "sizePt": 8.0,
+     "align": "center",
+     "colour": "#000000"
+    },
+    "collector": {
+     "x0": 0.8384,
+     "y0": 0.9499,
+     "x1": 0.8954,
+     "y1": 0.9653,
+     "font": "bodyBold",
+     "sizePt": 3.7,
+     "align": "left",
+     "colour": "#000000"
+    }
+   },
+   "flow": {
+    "x0": 0.1587,
+    "y0": 0.6506,
+    "x1": 0.8727,
+    "y1": 0.8938,
+    "sizePt": 7.0,
+    "lineHeight": 0.0302,
+    "colour": "#000000"
+   },
+   "lore": {
+    "sizePt": 6.5
+   },
+   "skills": null,
+   "requirements": null,
+   "card": {
+    "borderPt": 0.0,
+    "cornerPt": 0.0
+   }
+  },
+  "ship.std": {
+   "type": "ship",
+   "family": "std",
+   "refWidthPt": 178.58,
+   "artBox": [
+    0.0497,
+    0.1405,
+    0.9086,
+    0.5072
+   ],
+   "boxes": {
+    "attr0": {
+     "x0": 0.1706,
+     "y0": 0.887,
+     "x1": 0.2513,
+     "y1": 0.9166,
+     "font": "bodyBoldSC",
+     "sizePt": 7.0,
+     "align": "left",
+     "colour": "#ffffff"
+    },
+    "attr1": {
+     "x0": 0.4532,
+     "y0": 0.8866,
+     "x1": 0.609,
+     "y1": 0.9168,
+     "font": "bodyBoldSC",
+     "sizePt": 7.0,
+     "align": "left",
+     "colour": "#ffffff"
+    },
+    "attr2": {
+     "x0": 0.7389,
+     "y0": 0.887,
+     "x1": 0.8302,
+     "y1": 0.9166,
+     "font": "bodyBoldSC",
+     "sizePt": 7.0,
+     "align": "left",
+     "colour": "#ffffff"
+    },
+    "title": {
+     "x0": 0.2595,
+     "y0": 0.0523,
+     "x1": 0.5648,
+     "y1": 0.0864,
+     "font": "title",
+     "sizePt": 8.5,
+     "align": "left",
+     "colour": "#000000"
+    },
+    "cost": {
+     "x0": 0.1997,
+     "y0": 0.0593,
+     "x1": 0.2259,
+     "y1": 0.0924,
+     "font": "title",
+     "sizePt": 8.2,
+     "align": "center",
+     "colour": "#ffffff"
+    },
+    "subtitle": {
+     "x0": 0.2889,
+     "y0": 0.0911,
+     "x1": 0.549,
+     "y1": 0.1171,
+     "font": "title",
+     "sizePt": 6.5,
+     "align": "left",
+     "colour": "#000000"
+    },
+    "typeBar": {
+     "x0": 0.3996,
+     "y0": 0.5325,
+     "x1": 0.6004,
+     "y1": 0.5726,
+     "font": "bodyBold",
+     "sizePt": 8.0,
+     "align": "center",
+     "colour": "#000000"
+    },
+    "collector": {
+     "x0": 0.8349,
+     "y0": 0.9499,
+     "x1": 0.9036,
+     "y1": 0.9653,
+     "font": "bodyBold",
+     "sizePt": 3.7,
+     "align": "left",
+     "colour": "#000000"
+    }
+   },
+   "flow": {
+    "x0": 0.1706,
+    "y0": 0.6253,
+    "x1": 0.8997,
+    "y1": 0.877,
+    "sizePt": 7.0,
+    "lineHeight": 0.0302,
+    "colour": "#000000"
+   },
+   "lore": {
+    "sizePt": 6.5
+   },
+   "skills": null,
+   "requirements": null,
+   "staffing": {
+    "cx": 0.105,
+    "y0": 0.195,
+    "step": 0.0505,
+    "size": 0.054,
+    "max": 4
+   },
+   "iconSlots": [
+    {
+     "cx": 0.102,
+     "cy": 0.6983,
+     "size": 0.0753
+    },
+    {
+     "cx": 0.102,
+     "cy": 0.7647,
+     "size": 0.0753
+    }
+   ],
+   "card": {
+    "borderPt": 0.0,
+    "cornerPt": 0.0
+   }
+  },
+  "dilemma.hires": {
+   "type": "dilemma",
+   "family": "hires",
+   "refWidthPt": 163.52,
+   "artBox": [
+    0.0078,
+    0.1182,
+    0.9452,
+    0.5369
+   ],
+   "boxes": {
+    "cost": {
+     "x0": 0.1713,
+     "y0": 0.0229,
+     "x1": 0.1973,
+     "y1": 0.0643,
+     "font": "title",
+     "sizePt": 8.0,
+     "align": "center",
+     "colour": "#ffffff"
+    },
+    "title": {
+     "x0": 0.2407,
+     "y0": 0.0384,
+     "x1": 0.5786,
+     "y1": 0.0786,
+     "font": "title",
+     "sizePt": 7.8,
+     "align": "left",
+     "colour": "#231f20"
+    },
+    "typeBar": {
+     "x0": 0.4184,
+     "y0": 0.5317,
+     "x1": 0.5688,
+     "y1": 0.5752,
+     "font": "bodyBold",
+     "sizePt": 8.0,
+     "align": "center",
+     "colour": "#231f20"
+    },
+    "collector": {
+     "x0": 0.8739,
+     "y0": 0.976,
+     "x1": 0.9357,
+     "y1": 0.9978,
+     "font": "bodyBold",
+     "sizePt": 4.0,
+     "align": "left",
+     "colour": "#231f20"
+    }
+   },
+   "flow": {
+    "x0": 0.1356,
+    "y0": 0.6557,
+    "x1": 0.9248,
+    "y1": 0.922,
+    "sizePt": 7.0,
+    "lineHeight": 0.0321,
+    "colour": "#231f20"
+   },
+   "lore": {
+    "sizePt": 6.5
+   },
+   "skills": null,
+   "requirements": null,
+   "card": {
+    "borderPt": 7.5,
+    "cornerPt": 7.08
+   }
+  },
+  "equipment.hires": {
+   "type": "equipment",
+   "family": "hires",
+   "refWidthPt": 163.52,
+   "artBox": [
+    0.0078,
+    0.1182,
+    0.9452,
+    0.5266
+   ],
+   "boxes": {
+    "cost": {
+     "x0": 0.1713,
+     "y0": 0.0232,
+     "x1": 0.1973,
+     "y1": 0.0646,
+     "font": "title",
+     "sizePt": 8.0,
+     "align": "center",
+     "colour": "#ffffff"
+    },
+    "title": {
+     "x0": 0.2407,
+     "y0": 0.0387,
+     "x1": 0.6332,
+     "y1": 0.0788,
+     "font": "title",
+     "sizePt": 7.8,
+     "align": "left",
+     "colour": "#231f20"
+    },
+    "typeBar": {
+     "x0": 0.4037,
+     "y0": 0.5316,
+     "x1": 0.5835,
+     "y1": 0.5751,
+     "font": "bodyBold",
+     "sizePt": 8.0,
+     "align": "center",
+     "colour": "#231f20"
+    },
+    "collector": {
+     "x0": 0.871,
+     "y0": 0.9748,
+     "x1": 0.9387,
+     "y1": 0.9966,
+     "font": "bodyBold",
+     "sizePt": 4.0,
+     "align": "left",
+     "colour": "#231f20"
+    }
+   },
+   "flow": {
+    "x0": 0.1356,
+    "y0": 0.6556,
+    "x1": 0.9174,
+    "y1": 0.9211,
+    "sizePt": 7.0,
+    "lineHeight": 0.032,
+    "colour": "#231f20"
+   },
+   "lore": {
+    "sizePt": 6.5
+   },
+   "skills": null,
+   "requirements": null,
+   "card": {
+    "borderPt": 7.5,
+    "cornerPt": 7.08
+   }
+  },
+  "event.hires": {
+   "type": "event",
+   "family": "hires",
+   "refWidthPt": 163.52,
+   "artBox": [
+    0.0078,
+    0.1182,
+    0.9452,
+    0.5369
+   ],
+   "boxes": {
+    "cost": {
+     "x0": 0.1713,
+     "y0": 0.0235,
+     "x1": 0.1973,
+     "y1": 0.0649,
+     "font": "title",
+     "sizePt": 8.0,
+     "align": "center",
+     "colour": "#ffffff"
+    },
+    "title": {
+     "x0": 0.2407,
+     "y0": 0.0384,
+     "x1": 0.6173,
+     "y1": 0.0786,
+     "font": "title",
+     "sizePt": 7.8,
+     "align": "left",
+     "colour": "#231f20"
+    },
+    "typeBar": {
+     "x0": 0.4449,
+     "y0": 0.5317,
+     "x1": 0.5422,
+     "y1": 0.5752,
+     "font": "bodyBold",
+     "sizePt": 8.0,
+     "align": "center",
+     "colour": "#231f20"
+    },
+    "collector": {
+     "x0": 0.868,
+     "y0": 0.976,
+     "x1": 0.9417,
+     "y1": 0.9978,
+     "font": "bodyBold",
+     "sizePt": 4.0,
+     "align": "left",
+     "colour": "#231f20"
+    }
+   },
+   "flow": {
+    "x0": 0.1356,
+    "y0": 0.6557,
+    "x1": 0.9177,
+    "y1": 0.9361,
+    "sizePt": 7.0,
+    "lineHeight": 0.032,
+    "colour": "#231f20"
+   },
+   "lore": {
+    "sizePt": 6.5
+   },
+   "skills": null,
+   "requirements": null,
+   "card": {
+    "borderPt": 7.5,
+    "cornerPt": 7.08
+   }
+  },
+  "interrupt.hires": {
+   "type": "interrupt",
+   "family": "hires",
+   "refWidthPt": 163.52,
+   "artBox": [
+    0.0078,
+    0.1182,
+    0.9452,
+    0.5369
+   ],
+   "boxes": {
+    "title": {
+     "x0": 0.1974,
+     "y0": 0.0384,
+     "x1": 0.5426,
+     "y1": 0.0786,
+     "font": "title",
+     "sizePt": 7.8,
+     "align": "left",
+     "colour": "#231f20"
+    },
+    "typeBar": {
+     "x0": 0.4154,
+     "y0": 0.5317,
+     "x1": 0.5717,
+     "y1": 0.5752,
+     "font": "bodyBold",
+     "sizePt": 8.0,
+     "align": "center",
+     "colour": "#231f20"
+    },
+    "collector": {
+     "x0": 0.868,
+     "y0": 0.976,
+     "x1": 0.9417,
+     "y1": 0.9978,
+     "font": "bodyBold",
+     "sizePt": 4.0,
+     "align": "left",
+     "colour": "#231f20"
+    }
+   },
+   "flow": {
+    "x0": 0.1356,
+    "y0": 0.656,
+    "x1": 0.9254,
+    "y1": 0.9361,
+    "sizePt": 7.0,
+    "lineHeight": 0.032,
+    "colour": "#231f20"
+   },
+   "lore": {
+    "sizePt": 6.5
+   },
+   "skills": null,
+   "requirements": null,
+   "card": {
+    "borderPt": 7.5,
+    "cornerPt": 7.08
+   }
+  },
+  "mission.hires": {
+   "type": "mission",
+   "family": "hires",
+   "refWidthPt": 163.52,
+   "artBox": [
+    0.0078,
+    0.1175,
+    0.9941,
+    0.5724
+   ],
+   "boxes": {
+    "title": {
+     "x0": 0.1974,
+     "y0": 0.0209,
+     "x1": 0.6506,
+     "y1": 0.061,
+     "font": "title",
+     "sizePt": 7.8,
+     "align": "left",
+     "colour": "#231f20"
+    },
+    "points": {
+     "x0": 0.8912,
+     "y0": 0.5392,
+     "x1": 0.9852,
+     "y1": 0.6143,
+     "font": "title",
+     "sizePt": 14.5,
+     "align": "center",
+     "colour": "#ffffff"
+    },
+    "span": {
+     "x0": 0.4808,
+     "y0": 0.9381,
+     "x1": 0.5133,
+     "y1": 0.9899,
+     "font": "title",
+     "sizePt": 10.0,
+     "align": "center",
+     "colour": "#ffffff"
+    },
+    "collector": {
+     "x0": 0.868,
+     "y0": 0.9757,
+     "x1": 0.9417,
+     "y1": 0.9975,
+     "font": "bodyBold",
+     "sizePt": 4.0,
+     "align": "left",
+     "colour": "#231f20"
+    },
+    "subtitle": {
+     "x0": 0.1974,
+     "y0": 0.0601,
+     "x1": 0.5637,
+     "y1": 0.0948,
+     "font": "title",
+     "sizePt": 6.5,
+     "align": "left",
+     "colour": "#231f20"
+    }
+   },
+   "flow": {
+    "x0": 0.0663,
+    "y0": 0.6713,
+    "x1": 0.9315,
+    "y1": 0.84,
+    "sizePt": 7.0,
+    "lineHeight": 0.0325,
+    "colour": "#231f20"
+   },
+   "lore": {
+    "sizePt": 6.5
+   },
+   "skills": null,
+   "requirements": {
+    "x0": 0.2173,
+    "y0": 0.5949,
+    "x1": 0.7855,
+    "y1": 0.665,
+    "sizePt": 7.0,
+    "colour": "#231f20"
+   },
+   "quadrant": {
+    "cx": 0.0685,
+    "cy": 0.572,
+    "r": 0.049,
+    "fill": "#0d1f3c",
+    "sizePt": 15
+   },
+   "missionAffiliations": {
+    "cy": 0.8916,
+    "step": 0.1448,
+    "size": 0.0978
+   },
+   "card": {
+    "borderPt": 7.5,
+    "cornerPt": 7.08
+   }
+  },
+  "personnel.hires": {
+   "type": "personnel",
+   "family": "hires",
+   "refWidthPt": 163.52,
+   "artBox": [
+    0.0078,
+    0.1175,
+    0.9471,
+    0.528
+   ],
+   "boxes": {
+    "attr0": {
+     "x0": 0.1418,
+     "y0": 0.9055,
+     "x1": 0.3198,
+     "y1": 0.9423,
+     "font": "bodyBoldSC",
+     "sizePt": 6.8,
+     "align": "left",
+     "colour": "#ffffff"
+    },
+    "attr1": {
+     "x0": 0.4505,
+     "y0": 0.9055,
+     "x1": 0.632,
+     "y1": 0.9423,
+     "font": "bodyBoldSC",
+     "sizePt": 6.8,
+     "align": "left",
+     "colour": "#ffffff"
+    },
+    "attr2": {
+     "x0": 0.7626,
+     "y0": 0.9055,
+     "x1": 0.9341,
+     "y1": 0.9423,
+     "font": "bodyBoldSC",
+     "sizePt": 6.8,
+     "align": "left",
+     "colour": "#ffffff"
+    },
+    "title": {
+     "x0": 0.2405,
+     "y0": 0.0197,
+     "x1": 0.4402,
+     "y1": 0.0637,
+     "font": "title",
+     "sizePt": 8.5,
+     "align": "left",
+     "colour": "#231f20"
+    },
+    "cost": {
+     "x0": 0.171,
+     "y0": 0.0229,
+     "x1": 0.197,
+     "y1": 0.0643,
+     "font": "title",
+     "sizePt": 8.0,
+     "align": "center",
+     "colour": "#ffffff"
+    },
+    "subtitle": {
+     "x0": 0.2405,
+     "y0": 0.0608,
+     "x1": 0.578,
+     "y1": 0.0944,
+     "font": "title",
+     "sizePt": 6.5,
+     "align": "left",
+     "colour": "#231f20"
+    },
+    "typeBar": {
+     "x0": 0.4286,
+     "y0": 0.5317,
+     "x1": 0.5585,
+     "y1": 0.5753,
+     "font": "bodyBold",
+     "sizePt": 8.0,
+     "align": "center",
+     "colour": "#231f20"
+    },
+    "collector": {
+     "x0": 0.8683,
+     "y0": 0.976,
+     "x1": 0.9421,
+     "y1": 0.9978,
+     "font": "bodyBold",
+     "sizePt": 4.0,
+     "align": "left",
+     "colour": "#231f20"
+    }
+   },
+   "flow": {
+    "x0": 0.144,
+    "y0": 0.6676,
+    "x1": 0.9256,
+    "y1": 0.8955,
+    "sizePt": 7.0,
+    "lineHeight": 0.032,
+    "colour": "#231f20"
+   },
+   "lore": {
+    "sizePt": 6.5
+   },
+   "skills": {
+    "x0": 0.1443,
+    "y0": 0.6255,
+    "x1": 0.9256,
+    "rowHeight": 0.032,
+    "bulletSize": 0.026,
+    "colour": "#231f20"
+   },
+   "requirements": null,
+   "iconSlots": [
+    {
+     "cx": 0.0651,
+     "cy": 0.6393,
+     "size": 0.0793
+    },
+    {
+     "cx": 0.0651,
+     "cy": 0.7107,
+     "size": 0.0793
+    },
+    {
+     "cx": 0.0651,
+     "cy": 0.7804,
+     "size": 0.0793
+    }
+   ],
+   "card": {
+    "borderPt": 7.5,
+    "cornerPt": 7.08
+   }
+  },
+  "ship.hires": {
+   "type": "ship",
+   "family": "hires",
+   "refWidthPt": 163.52,
+   "artBox": [
+    0.0088,
+    0.123,
+    0.9461,
+    0.5239
+   ],
+   "boxes": {
+    "attr0": {
+     "x0": 0.1418,
+     "y0": 0.9058,
+     "x1": 0.3198,
+     "y1": 0.9426,
+     "font": "bodyBoldSC",
+     "sizePt": 6.8,
+     "align": "left",
+     "colour": "#ffffff"
+    },
+    "attr1": {
+     "x0": 0.4504,
+     "y0": 0.9058,
+     "x1": 0.632,
+     "y1": 0.9426,
+     "font": "bodyBoldSC",
+     "sizePt": 6.8,
+     "align": "left",
+     "colour": "#ffffff"
+    },
+    "attr2": {
+     "x0": 0.7626,
+     "y0": 0.9058,
+     "x1": 0.9341,
+     "y1": 0.9426,
+     "font": "bodyBoldSC",
+     "sizePt": 6.8,
+     "align": "left",
+     "colour": "#ffffff"
+    },
+    "title": {
+     "x0": 0.2405,
+     "y0": 0.0197,
+     "x1": 0.5739,
+     "y1": 0.0637,
+     "font": "title",
+     "sizePt": 8.5,
+     "align": "left",
+     "colour": "#231f20"
+    },
+    "cost": {
+     "x0": 0.1709,
+     "y0": 0.0229,
+     "x1": 0.1969,
+     "y1": 0.0643,
+     "font": "title",
+     "sizePt": 8.0,
+     "align": "center",
+     "colour": "#ffffff"
+    },
+    "subtitle": {
+     "x0": 0.2405,
+     "y0": 0.0608,
+     "x1": 0.5806,
+     "y1": 0.0944,
+     "font": "title",
+     "sizePt": 6.5,
+     "align": "left",
+     "colour": "#231f20"
+    },
+    "typeBar": {
+     "x0": 0.3683,
+     "y0": 0.5317,
+     "x1": 0.6165,
+     "y1": 0.5752,
+     "font": "bodyBold",
+     "sizePt": 8.0,
+     "align": "center",
+     "colour": "#231f20"
+    },
+    "collector": {
+     "x0": 0.8683,
+     "y0": 0.976,
+     "x1": 0.9421,
+     "y1": 0.9978,
+     "font": "bodyBold",
+     "sizePt": 4.0,
+     "align": "left",
+     "colour": "#231f20"
+    }
+   },
+   "flow": {
+    "x0": 0.144,
+    "y0": 0.626,
+    "x1": 0.9209,
+    "y1": 0.8958,
+    "sizePt": 7.0,
+    "lineHeight": 0.032,
+    "colour": "#231f20"
+   },
+   "lore": {
+    "sizePt": 6.5
+   },
+   "skills": null,
+   "requirements": null,
+   "staffing": {
+    "cx": 0.0666,
+    "y0": 0.168,
+    "step": 0.0546,
+    "size": 0.054,
+    "max": 4
+   },
+   "iconSlots": [
+    {
+     "cx": 0.0651,
+     "cy": 0.7107,
+     "size": 0.0793
+    },
+    {
+     "cx": 0.0651,
+     "cy": 0.7804,
+     "size": 0.0793
+    }
+   ],
+   "card": {
+    "borderPt": 7.5,
+    "cornerPt": 7.08
+   }
+  }
+ },
+ "icons": [
+  {
+   "id": "alternate",
+   "file": "icons/alternate.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline",
+   "hi": "icons/hi-alternate.png"
+  },
+  {
+   "id": "borg",
+   "file": "icons/borg.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline",
+   "hi": "icons/hi-borg.png"
+  },
+  {
+   "id": "cardassian",
+   "file": "icons/cardassian.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline",
+   "hi": "icons/hi-cardassian.png"
+  },
+  {
+   "id": "cardassian-b",
+   "file": "icons/cardassian-b.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline",
+   "hi": "icons/hi-cardassian.png"
+  },
+  {
+   "id": "command",
+   "file": "icons/command.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline",
+   "hi": "icons/hi-command.png"
+  },
+  {
+   "id": "command-b",
+   "file": "icons/command-b.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline",
+   "hi": "icons/hi-command.png"
+  },
+  {
+   "id": "deep-space-nine",
+   "file": "icons/deep-space-nine.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline",
+   "hi": "icons/hi-deep-space-nine.png"
+  },
+  {
+   "id": "deep-space-nine-b",
+   "file": "icons/deep-space-nine-b.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline",
+   "hi": "icons/hi-deep-space-nine.png"
+  },
+  {
+   "id": "delta-quadrant",
+   "file": "icons/delta-quadrant.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline"
+  },
+  {
+   "id": "dominion",
+   "file": "icons/dominion.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline",
+   "hi": "icons/hi-dominion.png"
+  },
+  {
+   "id": "earth",
+   "file": "icons/earth.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline",
+   "hi": "icons/hi-earth.png"
+  },
+  {
+   "id": "federation",
+   "file": "icons/federation.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline",
+   "hi": "icons/hi-federation.png"
+  },
+  {
+   "id": "federation-b",
+   "file": "icons/federation-b.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline",
+   "hi": "icons/hi-federation.png"
+  },
+  {
+   "id": "ferengi",
+   "file": "icons/ferengi.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline",
+   "hi": "icons/hi-ferengi.png"
+  },
+  {
+   "id": "ferengi-b",
+   "file": "icons/ferengi-b.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline",
+   "hi": "icons/hi-ferengi.png"
+  },
+  {
+   "id": "future",
+   "file": "icons/future.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline",
+   "hi": "icons/hi-future.png"
+  },
+  {
+   "id": "maquis",
+   "file": "icons/maquis.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline",
+   "hi": "icons/hi-maquis.png"
+  },
+  {
+   "id": "next-generation",
+   "file": "icons/next-generation.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline",
+   "hi": "icons/hi-next-generation.png"
+  },
+  {
+   "id": "non-aligned",
+   "file": "icons/non-aligned.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline",
+   "hi": "icons/hi-non-aligned.png"
+  },
+  {
+   "id": "non-aligned-b",
+   "file": "icons/non-aligned-b.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline",
+   "hi": "icons/hi-non-aligned.png"
+  },
+  {
+   "id": "original-series",
+   "file": "icons/original-series.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline",
+   "hi": "icons/hi-original-series.png"
+  },
+  {
+   "id": "past",
+   "file": "icons/past.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline",
+   "hi": "icons/hi-past.png"
+  },
+  {
+   "id": "romulan",
+   "file": "icons/romulan.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline",
+   "hi": "icons/hi-romulan.png"
+  },
+  {
+   "id": "romulan-b",
+   "file": "icons/romulan-b.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline",
+   "hi": "icons/hi-romulan.png"
+  },
+  {
+   "id": "skill-dot",
+   "file": "icons/skill-dot.png",
+   "w": 26,
+   "h": 26,
+   "group": "inline"
+  },
+  {
+   "id": "skill-dot-b",
+   "file": "icons/skill-dot-b.png",
+   "w": 26,
+   "h": 26,
+   "group": "inline"
+  },
+  {
+   "id": "staff",
+   "file": "icons/staff.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline",
+   "hi": "icons/hi-staff.png"
+  },
+  {
+   "id": "staff-b",
+   "file": "icons/staff-b.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline",
+   "hi": "icons/hi-staff.png"
+  },
+  {
+   "id": "starfleet",
+   "file": "icons/starfleet.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline",
+   "hi": "icons/hi-starfleet.png"
+  },
+  {
+   "id": "terok-nor",
+   "file": "icons/terok-nor.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline"
+  },
+  {
+   "id": "voyager",
+   "file": "icons/voyager.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline",
+   "hi": "icons/hi-voyager.png"
+  },
+  {
+   "id": "bajoran",
+   "file": "icons/hi-bajoran.png",
+   "w": 96,
+   "h": 96,
+   "group": "inline",
+   "hi": "icons/hi-bajoran.png"
+  },
+  {
+   "id": "klingon",
+   "file": "icons/hi-klingon.png",
+   "w": 96,
+   "h": 96,
+   "group": "inline",
+   "hi": "icons/hi-klingon.png"
+  },
+  {
+   "id": "big-alternate",
+   "file": "icons/big-alternate.png",
+   "w": 56,
+   "h": 56,
+   "group": "other"
+  },
+  {
+   "id": "big-command",
+   "file": "icons/big-command.png",
+   "w": 56,
+   "h": 55,
+   "group": "other"
+  },
+  {
+   "id": "big-deep-space-nine",
+   "file": "icons/big-deep-space-nine.png",
+   "w": 56,
+   "h": 56,
+   "group": "other"
+  },
+  {
+   "id": "big-earth",
+   "file": "icons/big-earth.png",
+   "w": 56,
+   "h": 56,
+   "group": "other"
+  },
+  {
+   "id": "big-future",
+   "file": "icons/big-future.png",
+   "w": 56,
+   "h": 56,
+   "group": "other"
+  },
+  {
+   "id": "big-maquis",
+   "file": "icons/big-maquis.png",
+   "w": 56,
+   "h": 56,
+   "group": "other"
+  },
+  {
+   "id": "big-next-generation",
+   "file": "icons/big-next-generation.png",
+   "w": 56,
+   "h": 56,
+   "group": "other"
+  },
+  {
+   "id": "big-original-series",
+   "file": "icons/big-original-series.png",
+   "w": 56,
+   "h": 56,
+   "group": "other"
+  },
+  {
+   "id": "big-past",
+   "file": "icons/big-past.png",
+   "w": 56,
+   "h": 56,
+   "group": "other"
+  },
+  {
+   "id": "big-staff",
+   "file": "icons/big-staff.png",
+   "w": 56,
+   "h": 55,
+   "group": "other"
+  },
+  {
+   "id": "big-terok-nor",
+   "file": "icons/big-terok-nor.png",
+   "w": 31,
+   "h": 31,
+   "group": "other"
+  },
+  {
+   "id": "big-voyager",
+   "file": "icons/big-voyager.png",
+   "w": 56,
+   "h": 56,
+   "group": "other"
+  },
+  {
+   "id": "mission-bajoran",
+   "file": "icons/mission-bajoran.png",
+   "w": 62,
+   "h": 111,
+   "group": "missionAffiliation"
+  },
+  {
+   "id": "mission-borg",
+   "file": "icons/mission-borg.png",
+   "w": 73,
+   "h": 142,
+   "group": "missionAffiliation"
+  },
+  {
+   "id": "mission-cardassian",
+   "file": "icons/mission-cardassian.png",
+   "w": 77,
+   "h": 119,
+   "group": "missionAffiliation"
+  },
+  {
+   "id": "mission-dominion",
+   "file": "icons/mission-dominion.png",
+   "w": 55,
+   "h": 113,
+   "group": "missionAffiliation"
+  },
+  {
+   "id": "mission-federation",
+   "file": "icons/mission-federation.png",
+   "w": 124,
+   "h": 93,
+   "group": "missionAffiliation"
+  },
+  {
+   "id": "mission-ferengi",
+   "file": "icons/mission-ferengi.png",
+   "w": 96,
+   "h": 79,
+   "group": "missionAffiliation"
+  },
+  {
+   "id": "mission-klingon",
+   "file": "icons/mission-klingon.png",
+   "w": 112,
+   "h": 112,
+   "group": "missionAffiliation"
+  },
+  {
+   "id": "mission-non-aligned",
+   "file": "icons/mission-non-aligned.png",
+   "w": 93,
+   "h": 94,
+   "group": "missionAffiliation"
+  },
+  {
+   "id": "mission-romulan",
+   "file": "icons/mission-romulan.png",
+   "w": 125,
+   "h": 96,
+   "group": "missionAffiliation"
+  },
+  {
+   "id": "mission-starfleet",
+   "file": "icons/mission-starfleet.png",
+   "w": 95,
+   "h": 103,
+   "group": "missionAffiliation"
+  }
+ ],
+ "skills": [
+  "Acquisition",
+  "Anthropology",
+  "Archaeology",
+  "Astrometrics",
+  "Biology",
+  "Diplomacy",
+  "Engineer",
+  "Exobiology",
+  "Geology",
+  "Honor",
+  "Intelligence",
+  "Law",
+  "Leadership",
+  "Medical",
+  "Navigation",
+  "Officer",
+  "Physics",
+  "Programming",
+  "Science",
+  "Security",
+  "Telepathy",
+  "Transporters",
+  "Treachery"
+ ],
+ "frames": [
+  {
+   "id": "dilemma.dual",
+   "set": "base",
+   "type": "dilemma",
+   "family": "hires",
+   "affiliation": "none",
+   "variant": "dual",
+   "label": "Dual",
+   "sourceTitle": "",
+   "w": 1022,
+   "h": 1464,
+   "file": "base/dilemma.dual.jpg",
+   "thumb": "base/thumbs/dilemma.dual.jpg",
+   "overlay": "overlays/dilemma.hires.none.png",
+   "ring": null,
+   "artBox": null
+  },
+  {
+   "id": "dilemma.planet",
+   "set": "base",
+   "type": "dilemma",
+   "family": "hires",
+   "affiliation": "none",
+   "variant": "planet",
+   "label": "Planet",
+   "sourceTitle": "",
+   "w": 1022,
+   "h": 1464,
+   "file": "base/dilemma.planet.jpg",
+   "thumb": "base/thumbs/dilemma.planet.jpg",
+   "overlay": "overlays/dilemma.hires.none.png",
+   "ring": null,
+   "artBox": null
+  },
+  {
+   "id": "dilemma.space",
+   "set": "base",
+   "type": "dilemma",
+   "family": "hires",
+   "affiliation": "none",
+   "variant": "space",
+   "label": "Space",
+   "sourceTitle": "",
+   "w": 1022,
+   "h": 1464,
+   "file": "base/dilemma.space.jpg",
+   "thumb": "base/thumbs/dilemma.space.jpg",
+   "overlay": "overlays/dilemma.hires.none.png",
+   "ring": null,
+   "artBox": null
+  },
+  {
+   "id": "equipment.default",
+   "set": "base",
+   "type": "equipment",
+   "family": "hires",
+   "affiliation": "none",
+   "variant": "default",
+   "label": "Default",
+   "sourceTitle": "",
+   "w": 1022,
+   "h": 1465,
+   "file": "base/equipment.default.jpg",
+   "thumb": "base/thumbs/equipment.default.jpg",
+   "overlay": null,
+   "ring": null,
+   "artBox": null
+  },
+  {
+   "id": "event.default",
+   "set": "base",
+   "type": "event",
+   "family": "hires",
+   "affiliation": "none",
+   "variant": "default",
+   "label": "Default",
+   "sourceTitle": "",
+   "w": 1022,
+   "h": 1464,
+   "file": "base/event.default.jpg",
+   "thumb": "base/thumbs/event.default.jpg",
+   "overlay": "overlays/event.hires.none.png",
+   "ring": null,
+   "artBox": null
+  },
+  {
+   "id": "interrupt.default",
+   "set": "base",
+   "type": "interrupt",
+   "family": "hires",
+   "affiliation": "none",
+   "variant": "default",
+   "label": "Default",
+   "sourceTitle": "",
+   "w": 1022,
+   "h": 1464,
+   "file": "base/interrupt.default.jpg",
+   "thumb": "base/thumbs/interrupt.default.jpg",
+   "overlay": "overlays/interrupt.hires.none.png",
+   "ring": null,
+   "artBox": null
+  },
+  {
+   "id": "mission.headquarters",
+   "set": "base",
+   "type": "mission",
+   "family": "hires",
+   "affiliation": "none",
+   "variant": "headquarters",
+   "label": "Headquarters",
+   "sourceTitle": "",
+   "w": 1022,
+   "h": 1464,
+   "file": "base/mission.headquarters.jpg",
+   "thumb": "base/thumbs/mission.headquarters.jpg",
+   "overlay": "overlays/mission.hires.none.png",
+   "ring": null,
+   "artBox": null
+  },
+  {
+   "id": "mission.planet",
+   "set": "base",
+   "type": "mission",
+   "family": "hires",
+   "affiliation": "none",
+   "variant": "planet",
+   "label": "Planet",
+   "sourceTitle": "",
+   "w": 1022,
+   "h": 1464,
+   "file": "base/mission.planet.jpg",
+   "thumb": "base/thumbs/mission.planet.jpg",
+   "overlay": "overlays/mission.hires.none.png",
+   "ring": null,
+   "artBox": null
+  },
+  {
+   "id": "mission.space",
+   "set": "base",
+   "type": "mission",
+   "family": "hires",
+   "affiliation": "none",
+   "variant": "space",
+   "label": "Space",
+   "sourceTitle": "",
+   "w": 1022,
+   "h": 1464,
+   "file": "base/mission.space.jpg",
+   "thumb": "base/thumbs/mission.space.jpg",
+   "overlay": "overlays/mission.hires.none.png",
+   "ring": null,
+   "artBox": null
+  },
+  {
+   "id": "personnel.bajoran",
+   "set": "base",
+   "type": "personnel",
+   "family": "hires",
+   "affiliation": "bajoran",
+   "variant": "bajoran",
+   "label": "Bajoran",
+   "sourceTitle": "",
+   "w": 1021,
+   "h": 1464,
+   "file": "base/personnel.bajoran.jpg",
+   "thumb": "base/thumbs/personnel.bajoran.jpg",
+   "overlay": "overlays/personnel.hires.bajoran.png",
+   "ring": "rings/hires.bajoran.png",
+   "artBox": null
+  },
+  {
+   "id": "personnel.borg",
+   "set": "base",
+   "type": "personnel",
+   "family": "hires",
+   "affiliation": "borg",
+   "variant": "borg",
+   "label": "Borg",
+   "sourceTitle": "",
+   "w": 1021,
+   "h": 1464,
+   "file": "base/personnel.borg.jpg",
+   "thumb": "base/thumbs/personnel.borg.jpg",
+   "overlay": "overlays/personnel.hires.borg.png",
+   "ring": "rings/hires.borg.png",
+   "artBox": null
+  },
+  {
+   "id": "personnel.cardassian",
+   "set": "base",
+   "type": "personnel",
+   "family": "hires",
+   "affiliation": "cardassian",
+   "variant": "cardassian",
+   "label": "Cardassian",
+   "sourceTitle": "",
+   "w": 1021,
+   "h": 1464,
+   "file": "base/personnel.cardassian.jpg",
+   "thumb": "base/thumbs/personnel.cardassian.jpg",
+   "overlay": "overlays/personnel.hires.cardassian.png",
+   "ring": "rings/hires.cardassian.png",
+   "artBox": null
+  },
+  {
+   "id": "personnel.dominion",
+   "set": "base",
+   "type": "personnel",
+   "family": "hires",
+   "affiliation": "dominion",
+   "variant": "dominion",
+   "label": "Dominion",
+   "sourceTitle": "",
+   "w": 1021,
+   "h": 1464,
+   "file": "base/personnel.dominion.jpg",
+   "thumb": "base/thumbs/personnel.dominion.jpg",
+   "overlay": "overlays/personnel.hires.dominion.png",
+   "ring": "rings/hires.dominion.png",
+   "artBox": null
+  },
+  {
+   "id": "personnel.federation",
+   "set": "base",
+   "type": "personnel",
+   "family": "hires",
+   "affiliation": "federation",
+   "variant": "federation",
+   "label": "Federation",
+   "sourceTitle": "",
+   "w": 1021,
+   "h": 1464,
+   "file": "base/personnel.federation.jpg",
+   "thumb": "base/thumbs/personnel.federation.jpg",
+   "overlay": "overlays/personnel.hires.federation.png",
+   "ring": "rings/hires.federation.png",
+   "artBox": null
+  },
+  {
+   "id": "personnel.ferengi",
+   "set": "base",
+   "type": "personnel",
+   "family": "hires",
+   "affiliation": "ferengi",
+   "variant": "ferengi",
+   "label": "Ferengi",
+   "sourceTitle": "",
+   "w": 1021,
+   "h": 1464,
+   "file": "base/personnel.ferengi.jpg",
+   "thumb": "base/thumbs/personnel.ferengi.jpg",
+   "overlay": "overlays/personnel.hires.ferengi.png",
+   "ring": "rings/hires.ferengi.png",
+   "artBox": null
+  },
+  {
+   "id": "personnel.klingon",
+   "set": "base",
+   "type": "personnel",
+   "family": "hires",
+   "affiliation": "klingon",
+   "variant": "klingon",
+   "label": "Klingon",
+   "sourceTitle": "",
+   "w": 1021,
+   "h": 1465,
+   "file": "base/personnel.klingon.jpg",
+   "thumb": "base/thumbs/personnel.klingon.jpg",
+   "overlay": "overlays/personnel.hires.klingon.png",
+   "ring": "rings/hires.klingon.png",
+   "artBox": null
+  },
+  {
+   "id": "personnel.non-aligned",
+   "set": "base",
+   "type": "personnel",
+   "family": "hires",
+   "affiliation": "non-aligned",
+   "variant": "non-aligned",
+   "label": "Non-Aligned",
+   "sourceTitle": "",
+   "w": 1021,
+   "h": 1464,
+   "file": "base/personnel.non-aligned.jpg",
+   "thumb": "base/thumbs/personnel.non-aligned.jpg",
+   "overlay": "overlays/personnel.hires.non-aligned.png",
+   "ring": "rings/hires.non-aligned.png",
+   "artBox": null
+  },
+  {
+   "id": "personnel.romulan",
+   "set": "base",
+   "type": "personnel",
+   "family": "hires",
+   "affiliation": "romulan",
+   "variant": "romulan",
+   "label": "Romulan",
+   "sourceTitle": "",
+   "w": 1021,
+   "h": 1464,
+   "file": "base/personnel.romulan.jpg",
+   "thumb": "base/thumbs/personnel.romulan.jpg",
+   "overlay": "overlays/personnel.hires.romulan.png",
+   "ring": "rings/hires.romulan.png",
+   "artBox": null
+  },
+  {
+   "id": "personnel.starfleet",
+   "set": "base",
+   "type": "personnel",
+   "family": "hires",
+   "affiliation": "starfleet",
+   "variant": "starfleet",
+   "label": "Starfleet",
+   "sourceTitle": "",
+   "w": 1021,
+   "h": 1464,
+   "file": "base/personnel.starfleet.jpg",
+   "thumb": "base/thumbs/personnel.starfleet.jpg",
+   "overlay": null,
+   "ring": "rings/hires.starfleet.png",
+   "artBox": null
+  },
+  {
+   "id": "personnel.vidiian",
+   "set": "base",
+   "type": "personnel",
+   "family": "std",
+   "affiliation": "vidiian",
+   "variant": "vidiian",
+   "label": "Vidiian",
+   "sourceTitle": "",
+   "w": 744,
+   "h": 1039,
+   "file": "base/personnel.vidiian.jpg",
+   "thumb": "base/thumbs/personnel.vidiian.jpg",
+   "overlay": "overlays/personnel.std.vidiian.png",
+   "ring": "rings/std.vidiian.png",
+   "artBox": null
+  },
+  {
+   "id": "ship.bajoran",
+   "set": "base",
+   "type": "ship",
+   "family": "hires",
+   "affiliation": "bajoran",
+   "variant": "bajoran",
+   "label": "Bajoran",
+   "sourceTitle": "",
+   "w": 1021,
+   "h": 1464,
+   "file": "base/ship.bajoran.jpg",
+   "thumb": "base/thumbs/ship.bajoran.jpg",
+   "overlay": null,
+   "ring": "rings/hires.bajoran.png",
+   "artBox": null
+  },
+  {
+   "id": "ship.borg",
+   "set": "base",
+   "type": "ship",
+   "family": "hires",
+   "affiliation": "borg",
+   "variant": "borg",
+   "label": "Borg",
+   "sourceTitle": "",
+   "w": 1015,
+   "h": 1464,
+   "file": "base/ship.borg.jpg",
+   "thumb": "base/thumbs/ship.borg.jpg",
+   "overlay": null,
+   "ring": "rings/hires.borg.png",
+   "artBox": null
+  },
+  {
+   "id": "ship.cardassian",
+   "set": "base",
+   "type": "ship",
+   "family": "hires",
+   "affiliation": "cardassian",
+   "variant": "cardassian",
+   "label": "Cardassian",
+   "sourceTitle": "",
+   "w": 1021,
+   "h": 1464,
+   "file": "base/ship.cardassian.jpg",
+   "thumb": "base/thumbs/ship.cardassian.jpg",
+   "overlay": null,
+   "ring": "rings/hires.cardassian.png",
+   "artBox": null
+  },
+  {
+   "id": "ship.dominion",
+   "set": "base",
+   "type": "ship",
+   "family": "hires",
+   "affiliation": "dominion",
+   "variant": "dominion",
+   "label": "Dominion",
+   "sourceTitle": "",
+   "w": 1021,
+   "h": 1464,
+   "file": "base/ship.dominion.jpg",
+   "thumb": "base/thumbs/ship.dominion.jpg",
+   "overlay": null,
+   "ring": "rings/hires.dominion.png",
+   "artBox": null
+  },
+  {
+   "id": "ship.federation",
+   "set": "base",
+   "type": "ship",
+   "family": "hires",
+   "affiliation": "federation",
+   "variant": "federation",
+   "label": "Federation",
+   "sourceTitle": "",
+   "w": 1021,
+   "h": 1464,
+   "file": "base/ship.federation.jpg",
+   "thumb": "base/thumbs/ship.federation.jpg",
+   "overlay": null,
+   "ring": "rings/hires.federation.png",
+   "artBox": null
+  },
+  {
+   "id": "ship.ferengi",
+   "set": "base",
+   "type": "ship",
+   "family": "std",
+   "affiliation": "ferengi",
+   "variant": "ferengi",
+   "label": "Ferengi",
+   "sourceTitle": "",
+   "w": 744,
+   "h": 1039,
+   "file": "base/ship.ferengi.jpg",
+   "thumb": "base/thumbs/ship.ferengi.jpg",
+   "overlay": null,
+   "ring": null,
+   "artBox": null
+  },
+  {
+   "id": "ship.klingon",
+   "set": "base",
+   "type": "ship",
+   "family": "hires",
+   "affiliation": "klingon",
+   "variant": "klingon",
+   "label": "Klingon",
+   "sourceTitle": "",
+   "w": 1021,
+   "h": 1464,
+   "file": "base/ship.klingon.jpg",
+   "thumb": "base/thumbs/ship.klingon.jpg",
+   "overlay": null,
+   "ring": "rings/hires.klingon.png",
+   "artBox": null
+  },
+  {
+   "id": "ship.non-aligned",
+   "set": "base",
+   "type": "ship",
+   "family": "hires",
+   "affiliation": "non-aligned",
+   "variant": "non-aligned",
+   "label": "Non-Aligned",
+   "sourceTitle": "",
+   "w": 1021,
+   "h": 1464,
+   "file": "base/ship.non-aligned.jpg",
+   "thumb": "base/thumbs/ship.non-aligned.jpg",
+   "overlay": null,
+   "ring": "rings/hires.non-aligned.png",
+   "artBox": null
+  },
+  {
+   "id": "ship.romulan",
+   "set": "base",
+   "type": "ship",
+   "family": "hires",
+   "affiliation": "romulan",
+   "variant": "romulan",
+   "label": "Romulan",
+   "sourceTitle": "",
+   "w": 1021,
+   "h": 1464,
+   "file": "base/ship.romulan.jpg",
+   "thumb": "base/thumbs/ship.romulan.jpg",
+   "overlay": null,
+   "ring": "rings/hires.romulan.png",
+   "artBox": null
+  },
+  {
+   "id": "ship.vidiian",
+   "set": "base",
+   "type": "ship",
+   "family": "std",
+   "affiliation": "vidiian",
+   "variant": "vidiian",
+   "label": "Vidiian",
+   "sourceTitle": "",
+   "w": 744,
+   "h": 1039,
+   "file": "base/ship.vidiian.jpg",
+   "thumb": "base/thumbs/ship.vidiian.jpg",
+   "overlay": "overlays/ship.std.vidiian.png",
+   "ring": "rings/std.vidiian.png",
+   "artBox": null
+  }
+ ],
+ "sourceFrames": 648
+}

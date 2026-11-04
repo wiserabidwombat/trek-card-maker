@@ -1,7 +1,16 @@
 node_modules/
 dist/
-public/frames/
 .venv/
 __pycache__/
 *.pyc
 public/test/
+
+# Extractor working files: the per-card source frames, review sheets and the pass-3 input.
+# The finished catalog (base/, icons/, overlays/, rings/, catalog.json) is tracked so a clone
+# runs without the TrekCC PDFs.
+public/frames/*
+!public/frames/base/
+!public/frames/icons/
+!public/frames/overlays/
+!public/frames/rings/
+!public/frames/catalog.json
