@@ -1,9 +1,11 @@
 import type { Card } from '../model/card';
+import { describeBackup, needsNudge, type BackupStatus } from '../store/backup';
 
 interface Props {
   cards: Card[];
   currentId: string | null;
   busy: boolean;
+  backup: BackupStatus;
   onSelect: (id: string) => void;
   onNew: () => void;
   onDuplicate: (id: string) => void;
@@ -17,6 +19,7 @@ interface Props {
 
 export function DeckList(p: Props) {
   const total = p.cards.reduce((n, c) => n + Math.max(0, c.copies), 0);
+  const nudge = needsNudge(p.backup);
   return (
     <aside className="deck">
       <div className="deck-head">
@@ -57,7 +60,11 @@ export function DeckList(p: Props) {
         <button className="primary" onClick={p.onExportPdf} disabled={p.busy || total === 0}>
           {p.busy ? 'Building PDF…' : 'Export print sheet (PDF)'}
         </button>
-        <button onClick={p.onExportJson} disabled={!p.cards.length}>
+        <p className={nudge ? 'small backup-line warn' : 'muted small backup-line'} title="Cards live only in this browser; the JSON export is your copy">
+          {describeBackup(p.backup)}
+          {nudge && ' — time to export a backup'}
+        </p>
+        <button className={nudge ? 'attention' : ''} onClick={p.onExportJson} disabled={!p.cards.length}>
           Export deck (JSON)
         </button>
         <label className="file-button">

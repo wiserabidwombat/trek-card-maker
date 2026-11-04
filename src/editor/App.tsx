@@ -13,6 +13,8 @@ import type { Paper } from '../export/paper';
 import { ExportDialog } from './ExportDialog';
 import { HelpDialog } from './HelpDialog';
 import { Welcome } from './Welcome';
+import { useBackupStatus } from './useBackupStatus';
+import { recordBackup, recordChange } from '../store/backup';
 import { sampleCards } from './sampleDeck';
 import { clearCardsAndImages, deleteCard, getImage, getUserFont, listCards, putCard, putImage } from '../store/db';
 import { parseDeck, remapFrames, serializeDeck } from '../store/deckJson';
@@ -58,6 +60,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
   const [showHelp, setShowHelp] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const saveTimers = useRef(new Map<string, number>());
+  const backup = useBackupStatus();
 
   const current = cards.find((c) => c.id === currentId) ?? null;
   const frame = current ? catalog.frames.find((f) => f.id === current.frameId) ?? null : null;
@@ -122,7 +125,9 @@ function Editor({ catalog }: { catalog: Catalog }) {
     timers.set(
       card.id,
       window.setTimeout(() => {
-        putCard(card).catch((e) => setNotice(`Could not save: ${e instanceof Error ? e.message : String(e)}`));
+        putCard(card)
+          .then(() => recordChange())
+          .catch((e) => setNotice(`Could not save: ${e instanceof Error ? e.message : String(e)}`));
         timers.delete(card.id);
       }, 300),
     );
@@ -159,6 +164,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
     setCards(rest);
     if (currentId === id) setCurrentId(rest.length ? rest[rest.length - 1].id : null);
     await deleteCard(id);
+    recordChange();
     if (!rest.length) addCard();
   };
 
@@ -173,6 +179,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
     saveTimers.current.clear();
     for (const c of cards) if (c.image) assets.dropBlob(c.image.blobKey);
     const removed = await clearCardsAndImages();
+    recordChange();
     const first = catalog.frames.find((fr) => fr.type === 'personnel') ?? catalog.frames[0];
     const fresh = newCard(first.type, first.id);
     setCards([fresh]);
@@ -232,6 +239,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
       if (blob) images[c.image.blobKey] = await blobToDataUrl(blob);
     }
     downloadBytes(new TextEncoder().encode(serializeDeck(cards, images)), 'trek-cards-deck.json', 'application/json');
+    recordBackup();
   };
 
   /** Append cards to the deck (fresh ids for any already taken), select the last one, and return what was added. */
@@ -239,6 +247,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
     const existing = new Set(cards.map((c) => c.id));
     const fresh = incoming.map((c) => (existing.has(c.id) ? { ...c, id: newCard(c.type, c.frameId).id } : c));
     for (const c of fresh) await putCard(c);
+    if (fresh.length) recordChange(fresh.length);
     setCards((cs) => [...cs, ...fresh]);
     if (fresh.length) setCurrentId(fresh[fresh.length - 1].id);
     return fresh;
@@ -295,6 +304,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
           cards={cards}
           currentId={currentId}
           busy={exporting}
+          backup={backup}
           onSelect={setCurrentId}
           onNew={() => addCard()}
           onDuplicate={(id) => {

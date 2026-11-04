@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Catalog } from '../catalog/types';
 import { templateFor } from '../catalog/types';
 import type { Card } from '../model/card';
@@ -9,14 +9,19 @@ import { getImage } from '../store/db';
 import { FRAMES_BASE } from '../catalog/useCatalog';
 
 export interface RenderState {
+  /** The finished card, or null while nothing has rendered yet or after a failure. */
   canvas: HTMLCanvasElement | null;
   overflow: boolean;
   error: string | null;
   busy: boolean;
+  /** Render the current card again (after a failed fetch, for example). */
+  retry: () => void;
 }
 
 export function useRenderer(card: Card | null, catalog: Catalog, fonts: FontConfig, assets: AssetCache): RenderState {
-  const [state, setState] = useState<RenderState>({ canvas: null, overflow: false, error: null, busy: false });
+  const [attempt, setAttempt] = useState(0);
+  const retry = useCallback(() => setAttempt((n) => n + 1), []);
+  const [state, setState] = useState<RenderState>({ canvas: null, overflow: false, error: null, busy: false, retry });
   const token = useRef(0);
 
   useEffect(() => {
@@ -34,14 +39,14 @@ export function useRenderer(card: Card | null, catalog: Catalog, fonts: FontConf
           if (blob) userImage = await assets.getBlobImage(card.image.blobKey, blob);
         }
         const result = await renderCard(card, { catalog, frame, template, fonts, assets, userImage, base: FRAMES_BASE });
-        if (my === token.current) setState({ canvas: result.canvas, overflow: result.overflow, error: null, busy: false });
+        if (my === token.current) setState({ canvas: result.canvas, overflow: result.overflow, error: null, busy: false, retry });
       } catch (e) {
-        if (my === token.current)
-          setState((s) => ({ ...s, error: e instanceof Error ? e.message : String(e), busy: false }));
+        // Drop the previous picture: showing it under an error message made failures look like success.
+        if (my === token.current) setState({ canvas: null, overflow: false, error: e instanceof Error ? e.message : String(e), busy: false, retry });
       }
     }, 60);
     return () => clearTimeout(timer);
-  }, [card, catalog, fonts, assets]);
+  }, [card, catalog, fonts, assets, attempt, retry]);
 
   return state;
 }

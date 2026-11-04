@@ -604,3 +604,36 @@ button.danger:hover:not(:disabled) {
 .paper-choice {
   grid-template-columns: 1fr 1fr;
 }
+
+/* preview failure */
+.preview-error {
+  background: #000;
+  border-radius: 10px;
+  padding: 28px 20px;
+  aspect-ratio: 63 / 88;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+.preview-error p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.preview-error strong {
+  color: var(--error);
+}
+
+/* backup reminder */
+.backup-line {
+  margin: 4px 0 0;
+}
+.backup-line.warn {
+  color: var(--warn);
+}
+button.attention {
+  border-color: var(--warn);
+  color: var(--warn);
+}

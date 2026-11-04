@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { RenderState } from './useRenderer';
+import { renderErrorHint } from '../render/errors';
 
 interface Props {
   render: RenderState;
@@ -33,20 +34,33 @@ export function Preview({ render, filename }: Props) {
     }, 'image/png');
   };
 
+  const hint = render.error ? renderErrorHint(render.error) : '';
+
   return (
     <section className="preview">
       <div className="preview-toolbar">
         <h2>Preview</h2>
         {render.busy && <span className="badge muted">Rendering…</span>}
-        {render.overflow && <span className="badge warn">Text overflows: shrunk to fit</span>}
-        {render.error && <span className="badge error">{render.error}</span>}
+        {render.overflow && !render.error && <span className="badge warn">Text overflows: shrunk to fit</span>}
         <button onClick={download} disabled={!render.canvas}>
           Download PNG
         </button>
       </div>
-      <div className="preview-frame">
-        <canvas ref={ref} className="preview-canvas" />
-      </div>
+      {render.error ? (
+        // The last good render is dropped on purpose: a stale picture next to an error reads as "it worked".
+        <div className="preview-error" role="alert">
+          <strong>Could not draw this card</strong>
+          <p>{render.error}</p>
+          {hint && <p className="muted small">{hint}</p>}
+          <button className="primary" onClick={render.retry} disabled={render.busy}>
+            {render.busy ? 'Retrying…' : 'Retry'}
+          </button>
+        </div>
+      ) : (
+        <div className="preview-frame">
+          <canvas ref={ref} className="preview-canvas" />
+        </div>
+      )}
     </section>
   );
 }
