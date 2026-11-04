@@ -48,6 +48,8 @@ export interface Card {
   image?: CardImage;
   copies: number;
   updatedAt: number;
+  /** The deck this card belongs to; cards saved before decks existed get the default deck on load. */
+  deckId?: string;
 }
 
 export interface FieldDef {
@@ -117,7 +119,7 @@ function emptyFields(type: CardType): Record<string, string> {
   return out;
 }
 
-export function newCard(type: CardType, frameId: string): Card {
+export function newCard(type: CardType, frameId: string, deckId?: string): Card {
   return {
     id: uid(),
     name: '',
@@ -128,6 +130,7 @@ export function newCard(type: CardType, frameId: string): Card {
     icons: [],
     copies: 1,
     updatedAt: Date.now(),
+    ...(deckId ? { deckId } : {}),
   };
 }
 

@@ -59,7 +59,8 @@ export function HelpDialog({ catalog, onClose, onLoadSample }: Props) {
             </p>
             <ul>
               <li>
-                <code>version</code>: {DECK_VERSION}. <code>exportedAt</code>: ISO timestamp, informational.
+                <code>version</code>: {DECK_VERSION}. <code>exportedAt</code>: ISO timestamp, informational. <code>name</code>: optional deck
+                name; importing creates a new deck called this (else named after the file).
               </li>
               <li>
                 <code>cards</code>: one object per card. <code>id</code> any unique string; <code>name</code> is the deck-list label;{' '}

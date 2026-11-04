@@ -14,12 +14,16 @@ export const DECK_VERSION = 2;
 export interface DeckFile {
   version: typeof DECK_VERSION;
   exportedAt: string;
+  /** Deck name; importing creates a deck with it. Older files have none. */
+  name?: string;
   cards: Card[];
   images: Record<string, string>; // blobKey -> data URL
 }
 
-export function serializeDeck(cards: Card[], images: Record<string, string>): string {
-  const file: DeckFile = { version: DECK_VERSION, exportedAt: new Date().toISOString(), cards, images };
+export function serializeDeck(cards: Card[], images: Record<string, string>, name?: string): string {
+  // deckId is local bookkeeping; the file should import cleanly anywhere
+  const portable = cards.map(({ deckId: _drop, ...c }) => c);
+  const file: DeckFile = { version: DECK_VERSION, exportedAt: new Date().toISOString(), ...(name ? { name } : {}), cards: portable, images };
   return JSON.stringify(file, null, 1);
 }
 
@@ -69,7 +73,7 @@ function checkCard(i: number, c: unknown): Card {
   };
 }
 
-export function parseDeck(json: string): { cards: Card[]; images: Record<string, string> } {
+export function parseDeck(json: string): { cards: Card[]; images: Record<string, string>; name?: string } {
   let data: unknown;
   try {
     data = JSON.parse(json);
@@ -84,7 +88,7 @@ export function parseDeck(json: string): { cards: Card[]; images: Record<string,
   if (isRecord(data.images)) {
     for (const [k, v] of Object.entries(data.images)) if (typeof v === 'string') images[k] = v;
   }
-  return { cards, images };
+  return { cards, images, ...(typeof data.name === 'string' && data.name.trim() ? { name: data.name.trim() } : {}) };
 }
 
 /**

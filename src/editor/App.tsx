@@ -16,7 +16,8 @@ import { Welcome } from './Welcome';
 import { useBackupStatus } from './useBackupStatus';
 import { recordBackup, recordChange } from '../store/backup';
 import { sampleCards } from './sampleDeck';
-import { clearCardsAndImages, deleteCard, getImage, getUserFont, listCards, putCard, putImage } from '../store/db';
+import { clearCardsAndImages, deleteCard, getImage, getUserFont, listCards, loadDecks, putCard, putImage, saveCurrentDeck, saveDecks } from '../store/db';
+import { deckFileName, importedDeckName, newDeckId, uniqueDeckName, type DeckMeta } from '../store/decks';
 import { parseDeck, remapFrames, serializeDeck } from '../store/deckJson';
 import { DeckList } from './DeckList';
 import { FieldsForm } from './FieldsForm';
@@ -51,6 +52,8 @@ async function dataUrlToBlob(url: string): Promise<Blob> {
 function Editor({ catalog }: { catalog: Catalog }) {
   const assets = useMemo(() => new AssetCache(), []);
   const [fonts, setFonts] = useState<FontConfig>(DEFAULT_FONTS);
+  const [decks, setDecks] = useState<DeckMeta[]>([]);
+  const [deckId, setDeckId] = useState<string>('');
   const [cards, setCards] = useState<Card[]>([]);
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -82,9 +85,12 @@ function Editor({ catalog }: { catalog: Catalog }) {
         }
       }
       await ensureFontsLoaded(f);
-      const stored = await listCards();
+      const { decks: registry, currentId: openDeck } = await loadDecks();
+      const stored = await listCards(openDeck);
       if (cancelled) return;
       setFonts(f);
+      setDecks(registry);
+      setDeckId(openDeck);
       if (stored.length) {
         // cards saved against an older catalog (per-card frames, text skills) are moved to base frames
         const { cards: saved, remapped } = remapFrames(
@@ -103,7 +109,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
         setCurrentId(saved[saved.length - 1].id);
       } else {
         const first = catalog.frames.find((fr) => fr.type === 'personnel') ?? catalog.frames[0];
-        const c = newCard(first.type, first.id);
+        const c = newCard(first.type, first.id, openDeck);
         setCards([c]);
         setCurrentId(c.id);
         await putCard(c);
@@ -141,7 +147,8 @@ function Editor({ catalog }: { catalog: Catalog }) {
   const addCard = async (base?: Card) => {
     const c = base
       ? { ...structuredClone(base), id: newCard(base.type, base.frameId).id, name: base.name ? `${base.name} (copy)` : '', updatedAt: Date.now() }
-      : newCard(current?.type ?? 'personnel', current?.frameId ?? catalog.frames[0].id);
+      : newCard(current?.type ?? 'personnel', current?.frameId ?? catalog.frames[0].id, deckId);
+    if (base) c.deckId = deckId;
     if (base?.image) {
       // duplicate the stored image so the copies can be edited independently
       const blob = await getImage(base.image.blobKey);
@@ -178,10 +185,10 @@ function Editor({ catalog }: { catalog: Catalog }) {
     for (const timer of saveTimers.current.values()) window.clearTimeout(timer);
     saveTimers.current.clear();
     for (const c of cards) if (c.image) assets.dropBlob(c.image.blobKey);
-    const removed = await clearCardsAndImages();
+    const removed = await clearCardsAndImages(deckId);
     recordChange();
     const first = catalog.frames.find((fr) => fr.type === 'personnel') ?? catalog.frames[0];
-    const fresh = newCard(first.type, first.id);
+    const fresh = newCard(first.type, first.id, deckId);
     setCards([fresh]);
     setCurrentId(fresh.id);
     await putCard(fresh);
@@ -238,14 +245,73 @@ function Editor({ catalog }: { catalog: Catalog }) {
       const blob = await getImage(c.image.blobKey);
       if (blob) images[c.image.blobKey] = await blobToDataUrl(blob);
     }
-    downloadBytes(new TextEncoder().encode(serializeDeck(cards, images)), 'trek-cards-deck.json', 'application/json');
+    const deckName = decks.find((d) => d.id === deckId)?.name ?? '';
+    downloadBytes(new TextEncoder().encode(serializeDeck(cards, images, deckName)), deckFileName(deckName), 'application/json');
     recordBackup();
   };
 
+  /** Show a deck: flush nothing (pending saves carry their own deck id), load its cards, and give an empty deck a starter card. */
+  const openDeck = async (id: string, preloaded?: Card[]) => {
+    setDeckId(id);
+    await saveCurrentDeck(id);
+    let next = preloaded ?? (await listCards(id));
+    if (!next.length) {
+      const first = catalog.frames.find((fr) => fr.type === 'personnel') ?? catalog.frames[0];
+      const starter = newCard(first.type, first.id, id);
+      await putCard(starter);
+      next = [starter];
+    }
+    setCards(next);
+    setCurrentId(next[next.length - 1].id);
+  };
+
+  const createDeck = async (wanted?: string): Promise<DeckMeta | null> => {
+    const name = wanted ?? window.prompt('Name for the new deck', uniqueDeckName('Deck', decks));
+    if (name === null) return null;
+    const meta: DeckMeta = { id: newDeckId(), name: uniqueDeckName(name, decks), createdAt: Date.now() };
+    const next = [...decks, meta];
+    setDecks(next);
+    await saveDecks(next);
+    return meta;
+  };
+
+  const newDeck = async () => {
+    const meta = await createDeck();
+    if (meta) await openDeck(meta.id);
+  };
+
+  const renameDeck = async () => {
+    const cur = decks.find((d) => d.id === deckId);
+    if (!cur) return;
+    const name = window.prompt('Rename deck', cur.name);
+    if (name === null || !name.trim() || name.trim() === cur.name) return;
+    const next = decks.map((d) => (d.id === deckId ? { ...d, name: uniqueDeckName(name, decks.filter((x) => x.id !== deckId)) } : d));
+    setDecks(next);
+    await saveDecks(next);
+  };
+
+  const removeDeck = async () => {
+    const cur = decks.find((d) => d.id === deckId);
+    if (!cur) return;
+    const n = cards.length;
+    if (!window.confirm(`Delete the deck "${cur.name}" and its ${n} card${n === 1 ? '' : 's'}? This cannot be undone. Export it first if you want to keep it.`)) return;
+    for (const timer of saveTimers.current.values()) window.clearTimeout(timer);
+    saveTimers.current.clear();
+    for (const c of cards) if (c.image) assets.dropBlob(c.image.blobKey);
+    await clearCardsAndImages(deckId);
+    recordChange();
+    let rest = decks.filter((d) => d.id !== deckId);
+    if (!rest.length) rest = [{ id: newDeckId(), name: uniqueDeckName('My deck', []), createdAt: Date.now() }];
+    setDecks(rest);
+    await saveDecks(rest);
+    await openDeck(rest[0].id);
+    setNotice(`Deleted deck "${cur.name}".`);
+  };
+
   /** Append cards to the deck (fresh ids for any already taken), select the last one, and return what was added. */
-  const addCards = async (incoming: Card[]): Promise<Card[]> => {
-    const existing = new Set(cards.map((c) => c.id));
-    const fresh = incoming.map((c) => (existing.has(c.id) ? { ...c, id: newCard(c.type, c.frameId).id } : c));
+  const addCards = async (incoming: Card[], into = deckId, present = cards): Promise<Card[]> => {
+    const existing = new Set(present.map((c) => c.id));
+    const fresh = incoming.map((c) => ({ ...c, deckId: into, ...(existing.has(c.id) ? { id: newCard(c.type, c.frameId).id } : {}) }));
     for (const c of fresh) await putCard(c);
     if (fresh.length) recordChange(fresh.length);
     setCards((cs) => [...cs, ...fresh]);
@@ -274,8 +340,15 @@ function Editor({ catalog }: { catalog: Catalog }) {
       const { cards: incoming, remapped } = remapFrames(parsed.cards, catalog);
       const images = parsed.images;
       for (const [key, url] of Object.entries(images)) await putImage(key, await dataUrlToBlob(url));
-      const fresh = await addCards(incoming);
-      setNotice(`Imported ${fresh.length} card${fresh.length === 1 ? '' : 's'}${remapped ? ` (${remapped} moved to base frames)` : ''}.`);
+      // Each file becomes its own deck, named from the file, and the editor switches to it.
+      const meta = await createDeck(importedDeckName(file.name, parsed.name, decks));
+      if (!meta) return;
+      setDeckId(meta.id);
+      await saveCurrentDeck(meta.id);
+      setCards([]);
+      const fresh = await addCards(incoming, meta.id, []);
+      if (!fresh.length) await openDeck(meta.id);
+      setNotice(`Imported ${fresh.length} card${fresh.length === 1 ? '' : 's'} into the new deck "${meta.name}"${remapped ? ` (${remapped} moved to base frames)` : ''}.`);
     } catch (e) {
       setNotice(`Import failed: ${e instanceof Error ? e.message : String(e)}`);
     }
@@ -305,6 +378,12 @@ function Editor({ catalog }: { catalog: Catalog }) {
           currentId={currentId}
           busy={exporting}
           backup={backup}
+          decks={decks}
+          deckId={deckId}
+          onSwitchDeck={openDeck}
+          onNewDeck={newDeck}
+          onRenameDeck={renameDeck}
+          onDeleteDeck={removeDeck}
           onSelect={setCurrentId}
           onNew={() => addCard()}
           onDuplicate={(id) => {

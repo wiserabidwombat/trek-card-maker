@@ -64,3 +64,16 @@ describe('deck JSON', () => {
     expect(() => parseDeck(JSON.stringify({ version: 1, cards: [{ id: 1 }], images: {} }))).toThrow(DeckFormatError);
   });
 });
+
+describe('deck name in the file', () => {
+  it('round-trips the name and strips local deck ids', async () => {
+    const { newCard } = await import('../model/card');
+    const card = { ...newCard('personnel', 'personnel.klingon'), deckId: 'local-only' };
+    const json = serializeDeck([card], {}, 'Klingon Aggro');
+    expect(json).not.toContain('local-only');
+    const parsed = parseDeck(json);
+    expect(parsed.name).toBe('Klingon Aggro');
+    expect(parsed.cards[0].deckId).toBeUndefined();
+    expect(parseDeck(serializeDeck([card], {})).name).toBeUndefined();
+  });
+});

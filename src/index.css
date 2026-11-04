@@ -637,3 +637,17 @@ button.attention {
   border-color: var(--warn);
   color: var(--warn);
 }
+
+/* deck switcher */
+.deck-switcher {
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.deck-switcher select {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+}
+.deck-switcher button {
+  padding: 4px 8px;
+}

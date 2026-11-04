@@ -1,11 +1,18 @@
 import type { Card } from '../model/card';
 import { describeBackup, needsNudge, type BackupStatus } from '../store/backup';
+import type { DeckMeta } from '../store/decks';
 
 interface Props {
   cards: Card[];
   currentId: string | null;
   busy: boolean;
   backup: BackupStatus;
+  decks: DeckMeta[];
+  deckId: string;
+  onSwitchDeck: (id: string) => void;
+  onNewDeck: () => void;
+  onRenameDeck: () => void;
+  onDeleteDeck: () => void;
   onSelect: (id: string) => void;
   onNew: () => void;
   onDuplicate: (id: string) => void;
@@ -22,6 +29,21 @@ export function DeckList(p: Props) {
   const nudge = needsNudge(p.backup);
   return (
     <aside className="deck">
+      <div className="deck-head deck-switcher">
+        <select value={p.deckId} onChange={(e) => p.onSwitchDeck(e.target.value)} title="Switch deck" aria-label="Deck">
+          {p.decks.map((d) => (
+            <option key={d.id} value={d.id}>
+              {d.name}
+            </option>
+          ))}
+        </select>
+        <button onClick={p.onNewDeck} title="New deck">
+          +
+        </button>
+        <button onClick={p.onRenameDeck} title="Rename deck">
+          ✎
+        </button>
+      </div>
       <div className="deck-head">
         <h2>Cards</h2>
         <button className="primary" onClick={p.onNew}>
@@ -71,8 +93,11 @@ export function DeckList(p: Props) {
           Import deck (JSON)…
           <input type="file" accept="application/json,.json" onChange={(e) => e.target.files?.[0] && p.onImportJson(e.target.files[0])} />
         </label>
-        <button className="danger" onClick={p.onClearAll} disabled={p.busy || !p.cards.length} title="Delete every card and its image">
+        <button className="danger" onClick={p.onClearAll} disabled={p.busy || !p.cards.length} title="Delete every card in this deck and its image">
           Clear all…
+        </button>
+        <button className="danger" onClick={p.onDeleteDeck} disabled={p.busy} title="Delete this deck and its cards">
+          Delete deck…
         </button>
       </div>
     </aside>
