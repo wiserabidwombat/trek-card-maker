@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import type { Catalog } from './types';
 import { validateCatalog } from './loader';
 
-export const FRAMES_BASE = '/frames/';
+// Catalog files live under the app's base URL ('/' locally, '/<repo>/' on GitHub Pages).
+export const FRAMES_BASE = `${import.meta.env.BASE_URL}frames/`;
 
 export type CatalogState =
   | { status: 'loading' }

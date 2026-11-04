@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Catalog, Frame } from '../catalog/types';
 import { templateFor } from '../catalog/types';
 import { useCatalog, FRAMES_BASE } from '../catalog/useCatalog';
-import { changeType, newCard, type Card } from '../model/card';
+import { changeType, isBlankCard, newCard, type Card } from '../model/card';
 import { parseSkillText } from '../model/skills';
 import { AssetCache } from '../render/assets';
 import { DEFAULT_FONTS, ensureFontsLoaded, registerUserFont, type FontConfig } from '../render/fonts';
@@ -11,6 +11,8 @@ import { buildSheetPdf, downloadBytes } from '../export/exportPdf';
 import { PROFILES, type PrintProfile } from '../render/printProfile';
 import { ExportDialog } from './ExportDialog';
 import { HelpDialog } from './HelpDialog';
+import { Welcome } from './Welcome';
+import { sampleCards } from './sampleDeck';
 import { clearCardsAndImages, deleteCard, getImage, getUserFont, listCards, putCard, putImage } from '../store/db';
 import { parseDeck, remapFrames, serializeDeck } from '../store/deckJson';
 import { DeckList } from './DeckList';
@@ -231,17 +233,38 @@ function Editor({ catalog }: { catalog: Catalog }) {
     downloadBytes(new TextEncoder().encode(serializeDeck(cards, images)), 'trek-cards-deck.json', 'application/json');
   };
 
+  /** Append cards to the deck (fresh ids for any already taken), select the last one, and return what was added. */
+  const addCards = async (incoming: Card[]): Promise<Card[]> => {
+    const existing = new Set(cards.map((c) => c.id));
+    const fresh = incoming.map((c) => (existing.has(c.id) ? { ...c, id: newCard(c.type, c.frameId).id } : c));
+    for (const c of fresh) await putCard(c);
+    setCards((cs) => [...cs, ...fresh]);
+    if (fresh.length) setCurrentId(fresh[fresh.length - 1].id);
+    return fresh;
+  };
+
+  /** Add the two example cards from Help; an untouched starter card is dropped rather than left as an empty extra. */
+  const loadSample = async () => {
+    const blank = cards.filter(isBlankCard);
+    const added = await addCards(sampleCards(catalog));
+    for (const c of blank) {
+      const timer = saveTimers.current.get(c.id);
+      if (timer) window.clearTimeout(timer);
+      saveTimers.current.delete(c.id);
+      await deleteCard(c.id);
+    }
+    const dropped = new Set(blank.map((c) => c.id));
+    setCards((cs) => cs.filter((c) => !dropped.has(c.id)));
+    setNotice(`Added ${added.length} sample cards.`);
+  };
+
   const importJson = async (file: File) => {
     try {
       const parsed = parseDeck(await file.text());
       const { cards: incoming, remapped } = remapFrames(parsed.cards, catalog);
       const images = parsed.images;
       for (const [key, url] of Object.entries(images)) await putImage(key, await dataUrlToBlob(url));
-      const existing = new Set(cards.map((c) => c.id));
-      const fresh = incoming.map((c) => (existing.has(c.id) ? { ...c, id: newCard(c.type, c.frameId).id } : c));
-      for (const c of fresh) await putCard(c);
-      setCards((cs) => [...cs, ...fresh]);
-      if (fresh.length) setCurrentId(fresh[fresh.length - 1].id);
+      const fresh = await addCards(incoming);
       setNotice(`Imported ${fresh.length} card${fresh.length === 1 ? '' : 's'}${remapped ? ` (${remapped} moved to base frames)` : ''}.`);
     } catch (e) {
       setNotice(`Import failed: ${e instanceof Error ? e.message : String(e)}`);
@@ -249,6 +272,8 @@ function Editor({ catalog }: { catalog: Catalog }) {
   };
 
   if (!loaded) return <main className="setup">Loading your cards…</main>;
+
+  const pristine = cards.every(isBlankCard);
 
   return (
     <div className="app">
@@ -287,13 +312,23 @@ function Editor({ catalog }: { catalog: Catalog }) {
         />
         <FramePicker catalog={catalog} selectedId={current?.frameId ?? ''} onSelect={selectFrame} />
         <div className="middle">
+          {pristine && <Welcome onLoadSample={loadSample} onHelp={() => setShowHelp(true)} />}
           {current && frame && template && <ImageSection card={current} frame={frame} template={template} assets={assets} onChange={updateCard} />}
           {current && <FieldsForm card={current} catalog={catalog} template={template} onChange={updateCard} />}
         </div>
         <Preview render={render} filename={current?.name || current?.fields.title || 'card'} />
       </div>
       {showFonts && <FontSettings fonts={fonts} onChange={setFonts} onClose={() => setShowFonts(false)} />}
-      {showHelp && <HelpDialog catalog={catalog} onClose={() => setShowHelp(false)} />}
+      {showHelp && (
+        <HelpDialog
+          catalog={catalog}
+          onClose={() => setShowHelp(false)}
+          onLoadSample={() => {
+            setShowHelp(false);
+            loadSample();
+          }}
+        />
+      )}
       {showExport && (
         <ExportDialog cardCount={cards.reduce((n, c) => n + Math.max(0, c.copies), 0)} onExport={exportPdf} onCancel={() => setShowExport(false)} />
       )}

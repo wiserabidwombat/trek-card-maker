@@ -1,53 +1,24 @@
 # Trek Card Maker
 
-A local web app for designing custom **Star Trek Customizable Card Game, Second Edition** cards.
+A browser app for designing custom **Star Trek Customizable Card Game, Second Edition** cards.
 Pick a clean base frame (one per card type and affiliation, built from The Continuing Committee's
 free-to-print virtual card PDFs), add the rulebook's *Other Icons*, staffing, mission affiliations
 and skills from lists, fill in the card text, drop in your own artwork (with crop, zoom and
 rotate), and export a US Letter print sheet (3×3 cards at 63×88 mm, the TrekCC size, with cut
 marks) as a PDF at the frames' native resolution.
 
-Everything runs in your browser. Cards and images are stored in the browser's IndexedDB; a JSON
-export lets you back them up or move them to another machine.
+Everything runs in your browser; nothing is uploaded. Cards and images are stored in the browser's
+IndexedDB, so they stay on the machine and browser you made them in. Use **Export deck (JSON)**
+regularly for a backup you can import elsewhere.
 
-## Prerequisites
+## Use it
 
-- Node.js 20+
-- Python 3.11+ with `pip install -r tools/requirements.txt` (PyMuPDF, Pillow, NumPy, pytest)
-- The TrekCC virtual-set PDFs (the "HiRes" versions give the sharpest frames). The flat-scan sets
-  (for example *Timeless* and *Finding Our Way*) have no separate card images and are skipped.
+Open **https://wiserabidwombat.github.io/trek-card-maker/** in a current Chrome, Edge, Firefox or
+Safari. No install; the first visit shows a welcome panel with a **Load sample deck** button.
 
-## 1. Build the frame catalog (once)
+## Run it locally
 
-```bash
-python -I -X utf8 tools/extract_frames.py --pdf-dir "C:/Users/altil/Downloads/TrekCC" --rulebook "C:/Users/altil/Downloads/rulebook.pdf" --out public/frames
-```
-
-Add `--review` to also write contact sheets into `public/frames/review/` (affiliation clusters,
-template boxes, every base frame before/after cleaning, and the icon crops with the name each
-was matched to). The extractor writes:
-
-- `public/frames/<Set>/NNN.jpg` the per-card source frames (1022×1464 for HiRes sets, 744×1039
-  for older ones); kept for the extractor itself, not listed in the catalog
-- `public/frames/base/<type>.<variant>.jpg` one clean frame per card type and variant
-  (affiliation for personnel and ships; planet/space/headquarters for missions;
-  dual/planet/space for dilemmas). HiRes sources are preferred; the older sets fill the gaps
-  (Vidiian personnel, the Ferengi ship). Icon sockets and mission affiliation icons are removed.
-- `public/frames/rings/*.png` the empty socket ring per affiliation, drawn under each Other Icon
-- `public/frames/icons/big-*.png` full-size Other Icons cropped from the frames and named by
-  matching against the rulebook's icon list; `icons/mission-*.png` affiliation icons for the
-  mission strip; `icons/hi-*.png` 96 px versions of the inline icons (ring plus emblem), used in
-  game text and staffing in place of the small `icons/*.png` originals wherever one exists
-- `public/frames/overlays/*.png` the frame edges that overlap the art area, drawn back on top of your image
-- `public/frames/catalog.json` the base frames, one layout template per card type and family
-  (text boxes from the PDFs' own text layer, socket slots and strip geometry measured from the
-  frames), the icon list with groups, and the skill vocabulary
-
-`public/frames/` is generated and git-ignored. Hand corrections to a template go in
-`tools/template_overrides.json`; inline icon names in `tools/icon_names.json`; rulebook label →
-icon id in `tools/rulebook_icons.json`; affiliation colour centres in `tools/affiliation.py`.
-
-## 2. Run the editor
+Node.js 20+ is all you need; the frame catalog is included in the repository.
 
 ```bash
 npm install
@@ -105,6 +76,44 @@ to load your `.ttf`/`.otf` files; they are kept in the browser only.
 - Decks saved by the first version (per-card frames, free-text skills) load and import, but their
   cards move to the first base frame of their type: re-pick the affiliation and add the icons.
 
+## Rebuilding the frame catalog (optional)
+
+Only needed to change how frames, icons or templates are extracted. Requirements: Python 3.11+
+with `pip install -r tools/requirements.txt` (PyMuPDF, Pillow, NumPy, pytest), the TrekCC
+virtual-set PDFs (the "HiRes" versions give the sharpest frames; flat-scan sets such as *Timeless*
+and *Finding Our Way* have no separate card images and are skipped) and the 2E rulebook PDF.
+
+```bash
+python -I -X utf8 tools/extract_frames.py --pdf-dir "C:/Users/altil/Downloads/TrekCC" --rulebook "C:/Users/altil/Downloads/rulebook.pdf" --out public/frames
+```
+
+Add `--review` to also write contact sheets into `public/frames/review/` (affiliation clusters,
+template boxes, every base frame before/after cleaning, and the icon crops with the name each
+was matched to). The extractor writes:
+
+- `public/frames/<Set>/NNN.jpg` the per-card source frames (1022×1464 for HiRes sets, 744×1039
+  for older ones); kept for the extractor itself, not listed in the catalog
+- `public/frames/base/<type>.<variant>.jpg` one clean frame per card type and variant
+  (affiliation for personnel and ships; planet/space/headquarters for missions;
+  dual/planet/space for dilemmas). HiRes sources are preferred; the older sets fill the gaps
+  (Vidiian personnel, the Ferengi ship). Icon sockets and mission affiliation icons are removed.
+- `public/frames/rings/*.png` the empty socket ring per affiliation, drawn under each Other Icon
+- `public/frames/icons/big-*.png` full-size Other Icons cropped from the frames and named by
+  matching against the rulebook's icon list; `icons/mission-*.png` affiliation icons for the
+  mission strip; `icons/hi-*.png` 96 px versions of the inline icons (ring plus emblem), used in
+  game text and staffing in place of the small `icons/*.png` originals wherever one exists
+- `public/frames/overlays/*.png` the frame edges that overlap the art area, drawn back on top of your image
+- `public/frames/catalog.json` the base frames, one layout template per card type and family
+  (text boxes from the PDFs' own text layer, socket slots and strip geometry measured from the
+  frames), the icon list with groups, and the skill vocabulary
+
+The finished catalog (`base/`, `icons/`, `overlays/`, `rings/`, `catalog.json`) is committed so a clone
+runs without the PDFs; the per-set source frames, review sheets and `source_frames.json` are
+git-ignored. `--pass3-only` rebuilds the base frames and icons from `source_frames.json` in about a
+minute (it needs a full run first). Hand corrections to a template go in
+`tools/template_overrides.json`; inline icon names in `tools/icon_names.json`; rulebook label →
+icon id in `tools/rulebook_icons.json`; affiliation colour centres in `tools/affiliation.py`.
+
 ## Development
 
 ```bash
@@ -116,8 +125,22 @@ cd tools && python -I -X utf8 -m pytest -q   # extractor unit tests
 
 Design notes live in `docs/superpowers/specs/` and the implementation plan in `docs/superpowers/plans/`.
 
+The GitHub Actions workflow in `.github/workflows/ci.yml` runs the same checks on every push and
+pull request, and on `master` builds the site with `BASE_PATH=/trek-card-maker/` and deploys it to
+GitHub Pages. To host your own copy, enable Pages (source: GitHub Actions) on your fork.
+
 ## Credits and fair use
 
-Card frames are derived from The Continuing Committee's (trekcc.org) virtual expansions, which
-are distributed for non-commercial print-and-play use. Star Trek is a trademark of CBS/Paramount.
-This tool is for personal, non-commercial custom cards.
+- Card frames, icons and layout templates are derived from [The Continuing Committee](https://www.trekcc.org)'s
+  virtual expansions, distributed for non-commercial print-and-play use. Thank you to everyone
+  there who designs, templates and releases those sets.
+- Star Trek and related marks are trademarks of CBS Studios Inc. / Paramount Global. This is an
+  unofficial fan tool for personal, non-commercial custom cards and is not affiliated with or
+  endorsed by The Continuing Committee, Decipher, CBS or Paramount.
+- Fonts: [Exo 2](https://fonts.google.com/specimen/Exo+2) and
+  [Fira Sans Condensed](https://fonts.google.com/specimen/Fira+Sans+Condensed) (SIL Open Font License).
+
+## License
+
+The application code is released under the [MIT License](LICENSE). The frame catalog in
+`public/frames/` is not; see the note at the end of that file.

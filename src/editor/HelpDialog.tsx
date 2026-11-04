@@ -10,11 +10,13 @@ import { sampleDeckJson } from './sampleDeck';
 interface Props {
   catalog: Catalog;
   onClose: () => void;
+  /** Adds the sample cards to the deck (the same two shown in the JSON below). */
+  onLoadSample?: () => void;
 }
 
 type Tab = 'deck' | 'markup' | 'fields';
 
-export function HelpDialog({ catalog, onClose }: Props) {
+export function HelpDialog({ catalog, onClose, onLoadSample }: Props) {
   const [tab, setTab] = useState<Tab>('deck');
   const [copied, setCopied] = useState(false);
   const sample = useMemo(() => sampleDeckJson(catalog), [catalog]);
@@ -86,6 +88,7 @@ export function HelpDialog({ catalog, onClose }: Props) {
             <div className="row">
               <strong>Sample (two cards, no images)</strong>
               <span className="spacer" />
+              {onLoadSample && <button onClick={onLoadSample}>Add these cards to my deck</button>}
               <button onClick={copy}>{copied ? 'Copied' : 'Copy'}</button>
               <button onClick={() => downloadBytes(new TextEncoder().encode(sample), 'sample-deck.json', 'application/json')}>Download sample-deck.json</button>
             </div>

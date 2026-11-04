@@ -565,3 +565,25 @@ button.danger:hover:not(:disabled) {
   overflow: auto;
   white-space: pre;
 }
+
+/* first-run welcome */
+.welcome {
+  background: var(--panel-2);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.welcome p {
+  margin: 0 0 8px;
+}
+.welcome ol {
+  margin: 0 0 10px;
+  padding-left: 20px;
+}
+.welcome li {
+  margin-bottom: 4px;
+}
+.welcome .row {
+  display: flex;
+  gap: 8px;
+}

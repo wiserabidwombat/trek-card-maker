@@ -175,3 +175,9 @@ export function staffingIcons(card: Card): string[] {
     .map((s) => s.trim())
     .filter(Boolean);
 }
+
+/** True for a card nobody has touched yet: no name, artwork, skills or icons, and every text field empty. */
+export function isBlankCard(card: Card): boolean {
+  if (card.name.trim() || card.image || card.skills.length || card.icons.length) return false;
+  return Object.values(card.fields).every((v) => !v.trim());
+}
