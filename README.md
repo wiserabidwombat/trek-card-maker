@@ -91,7 +91,10 @@ Open the printed URL (default `http://localhost:5173`).
   dialog lists the Width, Height and Number to enter for each sheet.
 - **Card backs**: the export dialog can follow every sheet with a back page, mirrored left to
   right so a long-edge duplex print puts each back behind its front. Use the plain back (deck name)
-  or your own picture, which is kept in the browser.
+  or your own picture, which is kept in the browser. A **duplex offset** (tenths of a millimetre,
+  right and up) moves the back pages to make up for a printer that puts the second side slightly
+  off: print one sheet, hold it to the light, enter the opposite of what you measure, and it is
+  remembered.
 - **Bleed** (on by default in the export dialog): black runs 2 mm past every cut line on fronts
   and backs, so a cut that drifts leaves a black sliver rather than a white one. Cards on a bleed
   sheet print with square corners for a corner punch; the cut marks stay where they are.

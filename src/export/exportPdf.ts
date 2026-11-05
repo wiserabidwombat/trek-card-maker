@@ -1,7 +1,7 @@
 import { degrees, PDFDocument, rgb } from 'pdf-lib';
 import { hexToRgb01, mapTextOp, type TextOp } from '../render/textOps';
 import { PdfFontRegistry, type UserFontBytes } from './pdfFonts';
-import { bleedRect, cutMarks, layoutSheet, mirrorSlots, type Mark, type Slot } from './sheetLayout';
+import { bleedRect, cutMarks, layoutSheet, mirrorSlots, shiftSlots, type Mark, type Slot } from './sheetLayout';
 import { PAPERS, type Paper } from './paper';
 
 export interface SheetItem {
@@ -52,6 +52,8 @@ export interface SheetOptions {
   back?: Uint8Array;
   /** Bleed in points: black is laid this far past every card's cut lines (fronts and backs) before the images go down. */
   bleed?: number;
+  /** Duplex offset in points: the back pages' slots (and their bleed) move right by x and up by y. */
+  backOffset?: { x: number; y: number };
 }
 
 /** Hairline cut marks, then the bleed under every slot of this page. */
@@ -113,7 +115,7 @@ export async function buildSheetPdfFromJpegs(items: JpegItem[], options: SheetOp
   if (!pages.length) doc.addPage([size.w, size.h]);
   if (options.back && pages.length) {
     const backImg = isPng(options.back) ? await doc.embedPng(options.back) : await doc.embedJpg(options.back);
-    const mirrored = mirrorSlots(slots, paper);
+    const mirrored = shiftSlots(mirrorSlots(slots, paper), options.backOffset?.x ?? 0, options.backOffset?.y ?? 0);
     // insert after each front page, working backwards so earlier indices stay valid
     for (let p = pages.length - 1; p >= 0; p--) {
       const page = doc.insertPage(p + 1, [size.w, size.h]);

@@ -70,6 +70,16 @@ describe.skipIf(!available)('print sheet PDF (smoke)', () => {
     );
   });
 
+  it('moves the back pages by the duplex offset and leaves the fronts alone', async () => {
+    const items = [{ jpeg: new Uint8Array(readFileSync(frames[0])), copies: 1, cardW: 1022, cardH: 1464 }];
+    const back = new Uint8Array(readFileSync(frames[1]));
+    const ops = await pageOps(await buildSheetPdfFromJpegs(items, { loadFont: loadFontFromDisk, back, backOffset: { x: 0.5 * MM, y: -0.3 * MM } }));
+    // front image at the first slot (38.13, 520.72); the mirrored back at 612 - 38.13 - 178.58 = 395.29, moved 0.5 mm right and 0.3 mm down
+    expect(ops[0]).toMatch(/1 0 0 1 38\.1\d* 520\.7\d* cm/);
+    expect(ops[1]).toMatch(/1 0 0 1 396\.7\d* 519\.8\d* cm/);
+    expect(ops[1]).not.toMatch(/1 0 0 1 395\.2\d* 520\.7\d* cm/);
+  });
+
   it('makes A4 pages with the grid centred when asked', async () => {
     const items = [{ jpeg: new Uint8Array(readFileSync(frames[0])), copies: 9, cardW: 1022, cardH: 1464 }];
     const doc = await PDFDocument.load(await buildSheetPdfFromJpegs(items, { loadFont: loadFontFromDisk, paper: 'a4' }));

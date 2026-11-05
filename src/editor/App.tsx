@@ -13,9 +13,10 @@ import { buildTtsBack, buildTtsSheets } from '../export/ttsExport';
 import { expandCopies, ttsFileName } from '../export/tts';
 import type { TextOp } from '../render/textOps';
 import { PROFILES, SCREEN_PROFILE, type PrintProfile, type RenderProfile } from '../render/printProfile';
-import type { Paper } from '../export/paper';
+import { MM, type Paper } from '../export/paper';
 import { BACK_PX, type BackChoice } from '../export/backs';
 import { BLEED_PT } from '../export/bleed';
+import type { BackOffset } from '../export/duplex';
 import { ExportDialog } from './ExportDialog';
 import { Gallery } from './Gallery';
 import { DeckChecks } from './DeckChecks';
@@ -451,7 +452,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
     return undefined;
   };
 
-  const exportPdf = async (profileName: PrintProfile, paper: Paper, back: BackChoice, bleed: boolean) => {
+  const exportPdf = async (profileName: PrintProfile, paper: Paper, back: BackChoice, bleed: boolean, backOffset: BackOffset) => {
     setShowExport(false);
     setExporting(true);
     setNotice(null);
@@ -464,7 +465,13 @@ function Editor({ catalog }: { catalog: Catalog }) {
         if (blob) userFonts[slot] = await blob.arrayBuffer();
       }
       const backImage = await backBytes(back);
-      const bytes = await buildSheetPdf(items, profile.lossless, { userFonts, paper, back: backImage, bleed: bleed ? BLEED_PT : 0 });
+      const bytes = await buildSheetPdf(items, profile.lossless, {
+        userFonts,
+        paper,
+        back: backImage,
+        bleed: bleed ? BLEED_PT : 0,
+        backOffset: { x: backOffset.x * MM, y: backOffset.y * MM },
+      });
       downloadBytes(bytes, `trek-cards-sheet${paper === 'a4' ? '-a4' : ''}${profileName === 'inkjet' ? '-inkjet' : ''}${backImage ? '-duplex' : ''}.pdf`);
       if (skipped.length) setNotice(`Skipped (could not render): ${skipped.join(', ')}`);
     } catch (e) {

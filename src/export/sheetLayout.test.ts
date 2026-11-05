@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { layoutSheet, cutMarks, LETTER, CARD, MARGIN, PER_PAGE, marginFor, mirrorSlots, bleedRect, MM } from './sheetLayout';
+import { layoutSheet, cutMarks, LETTER, CARD, MARGIN, PER_PAGE, marginFor, mirrorSlots, bleedRect, shiftSlots, MM } from './sheetLayout';
 import { PAPERS } from './paper';
 
 describe('layoutSheet', () => {
@@ -105,5 +105,22 @@ describe('bleedRect', () => {
       expect(r.x).toBeGreaterThan(8); // marks are 8pt hairlines at the page edge
       expect(r.y + r.h).toBeLessThan(PAPERS[paper].h - 8);
     }
+  });
+});
+
+describe('shiftSlots', () => {
+  it('moves every slot by the offset and leaves the input alone', () => {
+    const slots = mirrorSlots(layoutSheet(2));
+    const moved = shiftSlots(slots, 1.5, -0.8);
+    expect(moved[0].x - slots[0].x).toBeCloseTo(1.5, 9);
+    expect(moved[0].y - slots[0].y).toBeCloseTo(-0.8, 9);
+    expect(moved[1].x).toBeCloseTo(slots[1].x + 1.5, 9);
+    expect(moved[1].page).toBe(slots[1].page);
+    expect(slots[0].x).toBe(mirrorSlots(layoutSheet(2))[0].x);
+  });
+
+  it('returns the same slots for a zero offset', () => {
+    const slots = layoutSheet(3);
+    expect(shiftSlots(slots, 0, 0)).toBe(slots);
   });
 });

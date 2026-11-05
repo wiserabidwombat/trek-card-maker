@@ -3,6 +3,7 @@ import { loadPrintProfile, savePrintProfile, type PrintProfile } from '../render
 import { loadPaper, PAPER_LIST, PAPERS, savePaper, type Paper } from '../export/paper';
 import { loadBackChoice, saveBackChoice, type BackChoice } from '../export/backs';
 import { BLEED_MM, loadBleed, saveBleed } from '../export/bleed';
+import { clampOffset, loadBackOffset, OFFSET_LIMIT_MM, saveBackOffset, type BackOffset } from '../export/duplex';
 
 export interface LowArt {
   name: string;
@@ -17,7 +18,7 @@ interface Props {
   customBackUrl: string | null;
   /** A new custom back picture, or null to forget the stored one. */
   onCustomBack: (file: File | null) => void;
-  onExport: (profile: PrintProfile, paper: Paper, back: BackChoice, bleed: boolean) => void;
+  onExport: (profile: PrintProfile, paper: Paper, back: BackChoice, bleed: boolean, backOffset: BackOffset) => void;
   onCancel: () => void;
 }
 
@@ -28,6 +29,11 @@ export function ExportDialog({ cardCount, lowArt, customBackUrl, onCustomBack, o
   const chooseBleed = (on: boolean) => {
     setBleed(on);
     saveBleed(on);
+  };
+  const [offset, setOffset] = useState<BackOffset>(loadBackOffset());
+  const chooseOffset = (o: BackOffset) => {
+    setOffset(o);
+    saveBackOffset(o);
   };
   const [back, setBack] = useState<BackChoice>(() => {
     const b = loadBackChoice();
@@ -147,10 +153,50 @@ export function ExportDialog({ cardCount, lowArt, customBackUrl, onCustomBack, o
           <span className="muted small">A 744 × 1039 px picture fills a back at 300 dpi; anything else is stretched to the card.</span>
         </div>
         {back !== 'none' && (
-          <p className="muted small">
-            Back pages follow each sheet mirrored left to right: print double-sided, flipping on the <strong>long edge</strong>, and every back
-            lands behind its front.
-          </p>
+          <>
+            <p className="muted small">
+              Back pages follow each sheet mirrored left to right: print double-sided, flipping on the <strong>long edge</strong>, and every back
+              lands behind its front.
+            </p>
+            <div className="offset-row">
+              <span className="small">
+                <strong>Duplex offset</strong>: move the backs
+              </span>
+              <label className="small">
+                <input
+                  type="number"
+                  step="0.1"
+                  min={-OFFSET_LIMIT_MM}
+                  max={OFFSET_LIMIT_MM}
+                  value={offset.x}
+                  aria-label="Move backs right, millimetres"
+                  onChange={(e) => chooseOffset({ ...offset, x: e.target.value === '' || e.target.value === '-' ? 0 : clampOffset(e.target.value) })}
+                />{' '}
+                mm right
+              </label>
+              <label className="small">
+                <input
+                  type="number"
+                  step="0.1"
+                  min={-OFFSET_LIMIT_MM}
+                  max={OFFSET_LIMIT_MM}
+                  value={offset.y}
+                  aria-label="Move backs up, millimetres"
+                  onChange={(e) => chooseOffset({ ...offset, y: e.target.value === '' || e.target.value === '-' ? 0 : clampOffset(e.target.value) })}
+                />{' '}
+                mm up
+              </label>
+              {(offset.x !== 0 || offset.y !== 0) && (
+                <button type="button" className="link" onClick={() => chooseOffset({ x: 0, y: 0 })}>
+                  Reset
+                </button>
+              )}
+            </div>
+            <p className="muted small">
+              Most printers put the second side a fraction of a millimetre off. Print one duplex sheet, hold it to the light, and if the backs
+              sit, say, 0.5 mm too far right, enter −0.5. Negative numbers move left or down; the setting is remembered for this printer.
+            </p>
+          </>
         )}
         {lowArt.length > 0 && (
           <p className="badge warn block">
@@ -165,7 +211,7 @@ export function ExportDialog({ cardCount, lowArt, customBackUrl, onCustomBack, o
         <div className="crop-controls">
           <span className="spacer" />
           <button onClick={onCancel}>Cancel</button>
-          <button className="primary" onClick={() => onExport(profile, paper, back, bleed)}>
+          <button className="primary" onClick={() => onExport(profile, paper, back, bleed, offset)}>
             Export PDF
           </button>
         </div>

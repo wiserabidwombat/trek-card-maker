@@ -52,6 +52,12 @@ export function mirrorSlots(slots: Slot[], paper: Paper = 'letter'): Slot[] {
   return slots.map((s) => ({ ...s, x: size.w - s.x - s.w }));
 }
 
+/** Every slot moved by (dx, dy) points: the duplex offset applied to the back pages. */
+export function shiftSlots(slots: Slot[], dx: number, dy: number): Slot[] {
+  if (!dx && !dy) return slots;
+  return slots.map((s) => ({ ...s, x: s.x + dx, y: s.y + dy }));
+}
+
 /** The slot grown by `bleed` points on every side: the area filled with border colour under the card. */
 export function bleedRect(slot: Slot, bleed: number): { x: number; y: number; w: number; h: number } {
   return { x: slot.x - bleed, y: slot.y - bleed, w: slot.w + 2 * bleed, h: slot.h + 2 * bleed };
