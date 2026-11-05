@@ -43,6 +43,15 @@ export function layoutSheet(count: number, paper: Paper = 'letter'): Slot[] {
   return slots;
 }
 
+/**
+ * Slots for the reverse side of a sheet: the same grid mirrored left to right, so that after a
+ * long-edge duplex flip each back lands behind its front.
+ */
+export function mirrorSlots(slots: Slot[], paper: Paper = 'letter'): Slot[] {
+  const size = PAPERS[paper];
+  return slots.map((s) => ({ ...s, x: size.w - s.x - s.w }));
+}
+
 export interface Mark {
   x1: number;
   y1: number;

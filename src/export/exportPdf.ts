@@ -1,7 +1,7 @@
 import { PDFDocument, rgb } from 'pdf-lib';
 import { hexToRgb01, mapTextOp, type TextOp } from '../render/textOps';
 import { PdfFontRegistry, type UserFontBytes } from './pdfFonts';
-import { cutMarks, layoutSheet } from './sheetLayout';
+import { cutMarks, layoutSheet, mirrorSlots } from './sheetLayout';
 import { PAPERS, type Paper } from './paper';
 
 export interface SheetItem {
@@ -48,6 +48,8 @@ export interface SheetOptions {
   loadFont?: (url: string) => Promise<Uint8Array>;
   /** Sheet size; US Letter unless given. */
   paper?: Paper;
+  /** Card back (PNG or JPEG bytes). When given, a mirrored back page follows every sheet for duplex printing. */
+  back?: Uint8Array;
 }
 
 /** Build a print sheet (US Letter or A4) from pre-encoded JPEGs: 3x3 cards per page with cut marks. */
@@ -87,6 +89,21 @@ export async function buildSheetPdfFromJpegs(items: JpegItem[], options: SheetOp
     }
   }
   if (!pages.length) doc.addPage([size.w, size.h]);
+  if (options.back && pages.length) {
+    const backImg = isPng(options.back) ? await doc.embedPng(options.back) : await doc.embedJpg(options.back);
+    const mirrored = mirrorSlots(slots, paper);
+    // insert after each front page, working backwards so earlier indices stay valid
+    for (let p = pages.length - 1; p >= 0; p--) {
+      const page = doc.insertPage(p + 1, [size.w, size.h]);
+      for (const m of marks) {
+        page.drawLine({ start: { x: m.x1, y: m.y1 }, end: { x: m.x2, y: m.y2 }, thickness: 0.25, color: rgb(0, 0, 0) });
+      }
+      for (const slot of mirrored) {
+        if (slot.page !== p) continue;
+        page.drawImage(backImg, { x: slot.x, y: slot.y, width: slot.w, height: slot.h });
+      }
+    }
+  }
   return doc.save();
 }
 

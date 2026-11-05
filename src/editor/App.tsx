@@ -14,6 +14,7 @@ import { expandCopies, ttsFileName } from '../export/tts';
 import type { TextOp } from '../render/textOps';
 import { PROFILES, SCREEN_PROFILE, type PrintProfile, type RenderProfile } from '../render/printProfile';
 import type { Paper } from '../export/paper';
+import { BACK_PX, type BackChoice } from '../export/backs';
 import { ExportDialog } from './ExportDialog';
 import { Gallery } from './Gallery';
 import { useThumbnails } from './useThumbnails';
@@ -25,7 +26,7 @@ import { recordBackup, recordChange } from '../store/backup';
 import { EMPTY_HISTORY, isTextTarget, popRedo, popUndo, record, redoLabel, undoLabel, type History, type HistoryEntry } from './history';
 import { applyOrder, moveCard, nextOrder, normalizeOrder } from '../model/order';
 import { sampleCards } from './sampleDeck';
-import { clearCardsAndImages, deleteCard, getImage, getUserFont, listCards, loadDecks, pruneOrphanImages, putCard, putImage, saveCurrentDeck, saveDecks } from '../store/db';
+import { clearCardsAndImages, deleteBackImage, deleteCard, getBackImage, getImage, getUserFont, putBackImage, listCards, loadDecks, pruneOrphanImages, putCard, putImage, saveCurrentDeck, saveDecks } from '../store/db';
 import { deckFileName, deckSlug, importedDeckName, newDeckId, uniqueDeckName, type DeckMeta } from '../store/decks';
 import { parseDeck, remapFrames, serializeDeck } from '../store/deckJson';
 import { cardsFromRows, parseDelimited } from '../store/csvImport';
@@ -71,6 +72,14 @@ function Editor({ catalog }: { catalog: Catalog }) {
   const [exporting, setExporting] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
+  const [customBack, setCustomBack] = useState<Blob | null>(null);
+  const customBackUrl = useMemo(() => (customBack ? URL.createObjectURL(customBack) : null), [customBack]);
+  useEffect(() => () => {
+    if (customBackUrl) URL.revokeObjectURL(customBackUrl);
+  }, [customBackUrl]);
+  useEffect(() => {
+    getBackImage().then((b) => setCustomBack(b ?? null), () => undefined);
+  }, []);
   const [showTts, setShowTts] = useState(false);
   const [ttsResult, setTtsResult] = useState<TtsResult | null>(null);
   /** Cards headed for the print sheet whose artwork prints below 300 dpi. */
@@ -366,7 +375,35 @@ function Editor({ catalog }: { catalog: Catalog }) {
     return { items, skipped };
   };
 
-  const exportPdf = async (profileName: PrintProfile, paper: Paper) => {
+  const pickCustomBack = async (file: File | null) => {
+    try {
+      if (file) await putBackImage(file);
+      else await deleteBackImage();
+      setCustomBack(file);
+    } catch (e) {
+      setNotice(`Could not store the back picture: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  };
+
+  /** Bytes for the chosen card back: a generated plain back, or the stored picture (re-encoded unless it is already PNG or JPEG). */
+  const backBytes = async (back: BackChoice): Promise<Uint8Array | undefined> => {
+    if (back === 'plain') {
+      const deckName = decks.find((d) => d.id === deckId)?.name ?? '';
+      return canvasToBytes(buildTtsBack(BACK_PX.w, BACK_PX.h, deckName, fonts), 'image/png');
+    }
+    if (back === 'custom' && customBack) {
+      if (customBack.type === 'image/png' || customBack.type === 'image/jpeg') return new Uint8Array(await customBack.arrayBuffer());
+      const img = await assets.getBlobImage('back:image', customBack);
+      const c = document.createElement('canvas');
+      c.width = img.naturalWidth;
+      c.height = img.naturalHeight;
+      c.getContext('2d')?.drawImage(img, 0, 0);
+      return canvasToBytes(c, 'image/png');
+    }
+    return undefined;
+  };
+
+  const exportPdf = async (profileName: PrintProfile, paper: Paper, back: BackChoice) => {
     setShowExport(false);
     setExporting(true);
     setNotice(null);
@@ -378,8 +415,9 @@ function Editor({ catalog }: { catalog: Catalog }) {
         const blob = await getUserFont(slot);
         if (blob) userFonts[slot] = await blob.arrayBuffer();
       }
-      const bytes = await buildSheetPdf(items, profile.lossless, { userFonts, paper });
-      downloadBytes(bytes, `trek-cards-sheet${paper === 'a4' ? '-a4' : ''}${profileName === 'inkjet' ? '-inkjet' : ''}.pdf`);
+      const backImage = await backBytes(back);
+      const bytes = await buildSheetPdf(items, profile.lossless, { userFonts, paper, back: backImage });
+      downloadBytes(bytes, `trek-cards-sheet${paper === 'a4' ? '-a4' : ''}${profileName === 'inkjet' ? '-inkjet' : ''}${backImage ? '-duplex' : ''}.pdf`);
       if (skipped.length) setNotice(`Skipped (could not render): ${skipped.join(', ')}`);
     } catch (e) {
       setNotice(`Export failed: ${e instanceof Error ? e.message : String(e)}`);
@@ -650,7 +688,14 @@ function Editor({ catalog }: { catalog: Catalog }) {
         />
       )}
       {showExport && (
-        <ExportDialog cardCount={cards.reduce((n, c) => n + Math.max(0, c.copies), 0)} lowArt={lowArt} onExport={exportPdf} onCancel={() => setShowExport(false)} />
+        <ExportDialog
+          cardCount={cards.reduce((n, c) => n + Math.max(0, c.copies), 0)}
+          lowArt={lowArt}
+          customBackUrl={customBackUrl}
+          onCustomBack={pickCustomBack}
+          onExport={exportPdf}
+          onCancel={() => setShowExport(false)}
+        />
       )}
       {showTts && (
         <TtsDialog

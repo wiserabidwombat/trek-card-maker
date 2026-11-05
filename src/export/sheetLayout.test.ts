@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { layoutSheet, cutMarks, LETTER, CARD, MARGIN, PER_PAGE, marginFor, MM } from './sheetLayout';
+import { layoutSheet, cutMarks, LETTER, CARD, MARGIN, PER_PAGE, marginFor, mirrorSlots, MM } from './sheetLayout';
 import { PAPERS } from './paper';
 
 describe('layoutSheet', () => {
@@ -72,5 +72,19 @@ describe('A4 sheets', () => {
   it('keeps the Letter layout unchanged by default', () => {
     expect(layoutSheet(1)).toEqual(layoutSheet(1, 'letter'));
     expect(cutMarks()).toEqual(cutMarks('letter'));
+  });
+});
+
+describe('mirrorSlots', () => {
+  it('flips columns so the back of the first card sits where the third card was', () => {
+    const front = layoutSheet(9);
+    const back = mirrorSlots(front);
+    expect(back[0].x).toBeCloseTo(front[2].x, 6);
+    expect(back[2].x).toBeCloseTo(front[0].x, 6);
+    expect(back[1].x).toBeCloseTo(front[1].x, 6);
+    expect(back[0].y).toBe(front[0].y);
+    expect(back[0].page).toBe(0);
+    const a4 = mirrorSlots(layoutSheet(3, 'a4'), 'a4');
+    expect(a4[0].x + a4[0].w).toBeCloseTo(595.28 - marginFor('a4').x, 1);
   });
 });

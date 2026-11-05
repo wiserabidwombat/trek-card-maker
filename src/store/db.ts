@@ -110,6 +110,21 @@ export function deleteUserFont(slot: 'title' | 'body'): Promise<void> {
   return del(FONT_PREFIX + slot, store);
 }
 
+const BACK_KEY = 'back:image';
+
+/** The picture used as the card back on duplex print sheets, one per browser. */
+export function putBackImage(blob: Blob): Promise<void> {
+  return set(BACK_KEY, blob, store);
+}
+
+export function getBackImage(): Promise<Blob | undefined> {
+  return get<Blob>(BACK_KEY, store);
+}
+
+export function deleteBackImage(): Promise<void> {
+  return del(BACK_KEY, store);
+}
+
 export function newImageKey(): string {
   const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : String(Date.now());
   return `${IMAGE_PREFIX}${id}`;

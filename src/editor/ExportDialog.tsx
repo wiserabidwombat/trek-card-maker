@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { loadPrintProfile, savePrintProfile, type PrintProfile } from '../render/printProfile';
 import { loadPaper, PAPER_LIST, PAPERS, savePaper, type Paper } from '../export/paper';
+import { loadBackChoice, saveBackChoice, type BackChoice } from '../export/backs';
 
 export interface LowArt {
   name: string;
@@ -11,13 +12,21 @@ interface Props {
   cardCount: number;
   /** Cards whose artwork prints below 300 dpi, copies > 0 only. */
   lowArt: LowArt[];
-  onExport: (profile: PrintProfile, paper: Paper) => void;
+  /** Object URL of the stored custom back, when one has been chosen. */
+  customBackUrl: string | null;
+  /** A new custom back picture, or null to forget the stored one. */
+  onCustomBack: (file: File | null) => void;
+  onExport: (profile: PrintProfile, paper: Paper, back: BackChoice) => void;
   onCancel: () => void;
 }
 
-export function ExportDialog({ cardCount, lowArt, onExport, onCancel }: Props) {
+export function ExportDialog({ cardCount, lowArt, customBackUrl, onCustomBack, onExport, onCancel }: Props) {
   const [profile, setProfile] = useState<PrintProfile>(loadPrintProfile());
   const [paper, setPaper] = useState<Paper>(loadPaper());
+  const [back, setBack] = useState<BackChoice>(() => {
+    const b = loadBackChoice();
+    return b === 'custom' && !customBackUrl ? 'none' : b;
+  });
   const choose = (p: PrintProfile) => {
     setProfile(p);
     savePrintProfile(p);
@@ -26,13 +35,18 @@ export function ExportDialog({ cardCount, lowArt, onExport, onCancel }: Props) {
     setPaper(p);
     savePaper(p);
   };
+  const chooseBack = (b: BackChoice) => {
+    setBack(b);
+    saveBackChoice(b);
+  };
+  const pages = Math.max(1, Math.ceil(cardCount / 9));
   return (
     <div className="modal-backdrop" onClick={onCancel}>
       <div className="modal narrow" onClick={(e) => e.stopPropagation()}>
         <h2>Export print sheet</h2>
         <p className="muted small">
-          {cardCount} card{cardCount === 1 ? '' : 's'} on {Math.max(1, Math.ceil(cardCount / 9))} {PAPERS[paper].label} sheet{cardCount > 9 ? 's' : ''}, 63 × 88 mm
-          each.
+          {cardCount} card{cardCount === 1 ? '' : 's'} on {pages} {PAPERS[paper].label} sheet{pages > 1 ? 's' : ''}
+          {back !== 'none' ? ` plus ${pages} back page${pages > 1 ? 's' : ''}` : ''}, 63 × 88 mm each.
         </p>
         <div className="profile-choice paper-choice">
           {PAPER_LIST.map((p) => (
@@ -64,6 +78,67 @@ export function ExportDialog({ cardCount, lowArt, onExport, onCancel }: Props) {
             </span>
           </label>
         </div>
+        <h3 className="dialog-sub">Card backs</h3>
+        <div className="profile-choice back-choice">
+          <label className={back === 'none' ? 'on' : ''}>
+            <input type="radio" name="back" checked={back === 'none'} onChange={() => chooseBack('none')} />
+            <span>
+              <strong>None</strong>
+              <br />
+              Fronts only.
+            </span>
+          </label>
+          <label className={back === 'plain' ? 'on' : ''}>
+            <input type="radio" name="back" checked={back === 'plain'} onChange={() => chooseBack('plain')} />
+            <span>
+              <strong>Plain back</strong>
+              <br />
+              Black with a thin frame and the deck name.
+            </span>
+          </label>
+          <label className={back === 'custom' ? 'on' : customBackUrl ? '' : 'off'}>
+            <input type="radio" name="back" checked={back === 'custom'} disabled={!customBackUrl} onChange={() => chooseBack('custom')} />
+            <span>
+              <strong>Your picture</strong>
+              <br />
+              {customBackUrl ? <img className="back-thumb" src={customBackUrl} alt="Chosen card back" /> : 'Choose one below.'}
+            </span>
+          </label>
+        </div>
+        <div className="row wrap">
+          <label className="file-button">
+            {customBackUrl ? 'Replace back picture…' : 'Choose back picture…'}
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) {
+                  onCustomBack(f);
+                  chooseBack('custom');
+                }
+                e.target.value = '';
+              }}
+            />
+          </label>
+          {customBackUrl && (
+            <button
+              onClick={() => {
+                onCustomBack(null);
+                if (back === 'custom') chooseBack('none');
+              }}
+            >
+              Forget picture
+            </button>
+          )}
+          <span className="muted small">A 744 × 1039 px picture fills a back at 300 dpi; anything else is stretched to the card.</span>
+        </div>
+        {back !== 'none' && (
+          <p className="muted small">
+            Back pages follow each sheet mirrored left to right: print double-sided, flipping on the <strong>long edge</strong>, and every back
+            lands behind its front.
+          </p>
+        )}
         {lowArt.length > 0 && (
           <p className="badge warn block">
             Artwork below 300 dpi on {lowArt.length} card{lowArt.length === 1 ? '' : 's'}, so it will print soft or blurry:{' '}
@@ -77,7 +152,7 @@ export function ExportDialog({ cardCount, lowArt, onExport, onCancel }: Props) {
         <div className="crop-controls">
           <span className="spacer" />
           <button onClick={onCancel}>Cancel</button>
-          <button className="primary" onClick={() => onExport(profile, paper)}>
+          <button className="primary" onClick={() => onExport(profile, paper, back)}>
             Export PDF
           </button>
         </div>

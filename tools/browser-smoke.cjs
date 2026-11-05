@@ -136,6 +136,21 @@ async function run(engine) {
     return { file: path.basename(file), bytes: bytes.length, pages: doc.getPageCount(), width: doc.getPage(0).getWidth(), fonts: (bytes.toString('latin1').match(/\/FontFile/g) || []).length };
   });
 
+  await step('export pdf with backs', async () => {
+    await page.getByRole('button', { name: /Export print sheet/ }).click();
+    await page.getByLabel(/Plain back/).check();
+    const [download] = await Promise.all([
+      page.waitForEvent('download', { timeout: 60000 }),
+      page.getByRole('button', { name: 'Export PDF' }).click(),
+    ]);
+    const file = path.join(outDir, `${engine}-${download.suggestedFilename()}`);
+    await download.saveAs(file);
+    const doc = await PDFDocument.load(fs.readFileSync(file));
+    // the radio choice is remembered; put it back so the next run starts clean
+    await page.evaluate(() => localStorage.removeItem('trek-card-maker.back'));
+    return { file: path.basename(file), pages: doc.getPageCount() };
+  });
+
   await step('export json', async () => {
     const [download] = await Promise.all([
       page.waitForEvent('download', { timeout: 30000 }),

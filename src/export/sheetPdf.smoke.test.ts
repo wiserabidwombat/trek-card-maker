@@ -36,6 +36,14 @@ describe.skipIf(!available)('print sheet PDF (smoke)', () => {
     if (out) writeFileSync(out, bytes);
   });
 
+  it('follows every sheet with a mirrored back page when a back is given', async () => {
+    const items = [{ jpeg: new Uint8Array(readFileSync(frames[0])), copies: 11, cardW: 1022, cardH: 1464 }];
+    const back = new Uint8Array(readFileSync(frames[1]));
+    const doc = await PDFDocument.load(await buildSheetPdfFromJpegs(items, { loadFont: loadFontFromDisk, back }));
+    expect(doc.getPageCount()).toBe(4); // front, back, front, back
+    expect(doc.getPage(1).getWidth()).toBe(612);
+  });
+
   it('makes A4 pages with the grid centred when asked', async () => {
     const items = [{ jpeg: new Uint8Array(readFileSync(frames[0])), copies: 9, cardW: 1022, cardH: 1464 }];
     const doc = await PDFDocument.load(await buildSheetPdfFromJpegs(items, { loadFont: loadFontFromDisk, paper: 'a4' }));
