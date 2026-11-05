@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { layoutSheet, cutMarks, LETTER, CARD, MARGIN, PER_PAGE, marginFor, mirrorSlots, MM } from './sheetLayout';
+import { layoutSheet, cutMarks, LETTER, CARD, MARGIN, PER_PAGE, marginFor, mirrorSlots, bleedRect, MM } from './sheetLayout';
 import { PAPERS } from './paper';
 
 describe('layoutSheet', () => {
@@ -86,5 +86,24 @@ describe('mirrorSlots', () => {
     expect(back[0].page).toBe(0);
     const a4 = mirrorSlots(layoutSheet(3, 'a4'), 'a4');
     expect(a4[0].x + a4[0].w).toBeCloseTo(595.28 - marginFor('a4').x, 1);
+  });
+});
+
+describe('bleedRect', () => {
+  it('grows a slot by the bleed on every side', () => {
+    const slot = layoutSheet(1)[0];
+    const r = bleedRect(slot, 5.67);
+    expect(r.x).toBeCloseTo(slot.x - 5.67, 5);
+    expect(r.y).toBeCloseTo(slot.y - 5.67, 5);
+    expect(r.w).toBeCloseTo(slot.w + 11.34, 5);
+    expect(r.h).toBeCloseTo(slot.h + 11.34, 5);
+  });
+
+  it('stays inside the page and clear of the cut marks on both papers', () => {
+    for (const paper of ['letter', 'a4'] as const) {
+      const r = bleedRect(layoutSheet(1, paper)[0], 2 * MM);
+      expect(r.x).toBeGreaterThan(8); // marks are 8pt hairlines at the page edge
+      expect(r.y + r.h).toBeLessThan(PAPERS[paper].h - 8);
+    }
   });
 });

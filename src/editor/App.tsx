@@ -15,6 +15,7 @@ import type { TextOp } from '../render/textOps';
 import { PROFILES, SCREEN_PROFILE, type PrintProfile, type RenderProfile } from '../render/printProfile';
 import type { Paper } from '../export/paper';
 import { BACK_PX, type BackChoice } from '../export/backs';
+import { BLEED_PT } from '../export/bleed';
 import { ExportDialog } from './ExportDialog';
 import { Gallery } from './Gallery';
 import { useThumbnails } from './useThumbnails';
@@ -368,7 +369,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
   };
 
   /** Render every card with copies, in deck order; `withText` records the text for the PDF's vector layer. */
-  const renderDeck = async (profile: RenderProfile, withText: boolean) => {
+  const renderDeck = async (profile: RenderProfile, withText: boolean, squareCorners = false) => {
     const items: { canvas: HTMLCanvasElement; copies: number; textOps?: TextOp[] }[] = [];
     const skipped: string[] = [];
     for (const card of cards) {
@@ -385,7 +386,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
       }
       try {
         const textSink: TextOp[] | undefined = withText ? [] : undefined;
-        const r = await renderCard(card, { catalog, frame: fr, template: templateFor(catalog, fr), fonts, assets, userImage, base: FRAMES_BASE, profile, textSink });
+        const r = await renderCard(card, { catalog, frame: fr, template: templateFor(catalog, fr), fonts, assets, userImage, base: FRAMES_BASE, profile, textSink, squareCorners });
         items.push({ canvas: r.canvas, copies: card.copies, textOps: r.textOps });
       } catch {
         skipped.push(card.name || card.fields.title || card.id);
@@ -422,20 +423,20 @@ function Editor({ catalog }: { catalog: Catalog }) {
     return undefined;
   };
 
-  const exportPdf = async (profileName: PrintProfile, paper: Paper, back: BackChoice) => {
+  const exportPdf = async (profileName: PrintProfile, paper: Paper, back: BackChoice, bleed: boolean) => {
     setShowExport(false);
     setExporting(true);
     setNotice(null);
     const profile = PROFILES[profileName];
     try {
-      const { items, skipped } = await renderDeck(profile, true);
+      const { items, skipped } = await renderDeck(profile, true, bleed);
       const userFonts: { title?: ArrayBuffer; body?: ArrayBuffer } = {};
       for (const slot of ['title', 'body'] as const) {
         const blob = await getUserFont(slot);
         if (blob) userFonts[slot] = await blob.arrayBuffer();
       }
       const backImage = await backBytes(back);
-      const bytes = await buildSheetPdf(items, profile.lossless, { userFonts, paper, back: backImage });
+      const bytes = await buildSheetPdf(items, profile.lossless, { userFonts, paper, back: backImage, bleed: bleed ? BLEED_PT : 0 });
       downloadBytes(bytes, `trek-cards-sheet${paper === 'a4' ? '-a4' : ''}${profileName === 'inkjet' ? '-inkjet' : ''}${backImage ? '-duplex' : ''}.pdf`);
       if (skipped.length) setNotice(`Skipped (could not render): ${skipped.join(', ')}`);
     } catch (e) {

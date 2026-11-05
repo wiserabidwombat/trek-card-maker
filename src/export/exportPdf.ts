@@ -1,7 +1,7 @@
 import { degrees, PDFDocument, rgb } from 'pdf-lib';
 import { hexToRgb01, mapTextOp, type TextOp } from '../render/textOps';
 import { PdfFontRegistry, type UserFontBytes } from './pdfFonts';
-import { cutMarks, layoutSheet, mirrorSlots } from './sheetLayout';
+import { bleedRect, cutMarks, layoutSheet, mirrorSlots, type Mark, type Slot } from './sheetLayout';
 import { PAPERS, type Paper } from './paper';
 
 export interface SheetItem {
@@ -50,6 +50,21 @@ export interface SheetOptions {
   paper?: Paper;
   /** Card back (PNG or JPEG bytes). When given, a mirrored back page follows every sheet for duplex printing. */
   back?: Uint8Array;
+  /** Bleed in points: black is laid this far past every card's cut lines (fronts and backs) before the images go down. */
+  bleed?: number;
+}
+
+/** Hairline cut marks, then the bleed under every slot of this page. */
+function prepareSheetPage(page: ReturnType<PDFDocument['addPage']>, marks: Mark[], pageSlots: Slot[], bleed: number): void {
+  for (const m of marks) {
+    page.drawLine({ start: { x: m.x1, y: m.y1 }, end: { x: m.x2, y: m.y2 }, thickness: 0.25, color: rgb(0, 0, 0) });
+  }
+  if (bleed > 0) {
+    for (const slot of pageSlots) {
+      const r = bleedRect(slot, bleed);
+      page.drawRectangle({ x: r.x, y: r.y, width: r.w, height: r.h, color: rgb(0, 0, 0), borderWidth: 0 });
+    }
+  }
 }
 
 /** Build a print sheet (US Letter or A4) from pre-encoded JPEGs: 3x3 cards per page with cut marks. */
@@ -68,12 +83,12 @@ export async function buildSheetPdfFromJpegs(items: JpegItem[], options: SheetOp
   const slots = layoutSheet(placements.length, paper);
   const pages: ReturnType<PDFDocument['addPage']>[] = [];
   const marks = cutMarks(paper);
+  const bleed = Math.max(0, options.bleed ?? 0);
   for (const [i, slot] of slots.entries()) {
     while (pages.length <= slot.page) {
       const page = doc.addPage([size.w, size.h]);
-      for (const m of marks) {
-        page.drawLine({ start: { x: m.x1, y: m.y1 }, end: { x: m.x2, y: m.y2 }, thickness: 0.25, color: rgb(0, 0, 0) });
-      }
+      // every slot's bleed goes down before any image, so a neighbour's bleed never covers a card
+      prepareSheetPage(page, marks, slots.filter((s) => s.page === pages.length), bleed);
       pages.push(page);
     }
     const page = pages[slot.page];
@@ -102,11 +117,9 @@ export async function buildSheetPdfFromJpegs(items: JpegItem[], options: SheetOp
     // insert after each front page, working backwards so earlier indices stay valid
     for (let p = pages.length - 1; p >= 0; p--) {
       const page = doc.insertPage(p + 1, [size.w, size.h]);
-      for (const m of marks) {
-        page.drawLine({ start: { x: m.x1, y: m.y1 }, end: { x: m.x2, y: m.y2 }, thickness: 0.25, color: rgb(0, 0, 0) });
-      }
-      for (const slot of mirrored) {
-        if (slot.page !== p) continue;
+      const pageSlots = mirrored.filter((s) => s.page === p);
+      prepareSheetPage(page, marks, pageSlots, bleed);
+      for (const slot of pageSlots) {
         page.drawImage(backImg, { x: slot.x, y: slot.y, width: slot.w, height: slot.h });
       }
     }

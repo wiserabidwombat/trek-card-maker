@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { loadPrintProfile, savePrintProfile, type PrintProfile } from '../render/printProfile';
 import { loadPaper, PAPER_LIST, PAPERS, savePaper, type Paper } from '../export/paper';
 import { loadBackChoice, saveBackChoice, type BackChoice } from '../export/backs';
+import { BLEED_MM, loadBleed, saveBleed } from '../export/bleed';
 
 export interface LowArt {
   name: string;
@@ -16,13 +17,18 @@ interface Props {
   customBackUrl: string | null;
   /** A new custom back picture, or null to forget the stored one. */
   onCustomBack: (file: File | null) => void;
-  onExport: (profile: PrintProfile, paper: Paper, back: BackChoice) => void;
+  onExport: (profile: PrintProfile, paper: Paper, back: BackChoice, bleed: boolean) => void;
   onCancel: () => void;
 }
 
 export function ExportDialog({ cardCount, lowArt, customBackUrl, onCustomBack, onExport, onCancel }: Props) {
   const [profile, setProfile] = useState<PrintProfile>(loadPrintProfile());
   const [paper, setPaper] = useState<Paper>(loadPaper());
+  const [bleed, setBleed] = useState<boolean>(loadBleed());
+  const chooseBleed = (on: boolean) => {
+    setBleed(on);
+    saveBleed(on);
+  };
   const [back, setBack] = useState<BackChoice>(() => {
     const b = loadBackChoice();
     return b === 'custom' && !customBackUrl ? 'none' : b;
@@ -78,6 +84,13 @@ export function ExportDialog({ cardCount, lowArt, customBackUrl, onCustomBack, o
             </span>
           </label>
         </div>
+        <label className="row bleed-choice">
+          <input type="checkbox" checked={bleed} onChange={(e) => chooseBleed(e.target.checked)} />
+          <span>
+            <strong>Bleed</strong>: black runs {BLEED_MM} mm past every cut line, so a cut that drifts leaves no white sliver. Cards print with
+            square corners; round them with a corner punch. The cut marks do not move.
+          </span>
+        </label>
         <h3 className="dialog-sub">Card backs</h3>
         <div className="profile-choice back-choice">
           <label className={back === 'none' ? 'on' : ''}>
@@ -152,7 +165,7 @@ export function ExportDialog({ cardCount, lowArt, customBackUrl, onCustomBack, o
         <div className="crop-controls">
           <span className="spacer" />
           <button onClick={onCancel}>Cancel</button>
-          <button className="primary" onClick={() => onExport(profile, paper, back)}>
+          <button className="primary" onClick={() => onExport(profile, paper, back, bleed)}>
             Export PDF
           </button>
         </div>

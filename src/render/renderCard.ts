@@ -25,6 +25,8 @@ export interface RenderContext {
   profile?: RenderProfile;
   /** When given, text is recorded here (card-pixel coordinates) instead of painted on the canvas. */
   textSink?: TextOp[];
+  /** Fill the card's corners black instead of leaving them white outside the rounding: for sheets printed with bleed. */
+  squareCorners?: boolean;
 }
 
 export interface RenderResult {
@@ -465,7 +467,7 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
   );
   drawPlacedLines(g, sink, fit.lines, flowRect.x, flowTop, flowRect.w, fonts, icons, 'left', inkColour(t.flow.colour));
 
-  const card_ = withCardBorder(canvas, t);
+  const card_ = withCardBorder(canvas, t, ctx.squareCorners ?? false);
   if (sink) {
     // recorded positions are frame pixels; the finished card has the border around the frame
     const { pad } = cardBorderPx(t, W);
@@ -479,9 +481,10 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
 
 /**
  * HiRes frames are the inner card only; the printed card is a black rounded rectangle with the
- * frame inset in it (as on the TrekCC sheets). White paper shows outside the rounded corners.
+ * frame inset in it (as on the TrekCC sheets). White paper shows outside the rounded corners,
+ * unless `square` asks for black corners (sheets with bleed, cut square and punched round later).
  */
-function withCardBorder(frameCanvas: HTMLCanvasElement, t: Template): HTMLCanvasElement {
+function withCardBorder(frameCanvas: HTMLCanvasElement, t: Template, square = false): HTMLCanvasElement {
   const { pad, radius } = cardBorderPx(t, frameCanvas.width);
   if (!pad) return frameCanvas;
   const W = frameCanvas.width + 2 * pad;
@@ -491,11 +494,13 @@ function withCardBorder(frameCanvas: HTMLCanvasElement, t: Template): HTMLCanvas
   card.height = H;
   const g = card.getContext('2d');
   if (!g) return frameCanvas;
-  g.fillStyle = '#ffffff';
+  g.fillStyle = square ? '#000000' : '#ffffff';
   g.fillRect(0, 0, W, H);
-  g.fillStyle = '#000000';
-  roundedRectPath(g, 0, 0, W, H, radius);
-  g.fill();
+  if (!square) {
+    g.fillStyle = '#000000';
+    roundedRectPath(g, 0, 0, W, H, radius);
+    g.fill();
+  }
   g.drawImage(frameCanvas, pad, pad);
   g.strokeStyle = '#231f20';
   g.lineWidth = 1;

@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { PDFDocument } from 'pdf-lib';
+import { decodePDFRawStream, PDFArray, PDFDocument, PDFRawStream } from 'pdf-lib';
 import { buildSheetPdfFromJpegs, isPng } from './exportPdf';
 import type { TextOp } from '../render/textOps';
+import { MM } from './sheetLayout';
 
 // Uses real extracted frames when present; otherwise a tiny generated JPEG is not available in jsdom, so skip.
 const frames = ['public/frames/SacrificeofAngels/001.jpg', 'public/frames/Caretaker/001.jpg'];
@@ -14,6 +15,16 @@ async function loadFontFromDisk(url: string): Promise<Uint8Array> {
   const candidates = [file, `node_modules/${file.replace(/^.*node_modules\//, '')}`];
   for (const c of candidates) if (existsSync(c)) return new Uint8Array(readFileSync(c));
   throw new Error(`font not found for ${url}`);
+}
+
+/** Each page's content stream as operator text (pdf-lib deflates them on save). */
+async function pageOps(bytes: Uint8Array): Promise<string[]> {
+  const doc = await PDFDocument.load(bytes);
+  return doc.getPages().map((page) => {
+    const c = page.node.Contents();
+    const streams = c instanceof PDFArray ? c.asArray().map((r) => doc.context.lookup(r)) : [c];
+    return streams.map((s) => (s instanceof PDFRawStream ? Buffer.from(decodePDFRawStream(s).decode()).toString('latin1') : '')).join('\n');
+  });
 }
 
 describe.skipIf(!available)('print sheet PDF (smoke)', () => {
@@ -42,6 +53,21 @@ describe.skipIf(!available)('print sheet PDF (smoke)', () => {
     const doc = await PDFDocument.load(await buildSheetPdfFromJpegs(items, { loadFont: loadFontFromDisk, back }));
     expect(doc.getPageCount()).toBe(4); // front, back, front, back
     expect(doc.getPage(1).getWidth()).toBe(612);
+  });
+
+  it('lays black bleed under every slot, fronts and backs, before the images', async () => {
+    const items = [{ jpeg: new Uint8Array(readFileSync(frames[0])), copies: 3, cardW: 1022, cardH: 1464 }];
+    const back = new Uint8Array(readFileSync(frames[1]));
+    const plain = await buildSheetPdfFromJpegs(items, { loadFont: loadFontFromDisk, back });
+    const bled = await buildSheetPdfFromJpegs(items, { loadFont: loadFontFromDisk, back, bleed: 2 * MM });
+    // pdf-lib draws a filled rectangle as a translated closed path ending in "h f"; nothing else on the sheet is filled
+    const fills = async (bytes: Uint8Array) => (await pageOps(bytes)).map((ops) => (ops.match(/\nh\nf\n/g) ?? []).length);
+    expect(await fills(plain)).toEqual([0, 0]);
+    expect(await fills(bled)).toEqual([3, 3]); // three slots on the front page, three on the back page
+    // the first slot's bleed starts 2 mm outside its corner at 38.13 x (792 - 21.83 - 249.45) and spans 63+4 x 88+4 mm
+    expect((await pageOps(bled))[0]).toMatch(
+      /1 0 0 1 32\.4\d* 515\.0\d* cm\n(?:1 0 0 1 0 0 cm\n)*0 0 m\n0 260\.7\d* l\n189\.9\d* 260\.7\d* l\n189\.9\d* 0 l\nh\nf\n/,
+    );
   });
 
   it('makes A4 pages with the grid centred when asked', async () => {
