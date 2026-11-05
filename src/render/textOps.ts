@@ -18,6 +18,8 @@ export interface TextOp {
   y: number;
   /** CSS hex colour, #rrggbb. */
   colour: string;
+  /** Anticlockwise rotation in degrees about (x, y); 90 runs the text up the card. Absent means upright. */
+  rotate?: number;
 }
 
 export interface PdfTextPlacement {

@@ -975,3 +975,19 @@ button.attention {
 .lint li button.link:hover {
   color: var(--accent);
 }
+
+/* collector info: set, rarity, number */
+.collector-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.collector-row input {
+  width: 64px;
+}
+.collector-row select {
+  width: 128px;
+}
+.collector-print {
+  white-space: nowrap;
+}

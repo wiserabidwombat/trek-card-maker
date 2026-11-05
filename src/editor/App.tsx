@@ -25,6 +25,7 @@ import { useBackupStatus } from './useBackupStatus';
 import { useInstallPrompt } from './useInstallPrompt';
 import { recordBackup, recordChange } from '../store/backup';
 import { EMPTY_HISTORY, isTextTarget, popRedo, popUndo, record, redoLabel, undoLabel, type History, type HistoryEntry } from './history';
+import { nextCollector } from '../model/collector';
 import { applyOrder, moveCard, nextOrder, normalizeOrder } from '../model/order';
 import { sampleCards } from './sampleDeck';
 import { clearCardsAndImages, deleteBackImage, deleteCard, getBackImage, getImage, getUserFont, putBackImage, listCards, loadDecks, pruneOrphanImages, putCard, putImage, saveCurrentDeck, saveDecks } from '../store/db';
@@ -207,6 +208,11 @@ function Editor({ catalog }: { catalog: Catalog }) {
       ? { ...structuredClone(base), id: newCard(base.type, base.frameId).id, name: base.name ? `${base.name} (copy)` : '', updatedAt: Date.now() }
       : newCard(current?.type ?? 'personnel', current?.frameId ?? catalog.frames[0].id, deckId);
     if (base) c.deckId = deckId;
+    else if (current) {
+      // a fresh card continues the set: same set and rarity, next number, same edge line
+      c.fields.collectorInfo = nextCollector(current.fields.collectorInfo ?? '');
+      c.fields.credit = current.fields.credit ?? '';
+    }
     c.order = nextOrder(cards);
     if (base?.image) {
       // duplicate the stored image so the copies can be edited independently

@@ -70,6 +70,11 @@ Open the printed URL (default `http://localhost:5173`).
     bottom), a quadrant letter, points, span and requirements. A **Headquarters label** (for
     example "Borg Headquarters") replaces the affiliation icons in the bottom strip, as on
     headquarters missions; leave points empty for those.
+  - **Collector info** is set number, rarity and card number ("25 V 1"; V is a virtual card, VP a
+    virtual promo), printed in the bottom bar as on the originals; a new card continues the set
+    with the next number. The **Edge line** prints in small capitals up the right edge beside the
+    art, where the real cards carry their legal notice; the suggested line is
+    "FAN-MADE CARD · NOT FOR SALE".
 - **Preview**: live render; *Download PNG* saves the single card. A badge warns when game text
   had to be shrunk to fit.
 - **Export for Tabletop Simulator** saves the deck as card-sheet images for TTS's Custom Deck

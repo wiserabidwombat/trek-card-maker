@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Catalog, Template } from '../catalog/types';
 import { iconsInGroup } from '../catalog/types';
 import { FRAMES_BASE } from '../catalog/useCatalog';
-import { fieldsFor, maxIcons, staffingIcons, type Card, type FieldDef } from '../model/card';
+import { DEFAULT_CREDIT, fieldsFor, maxIcons, staffingIcons, type Card, type FieldDef } from '../model/card';
+import { RARITIES, formatCollector, looseCollector, parseCollector, type CollectorInfo } from '../model/collector';
 import { KEYWORDS, keywordInsert, keywordsFor } from '../model/keywords';
 import { IconsSection } from './IconsSection';
 import { lintCard } from './lint';
@@ -27,6 +28,7 @@ const PHRASES: { label: string; text: string; title: string }[] = [
 export function FieldsForm({ card, catalog, template, onChange }: Props) {
   const [iconTarget, setIconTarget] = useState<string | null>(null);
   const areas = useRef<Record<string, HTMLTextAreaElement | null>>({});
+  const collectorDraft = useRef<{ id: string; parts: CollectorInfo } | null>(null);
   const pending = useRef<{ id: string; start: number; end: number } | null>(null);
 
   // After an edit made through the toolbar, put the caret where the helper said.
@@ -211,6 +213,44 @@ export function FieldsForm({ card, catalog, template, onChange }: Props) {
           </div>
         );
       }
+      case 'collector': {
+        // while the boxes are being filled the stored string is partial ("25", "25 V"), so keep the parts as typed
+        const draft = collectorDraft.current;
+        const parts = draft && draft.id === card.id && formatCollector(draft.parts) === value ? draft.parts : looseCollector(value);
+        const raw = value && !parseCollector(value) && !(draft && draft.id === card.id && formatCollector(draft.parts) === value) ? value : '';
+        const setPart = (p: Partial<CollectorInfo>) => {
+          const next = { ...parts, ...p };
+          collectorDraft.current = { id: card.id, parts: next };
+          setField(f.id, formatCollector(next));
+        };
+        return (
+          <div className="field" key={f.id}>
+            <label htmlFor={`${f.id}-set`}>{f.label}</label>
+            <div className="collector-row">
+              <input id={`${f.id}-set`} inputMode="numeric" placeholder="set" aria-label="Set number" value={parts?.set ?? ''} onChange={(e) => setPart({ set: e.target.value })} />
+              <select id={`${f.id}-rarity`} aria-label="Rarity" value={parts?.rarity ?? ''} onChange={(e) => setPart({ rarity: e.target.value })}>
+                <option value="">rarity</option>
+                {RARITIES.map((r) => (
+                  <option key={r.code} value={r.code}>
+                    {r.code} – {r.label}
+                  </option>
+                ))}
+              </select>
+              <input id={`${f.id}-number`} inputMode="numeric" placeholder="number" aria-label="Card number" value={parts?.number ?? ''} onChange={(e) => setPart({ number: e.target.value })} />
+              <span className="muted small collector-print">{value ? `prints ${value}` : ''}</span>
+            </div>
+            {raw && (
+              <p className="hint">
+                Stored as “{raw}”, which is not the set-rarity-number form; filling the boxes replaces it.{' '}
+                <button type="button" className="link" onClick={() => setField(f.id, '')}>
+                  Clear
+                </button>
+              </p>
+            )}
+            {!raw && <p className="hint">New cards continue the set with the next number. Rarity V marks a virtual card, VP a virtual promo.</p>}
+          </div>
+        );
+      }
       case 'quadrant':
         return (
           <div className="field compact" key={f.id}>
@@ -229,6 +269,17 @@ export function FieldsForm({ card, catalog, template, onChange }: Props) {
           <div className="field" key={f.id}>
             <label htmlFor={f.id}>{f.label}</label>
             <input id={f.id} value={value} placeholder={f.placeholder} onChange={(e) => setField(f.id, e.target.value)} />
+            {f.id === 'credit' && (
+              <p className="hint">
+                Prints in small capitals where the originals carry their legal notice. About 35 characters fit at full size; longer lines
+                shrink.{' '}
+                {!value && (
+                  <button type="button" className="link" onClick={() => setField(f.id, DEFAULT_CREDIT)}>
+                    Use “{DEFAULT_CREDIT}”
+                  </button>
+                )}
+              </p>
+            )}
           </div>
         );
     }
@@ -268,7 +319,7 @@ export function FieldsForm({ card, catalog, template, onChange }: Props) {
       {card.type === 'personnel' && (
         <SkillsEditor skills={card.skills} names={catalog.skills} onChange={(skills) => onChange({ ...card, skills, updatedAt: Date.now() })} />
       )}
-      {rest.filter((f) => f.id === 'requirements' || f.id === 'hqLabel' || f.id === 'gameText' || f.id === 'lore' || f.id === 'collectorInfo').map(renderField)}
+      {rest.filter((f) => f.id === 'requirements' || f.id === 'hqLabel' || f.id === 'gameText' || f.id === 'lore' || f.id === 'collectorInfo' || f.id === 'credit').map(renderField)}
       <div className="lint" aria-live="polite">
         <h3>Checks</h3>
         {issues.length === 0 ? (

@@ -120,7 +120,8 @@ export function HelpDialog({ catalog, onClose, onLoadSample }: Props) {
                 <code>title</code>, <code>unique</code> (yes / 1 / x), <code>subtitle</code>, <code>species</code>, <code>class</code>,{' '}
                 <code>cost</code>, <code>integrity</code>, <code>cunning</code>, <code>strength</code>, <code>range</code>, <code>weapons</code>,{' '}
                 <code>shields</code>, <code>quadrant</code>, <code>points</code>, <code>span</code>, <code>requirements</code>, <code>hq</code>,{' '}
-                <code>game text</code>, <code>lore</code>, <code>collector</code>, <code>copies</code>.
+                <code>game text</code>, <code>lore</code>, <code>set</code>, <code>rarity</code>, <code>number</code> (or one{' '}
+                <code>collector</code> column holding “25 V 1”), <code>credit</code> (the line up the right edge), <code>copies</code>.
               </li>
               <li>
                 <code>skills</code>: comma-separated, "2 Leadership" for multiples. <code>staffing</code>: command, staff. <code>icons</code>:

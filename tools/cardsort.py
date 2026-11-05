@@ -308,3 +308,13 @@ def derive_template(ctype: str, family: str, cards: list[list[tuple[str, Line]]]
         "skills": _with_colour(skills, skill_lines),
         "requirements": _with_colour(requirements, req_lines),
     }
+
+
+def legal_box(lines: list[Line]) -> dict | None:
+    """The vertical legal line up the right edge ("NOT ENDORSED BY CBS OR PAR. PIC."), as a text box.
+
+    The box is narrow and tall; the app draws the card's edge line rotated to climb it."""
+    lines = list(lines)
+    if not lines:
+        return None
+    return _with_colour(_box_entry("legal", lines, "left"), lines)

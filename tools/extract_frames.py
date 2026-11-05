@@ -32,7 +32,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from affiliation import AFFILIATION_ALIASES, AFFILIATION_TABLE, cluster_colours, nearest_cluster, sample_features  # noqa: E402
 from artmask import compute_art_mask, erase_red_dots  # noqa: E402
-from cardsort import classify_type, derive_template, family_for, line_roles  # noqa: E402
+from cardsort import classify_type, derive_template, family_for, legal_box, line_roles  # noqa: E402
 from pass3 import build_base_catalog  # noqa: E402
 from refs import load_reference_icons  # noqa: E402
 
@@ -427,8 +427,15 @@ def finish(args, out, overrides, refs, frames, roles_by_frame, templates, art_bo
         os.makedirs(os.path.join(out, "review"), exist_ok=True)
     # ---------------- pass 3: variants, base frames, rings, full-size icons ----------------
     base = build_base_catalog(frames, roles_by_frame, templates, art_box_px, out, refs, args.review, log, overrides)
+    # the vertical legal line up the right edge, per type and family
+    legal_lines: dict[str, list] = defaultdict(list)
+    for fr, roles in zip(frames, roles_by_frame):
+        legal_lines[f"{fr['type']}.{fr['family']}"].extend(l for r, l in roles if r == "legal")
     for key, t in templates.items():
         t["card"] = dict(CARD_BORDER_PT.get(key.split(".")[-1], CARD_BORDER_PT["std"]))
+        legal = legal_box(legal_lines.get(key, []))
+        if legal:
+            t["boxes"]["legal"] = legal
         if key in overrides:
             templates[key] = deep_merge(t, overrides[key])
 

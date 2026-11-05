@@ -57,16 +57,20 @@ export interface Card {
 export interface FieldDef {
   id: string;
   label: string;
-  kind: 'text' | 'number' | 'multiline' | 'checkbox' | 'staffing' | 'quadrant';
+  kind: 'text' | 'number' | 'multiline' | 'checkbox' | 'staffing' | 'quadrant' | 'collector';
   placeholder?: string;
 }
+
+/** The edge line most fan cards should carry; short enough to print at full size. */
+export const DEFAULT_CREDIT = 'FAN-MADE CARD · NOT FOR SALE';
 
 export const COMMON_FIELDS: FieldDef[] = [
   { id: 'title', label: 'Title', kind: 'text', placeholder: 'Card title' },
   { id: 'unique', label: 'Unique (•)', kind: 'checkbox' },
   { id: 'gameText', label: 'Game text', kind: 'multiline', placeholder: '**Keyword.** Game text with *italics* and {icon:klingon}' },
   { id: 'lore', label: 'Lore', kind: 'multiline', placeholder: '“Quote.”' },
-  { id: 'collectorInfo', label: 'Collector info', kind: 'text', placeholder: '1 C 1' },
+  { id: 'collectorInfo', label: 'Collector info (set, rarity, number)', kind: 'collector', placeholder: '25 V 1' },
+  { id: 'credit', label: 'Edge line (prints up the right edge)', kind: 'text', placeholder: DEFAULT_CREDIT },
 ];
 
 export const FIELD_DEFS: Record<CardType, FieldDef[]> = {

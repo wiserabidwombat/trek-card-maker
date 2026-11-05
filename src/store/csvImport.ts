@@ -1,5 +1,6 @@
 import { CARD_TYPES, type Catalog, type CardType, type Frame } from '../catalog/types';
-import { fieldsFor, newCard, type Card } from '../model/card';
+import { DEFAULT_CREDIT, fieldsFor, newCard, type Card } from '../model/card';
+import { formatCollector } from '../model/collector';
 import { parseSkillText } from '../model/skills';
 
 /**
@@ -90,6 +91,14 @@ const COLUMNS: Record<string, string> = {
   lore: 'lore',
   collector: 'collectorInfo',
   collectorinfo: 'collectorInfo',
+  set: 'set',
+  setnumber: 'set',
+  rarity: 'rarity',
+  number: 'number',
+  cardnumber: 'number',
+  credit: 'credit',
+  edge: 'credit',
+  edgeline: 'credit',
   copies: 'copies',
 };
 
@@ -169,6 +178,10 @@ export function cardsFromRows(rows: string[][], catalog: Catalog, deckId?: strin
       } else if (f.id === 'quadrant') card.fields.quadrant = v.charAt(0).toUpperCase();
       else card.fields[f.id] = v;
     }
+    // set, rarity and number columns build the collector info when the row has no collector column
+    if (!card.fields.collectorInfo && ['set', 'rarity', 'number'].some((k) => cols.includes(k))) {
+      card.fields.collectorInfo = formatCollector({ set: get('set'), rarity: get('rarity'), number: get('number') });
+    }
     if (type === 'personnel' && cols.includes('skills')) card.skills = list(get('skills')).map(parseSkillText);
     if (cols.includes('icons')) {
       for (const raw of list(get('icons'))) {
@@ -188,11 +201,11 @@ export function cardsFromRows(rows: string[][], catalog: Catalog, deckId?: strin
 
 /** A header row with every column the importer knows, and one card of each main type as examples. */
 export function csvTemplate(): string {
-  const header = ['type', 'frame', 'title', 'unique', 'subtitle', 'species', 'class', 'cost', 'integrity', 'cunning', 'strength', 'range', 'weapons', 'shields', 'staffing', 'skills', 'icons', 'quadrant', 'points', 'span', 'requirements', 'hq', 'game text', 'lore', 'collector', 'copies'];
+  const header = ['type', 'frame', 'title', 'unique', 'subtitle', 'species', 'class', 'cost', 'integrity', 'cunning', 'strength', 'range', 'weapons', 'shields', 'staffing', 'skills', 'icons', 'quadrant', 'points', 'span', 'requirements', 'hq', 'game text', 'lore', 'set', 'rarity', 'number', 'credit', 'copies'];
   const rows = [
-    ['personnel', 'Klingon', 'Worf', 'yes', 'Son of Mogh', 'Klingon', '', '3', '6', '6', '8', '', '', '', '', '2 Leadership, Honor, Security', 'command', '', '', '', '', '', '**Order** - Stop this personnel to make another {icon:klingon} personnel present Strength +3 until the end of this turn.', '"Today is a good day to die."', '1 R 1', '2'],
-    ['ship', 'Klingon', 'I.K.S. Rotarran', 'yes', '', '', "B'rel Class", '5', '', '', '', '8', '7', '7', 'command, staff', '', 'command', '', '', '', '', '', 'Cloaking device.', '', '1 R 2', '1'],
-    ['mission', 'Planet', "Qo'noS", '', 'Secure Homeworld', '', '', '', '', '', '', '', '', '', '', '', 'Klingon', 'Alpha', '35', '2', 'Diplomacy, Honor, 2 Leadership, and Strength>34', '', 'When you complete this mission, you may download a {icon:klingon} ship.', '"The Klingon homeworld."', '1 U 3', '1'],
+    ['personnel', 'Klingon', 'Worf', 'yes', 'Son of Mogh', 'Klingon', '', '3', '6', '6', '8', '', '', '', '', '2 Leadership, Honor, Security', 'command', '', '', '', '', '', '**Order** - Stop this personnel to make another {icon:klingon} personnel present Strength +3 until the end of this turn.', '"Today is a good day to die."', '1', 'R', '1', DEFAULT_CREDIT, '2'],
+    ['ship', 'Klingon', 'I.K.S. Rotarran', 'yes', '', '', "B'rel Class", '5', '', '', '', '8', '7', '7', 'command, staff', '', 'command', '', '', '', '', '', '**Cloaking Device.**', '', '1', 'R', '2', DEFAULT_CREDIT, '1'],
+    ['mission', 'Planet', "Qo'noS", '', 'Secure Homeworld', '', '', '', '', '', '', '', '', '', '', '', 'Klingon', 'Alpha', '35', '2', 'Diplomacy, Honor, 2 Leadership, and Strength>34', '', 'When you complete this mission, you may download a {icon:klingon} ship.', '"The Klingon homeworld."', '1', 'U', '3', DEFAULT_CREDIT, '1'],
   ];
   const cell = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
   return [header, ...rows].map((r) => r.map(cell).join(',')).join('\r\n') + '\r\n';

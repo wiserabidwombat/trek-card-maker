@@ -1,4 +1,4 @@
-import { PDFDocument, rgb } from 'pdf-lib';
+import { degrees, PDFDocument, rgb } from 'pdf-lib';
 import { hexToRgb01, mapTextOp, type TextOp } from '../render/textOps';
 import { PdfFontRegistry, type UserFontBytes } from './pdfFonts';
 import { cutMarks, layoutSheet, mirrorSlots } from './sheetLayout';
@@ -85,7 +85,14 @@ export async function buildSheetPdfFromJpegs(items: JpegItem[], options: SheetOp
       if (!op.text) continue;
       const p = mapTextOp(op, slot, cardW, cardH);
       const [r, g, b] = hexToRgb01(op.colour);
-      page.drawText(op.text, { x: p.x, y: p.y, size: p.size, font: await fonts.font(op.spec), color: rgb(r, g, b) });
+      page.drawText(op.text, {
+        x: p.x,
+        y: p.y,
+        size: p.size,
+        font: await fonts.font(op.spec),
+        color: rgb(r, g, b),
+        ...(op.rotate ? { rotate: degrees(op.rotate) } : {}),
+      });
     }
   }
   if (!pages.length) doc.addPage([size.w, size.h]);

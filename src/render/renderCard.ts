@@ -48,17 +48,53 @@ function putText(
   baseline: number,
   align: 'left' | 'center' | 'right',
   colour: string,
+  rotate = 0,
 ): void {
   const width = g.measureText(text).width;
   const left = align === 'center' ? x - width / 2 : align === 'right' ? x - width : x;
   if (sink) {
-    sink.push({ text, spec, sizePx, x: left, y: baseline, colour });
+    sink.push({ text, spec, sizePx, x: left, y: baseline, colour, ...(rotate ? { rotate } : {}) });
     return;
   }
   g.textAlign = 'left';
   g.textBaseline = 'alphabetic';
   g.fillStyle = colour;
+  if (rotate) {
+    // anticlockwise about the origin, so 90 runs the text up the card with the glyph tops facing left
+    g.save();
+    g.translate(left, baseline);
+    g.rotate((-rotate * Math.PI) / 180);
+    g.fillText(text, 0, 0);
+    g.restore();
+    return;
+  }
   g.fillText(text, left, baseline);
+}
+
+/**
+ * The small line that climbs the right edge beside the artwork, where the originals print their
+ * legal notice ("NOT ENDORSED BY CBS OR PAR. PIC."). Capitals, shrunk to fit the run when long.
+ */
+function drawEdgeLine(
+  g: CanvasRenderingContext2D,
+  sink: TextOp[] | undefined,
+  text: string,
+  box: TextBox,
+  rect: PxRect,
+  sizePx: number,
+  fonts: FontConfig,
+): void {
+  const t = text.toUpperCase();
+  let px = sizePx;
+  g.font = cssFont(box.font, px, fonts);
+  let width = g.measureText(t).width;
+  while (width > rect.h && px > sizePx * 0.6) {
+    px *= 0.95;
+    g.font = cssFont(box.font, px, fonts);
+    width = g.measureText(t).width;
+  }
+  // the run starts at the bottom of the box; the baseline sits towards its outer (right) side
+  putText(g, sink, t, specForRole(box.font, fonts), px, rect.x + rect.w * BASELINE_RATIO, rect.y + rect.h, 'left', inkColour(box.colour), 90);
 }
 
 /** Baseline that centres `text` vertically on `cy` with the current font. */
@@ -240,6 +276,12 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
     // title/subtitle may extend to the right edge of the frame's title bar
     const maxWidth = role === 'title' || role === 'subtitle' ? W * 0.95 - rect.x : rect.w;
     drawBoxText(g, sink, text, box, rect, px(box.sizePt), fonts, { maxWidth });
+  }
+
+  // the edge line up the right side (credit, legal notice)
+  const credit = (card.fields.credit ?? '').trim();
+  if (credit && t.boxes.legal) {
+    drawEdgeLine(g, sink, credit, t.boxes.legal, boxToPx(t.boxes.legal, W, H), px(t.boxes.legal.sizePt), fonts);
   }
 
   // attributes: label left, value right-aligned within the box

@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-03T13:12:27",
+ "generatedAt": "2026-11-05T07:47:11",
  "families": {
   "std": {
    "refWidthPt": 178.58
@@ -59,6 +59,16 @@
      "sizePt": 3.7,
      "align": "left",
      "colour": "#000000"
+    },
+    "legal": {
+     "x0": 0.9258,
+     "y0": 0.6943,
+     "x1": 0.9432,
+     "y1": 0.8523,
+     "font": "body",
+     "sizePt": 3.1,
+     "align": "left",
+     "colour": "#ffffff"
     }
    },
    "flow": {
@@ -130,6 +140,16 @@
      "sizePt": 3.7,
      "align": "left",
      "colour": "#000000"
+    },
+    "legal": {
+     "x0": 0.9258,
+     "y0": 0.6943,
+     "x1": 0.9432,
+     "y1": 0.8523,
+     "font": "body",
+     "sizePt": 3.1,
+     "align": "left",
+     "colour": "#ffffff"
     }
    },
    "flow": {
@@ -191,6 +211,16 @@
      "sizePt": 3.7,
      "align": "left",
      "colour": "#000000"
+    },
+    "legal": {
+     "x0": 0.9258,
+     "y0": 0.6943,
+     "x1": 0.9432,
+     "y1": 0.8523,
+     "font": "body",
+     "sizePt": 3.1,
+     "align": "left",
+     "colour": "#ffffff"
     }
    },
    "flow": {
@@ -272,6 +302,16 @@
      "sizePt": 3.7,
      "align": "left",
      "colour": "#000000"
+    },
+    "legal": {
+     "x0": 0.9258,
+     "y0": 0.6943,
+     "x1": 0.9432,
+     "y1": 0.8523,
+     "font": "body",
+     "sizePt": 3.1,
+     "align": "left",
+     "colour": "#ffffff"
     }
    },
    "flow": {
@@ -402,6 +442,16 @@
      "sizePt": 3.7,
      "align": "left",
      "colour": "#000000"
+    },
+    "legal": {
+     "x0": 0.9306,
+     "y0": 0.6943,
+     "x1": 0.9479,
+     "y1": 0.8523,
+     "font": "body",
+     "sizePt": 3.1,
+     "align": "left",
+     "colour": "#ffffff"
     }
    },
    "flow": {
@@ -497,6 +547,16 @@
      "sizePt": 3.7,
      "align": "left",
      "colour": "#000000"
+    },
+    "legal": {
+     "x0": 0.9258,
+     "y0": 0.6943,
+     "x1": 0.9432,
+     "y1": 0.8523,
+     "font": "body",
+     "sizePt": 3.1,
+     "align": "left",
+     "colour": "#ffffff"
     }
    },
    "flow": {
@@ -608,6 +668,16 @@
      "sizePt": 3.7,
      "align": "left",
      "colour": "#000000"
+    },
+    "legal": {
+     "x0": 0.9306,
+     "y0": 0.6943,
+     "x1": 0.9479,
+     "y1": 0.8523,
+     "font": "body",
+     "sizePt": 3.1,
+     "align": "left",
+     "colour": "#ffffff"
     }
    },
    "flow": {
@@ -698,6 +768,16 @@
      "sizePt": 4.0,
      "align": "left",
      "colour": "#231f20"
+    },
+    "legal": {
+     "x0": 0.9567,
+     "y0": 0.7025,
+     "x1": 0.9812,
+     "y1": 0.8712,
+     "font": "body",
+     "sizePt": 3.3,
+     "align": "left",
+     "colour": "#ffffff"
     }
    },
    "flow": {
@@ -769,6 +849,16 @@
      "sizePt": 4.0,
      "align": "left",
      "colour": "#231f20"
+    },
+    "legal": {
+     "x0": 0.9567,
+     "y0": 0.7023,
+     "x1": 0.9812,
+     "y1": 0.8709,
+     "font": "body",
+     "sizePt": 3.3,
+     "align": "left",
+     "colour": "#ffffff"
     }
    },
    "flow": {
@@ -840,6 +930,16 @@
      "sizePt": 4.0,
      "align": "left",
      "colour": "#231f20"
+    },
+    "legal": {
+     "x0": 0.9567,
+     "y0": 0.7025,
+     "x1": 0.9812,
+     "y1": 0.8712,
+     "font": "body",
+     "sizePt": 3.3,
+     "align": "left",
+     "colour": "#ffffff"
     }
    },
    "flow": {
@@ -901,6 +1001,16 @@
      "sizePt": 4.0,
      "align": "left",
      "colour": "#231f20"
+    },
+    "legal": {
+     "x0": 0.9567,
+     "y0": 0.7053,
+     "x1": 0.9812,
+     "y1": 0.8712,
+     "font": "body",
+     "sizePt": 3.3,
+     "align": "left",
+     "colour": "#ffffff"
     }
    },
    "flow": {
@@ -982,6 +1092,16 @@
      "sizePt": 6.5,
      "align": "left",
      "colour": "#231f20"
+    },
+    "legal": {
+     "x0": 0.9653,
+     "y0": 0.699,
+     "x1": 0.9899,
+     "y1": 0.865,
+     "font": "body",
+     "sizePt": 3.3,
+     "align": "left",
+     "colour": "#ffffff"
     }
    },
    "flow": {
@@ -1112,6 +1232,16 @@
      "sizePt": 4.0,
      "align": "left",
      "colour": "#231f20"
+    },
+    "legal": {
+     "x0": 0.9658,
+     "y0": 0.7053,
+     "x1": 0.9903,
+     "y1": 0.8712,
+     "font": "body",
+     "sizePt": 3.3,
+     "align": "left",
+     "colour": "#ffffff"
     }
    },
    "flow": {
@@ -1247,6 +1377,16 @@
      "sizePt": 4.0,
      "align": "left",
      "colour": "#231f20"
+    },
+    "legal": {
+     "x0": 0.9658,
+     "y0": 0.7053,
+     "x1": 0.9903,
+     "y1": 0.8712,
+     "font": "body",
+     "sizePt": 3.3,
+     "align": "left",
+     "colour": "#ffffff"
     }
    },
    "flow": {

@@ -117,3 +117,36 @@ describe('cardsFromRows', () => {
     expect(() => cardsFromRows([['type', 'cost'], ['personnel', '3']], catalog)).toThrow(/title/);
   });
 });
+
+describe('collector info and edge line columns', () => {
+  it('builds the collector info from set, rarity and number', () => {
+    const { cards } = cardsFromRows(
+      [
+        ['type', 'title', 'set', 'rarity', 'number', 'credit'],
+        ['personnel', 'Worf', '25', 'v', '1', 'Fan-made card'],
+        ['personnel', 'Martok', '25', '', '', ''],
+      ],
+      catalog,
+    );
+    expect(cards[0].fields.collectorInfo).toBe('25 V 1');
+    expect(cards[0].fields.credit).toBe('Fan-made card');
+    expect(cards[1].fields.collectorInfo).toBe('25');
+  });
+
+  it('prefers a collector column when both forms are present', () => {
+    const { cards } = cardsFromRows(
+      [
+        ['type', 'title', 'collector', 'set', 'rarity', 'number'],
+        ['personnel', 'Worf', '1 C 9', '25', 'V', '1'],
+      ],
+      catalog,
+    );
+    expect(cards[0].fields.collectorInfo).toBe('1 C 9');
+  });
+
+  it('ships set, rarity, number and credit columns in the template', () => {
+    const header = parseDelimited(csvTemplate())[0];
+    expect(header).toEqual(expect.arrayContaining(['set', 'rarity', 'number', 'credit']));
+    expect(header).not.toContain('collector');
+  });
+});

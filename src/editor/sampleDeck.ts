@@ -1,6 +1,6 @@
 import type { Catalog } from '../catalog/types';
 import { framesOfType, iconsInGroup } from '../catalog/types';
-import { newCard, type Card } from '../model/card';
+import { DEFAULT_CREDIT, newCard, type Card } from '../model/card';
 import { serializeDeck } from '../store/deckJson';
 
 /**
@@ -30,6 +30,7 @@ export function sampleCards(catalog: Catalog): Card[] {
     gameText: '**Order** - Stop this personnel to make another {icon:klingon} personnel present Strength +3 until the end of this turn.',
     lore: '"Today is a good day to die."',
     collectorInfo: '1 C 1',
+    credit: DEFAULT_CREDIT,
   };
   worf.skills = [
     { name: 'Honor', count: 2 },
@@ -54,6 +55,7 @@ export function sampleCards(catalog: Catalog): Card[] {
     gameText: 'When you complete this mission, you may download a {icon:klingon} ship.',
     lore: '"The Klingon homeworld."',
     collectorInfo: '1 C 2',
+    credit: DEFAULT_CREDIT,
   };
   qonos.icons = pick(affiliations, ['-klingon', '-federation']);
   qonos.copies = 2;
