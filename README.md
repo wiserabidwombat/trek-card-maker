@@ -39,7 +39,9 @@ Open the printed URL (default `http://localhost:5173`).
   reorder; a filter box appears once there are more than three), copy counts for the print sheet,
   PDF/JSON export and import. **Undo** / **Redo** in the top bar (Ctrl+Z / Ctrl+Shift+Z outside a
   text field) step through edits, new cards, deletions and reorders; a burst of typing is one step. *Export deck (JSON)* writes the current deck with its name; *Import deck
-  (JSON)…* creates a new deck from the file and switches to it.
+  (JSON)…* creates a new deck from the file and switches to it. *Export deck list (TXT)* writes a
+  plain-text list the way players post them: missions, dilemma pile and draw deck by type, each card
+  as "2x Title, Subtitle" with the section counts.
   A line under the buttons says when the deck was last exported and how many saves have happened
   since; after 20 it turns amber as a reminder that the browser holds the only copy.
 - **Frame**: pick the card type, then the affiliation (or mission/dilemma type).

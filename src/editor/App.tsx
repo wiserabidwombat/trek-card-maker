@@ -34,6 +34,7 @@ import { sampleCards } from './sampleDeck';
 import { clearCardsAndImages, deleteBackImage, deleteCard, getBackImage, getImage, getUserFont, putBackImage, listCards, loadDecks, pruneOrphanImages, putCard, putImage, saveCurrentDeck, saveDecks } from '../store/db';
 import { deckFileName, deckSlug, importedDeckName, newDeckId, uniqueDeckName, type DeckMeta } from '../store/decks';
 import { parseDeck, remapFrames, serializeDeck } from '../store/deckJson';
+import { buildDeckList, deckListFileName } from '../store/deckList';
 import { cardsFromRows, parseDelimited } from '../store/csvImport';
 import { DeckList } from './DeckList';
 import { FieldsForm } from './FieldsForm';
@@ -510,6 +511,11 @@ function Editor({ catalog }: { catalog: Catalog }) {
     }
   };
 
+  const exportList = () => {
+    const deckName = decks.find((d) => d.id === deckId)?.name ?? '';
+    downloadBytes(new TextEncoder().encode(buildDeckList(cards, deckName)), deckListFileName(deckName), 'text/plain');
+  };
+
   const exportJson = async () => {
     const images: Record<string, string> = {};
     for (const c of cards) {
@@ -718,6 +724,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
           onExportPdf={() => setShowExport(true)}
           onExportTts={() => setShowTts(true)}
           onExportJson={exportJson}
+          onExportList={exportList}
           onImportJson={importJson}
           onImportCsv={importCsv}
         />

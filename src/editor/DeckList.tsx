@@ -26,6 +26,8 @@ interface Props {
   onExportPdf: () => void;
   onExportTts: () => void;
   onExportJson: () => void;
+  /** Plain-text deck list: missions, dilemma pile, draw deck with counts. */
+  onExportList: () => void;
   onImportJson: (file: File) => void;
   onImportCsv: (file: File) => void;
 }
@@ -162,6 +164,9 @@ export function DeckList(p: Props) {
         </p>
         <button className={nudge ? 'attention' : ''} onClick={p.onExportJson} disabled={!p.cards.length}>
           Export deck (JSON)
+        </button>
+        <button onClick={p.onExportList} disabled={total === 0} title="A plain-text list: missions, dilemma pile and draw deck, each card with its copies">
+          Export deck list (TXT)
         </button>
         <label className="file-button">
           Import deck (JSON)…
