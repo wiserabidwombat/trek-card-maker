@@ -12,6 +12,15 @@ import '@fontsource/fira-sans-condensed/700-italic.css';
 import './index.css';
 import App from './editor/App';
 
+// Production only: a worker in front of the dev server would hide hot updates.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(() => undefined);
+    // ask the browser not to evict the card database under storage pressure
+    navigator.storage?.persist?.().catch(() => undefined);
+  });
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />

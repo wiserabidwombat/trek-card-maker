@@ -23,7 +23,7 @@ export function Welcome({ onLoadSample, onHelp }: Props) {
         </li>
       </ol>
       <p className="muted small">
-        Cards are saved in this browser only. <em>Export deck (JSON)</em> makes a backup you can import on another machine. Found a problem or
+        After the first visit the app opens offline too, with the frames you have used. Cards are saved in this browser only. <em>Export deck (JSON)</em> makes a backup you can import on another machine. Found a problem or
         missing a frame?{' '}
         <a href={ISSUES_URL} target="_blank" rel="noopener noreferrer">
           Report it on GitHub

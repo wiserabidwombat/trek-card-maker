@@ -22,6 +22,7 @@ import { TtsDialog, type TtsResult } from './TtsDialog';
 import { HelpDialog } from './HelpDialog';
 import { Welcome } from './Welcome';
 import { useBackupStatus } from './useBackupStatus';
+import { useInstallPrompt } from './useInstallPrompt';
 import { recordBackup, recordChange } from '../store/backup';
 import { EMPTY_HISTORY, isTextTarget, popRedo, popUndo, record, redoLabel, undoLabel, type History, type HistoryEntry } from './history';
 import { applyOrder, moveCard, nextOrder, normalizeOrder } from '../model/order';
@@ -101,6 +102,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
   const saveTimers = useRef(new Map<string, number>());
   const backup = useBackupStatus();
   const thumbs = useThumbnails(cards, currentId, catalog, fonts, assets, showGallery);
+  const installer = useInstallPrompt();
   const [history, setHistory] = useState<History>(EMPTY_HISTORY);
   const cardsRef = useRef<Card[]>([]);
   cardsRef.current = cards;
@@ -620,6 +622,11 @@ function Editor({ catalog }: { catalog: Catalog }) {
         <button onClick={() => setShowGallery(true)} disabled={!cards.length} title="Every card in this deck as a picture">
           Gallery
         </button>
+        {installer.canInstall && (
+          <button onClick={installer.install} title="Add Trek Card Maker to your desktop or home screen; it works offline">
+            Install
+          </button>
+        )}
         <button onClick={() => setShowHelp(true)}>Help</button>
         <button onClick={() => setShowFonts(true)}>Fonts…</button>
       </header>

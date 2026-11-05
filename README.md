@@ -16,6 +16,9 @@ regularly for a backup you can import elsewhere.
 Open **https://wiserabidwombat.github.io/trek-card-maker/** in a current Chrome, Edge, Firefox or
 Safari. No install; the first visit shows a welcome panel with a **Load sample deck** button.
 
+The hosted app works offline after the first visit (a service worker keeps the app and the frames
+you have used), and browsers that support it offer an **Install** button in the top bar.
+
 ## Run it locally
 
 Node.js 20+ is all you need; the frame catalog is included in the repository.
@@ -147,6 +150,7 @@ icon id in `tools/rulebook_icons.json`; affiliation colour centres in `tools/aff
 
 ```bash
 npm test            # vitest unit tests (model, markup, layout, catalog, export, store)
+npm run test:offline -- http://localhost:4173/ firefox   # after `npm run build && npm run preview`: worker caches, offline reload
 npm run typecheck
 npm run build
 cd tools && python -I -X utf8 -m pytest -q   # extractor unit tests
