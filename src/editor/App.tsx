@@ -18,6 +18,8 @@ import { BACK_PX, type BackChoice } from '../export/backs';
 import { BLEED_PT } from '../export/bleed';
 import { ExportDialog } from './ExportDialog';
 import { Gallery } from './Gallery';
+import { DeckChecks } from './DeckChecks';
+import { lintContext, lintDeck } from './deckLint';
 import { useThumbnails } from './useThumbnails';
 import { TtsDialog, type TtsResult } from './TtsDialog';
 import { HelpDialog } from './HelpDialog';
@@ -83,6 +85,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
   const [exporting, setExporting] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
+  const [showChecks, setShowChecks] = useState(false);
   const [customBack, setCustomBack] = useState<Blob | null>(null);
   const customBackUrl = useMemo(() => (customBack ? URL.createObjectURL(customBack) : null), [customBack]);
   useEffect(() => () => {
@@ -114,6 +117,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
   const saveTimers = useRef(new Map<string, number>());
   const backup = useBackupStatus();
   const thumbs = useThumbnails(cards, currentId, catalog, fonts, assets, showGallery);
+  const deckLint = useMemo(() => lintDeck(cards, lintContext(catalog)), [cards, catalog]);
   const installer = useInstallPrompt();
   const [history, setHistory] = useState<History>(EMPTY_HISTORY);
   const cardsRef = useRef<Card[]>([]);
@@ -179,6 +183,21 @@ function Editor({ catalog }: { catalog: Catalog }) {
   }, [catalog]);
 
   const render = useRenderer(current, catalog, fonts, assets);
+
+  /** Save several changed cards as one undoable step (deck numbering, the edge line everywhere). */
+  const applyBulk = async (updated: Card[]) => {
+    if (!updated.length) return;
+    const cs = cardsRef.current;
+    const before = updated.map((u) => cs.find((c) => c.id === u.id)).filter((c): c is Card => !!c);
+    setHistory((h) => record(h, { kind: 'bulk', before, after: updated, at: Date.now() }));
+    const byId = new Map(updated.map((u) => [u.id, u]));
+    setCards(cs.map((c) => byId.get(c.id) ?? c));
+    for (const u of updated) {
+      cancelSave(u.id);
+      await putCard(u);
+    }
+    recordChange(updated.length);
+  };
 
   const updateCard = useCallback((card: Card) => {
     const before = cardsRef.current.find((c) => c.id === card.id);
@@ -305,6 +324,14 @@ function Editor({ catalog }: { catalog: Catalog }) {
     } else if (e.kind === 'delete') {
       if (direction === 'undo') await restoreCard(e.card, e.index);
       else await dropCard(e.card.id);
+    } else if (e.kind === 'bulk') {
+      const target = direction === 'undo' ? e.before : e.after;
+      const byId = new Map(target.map((c) => [c.id, c]));
+      setCards(cs.map((c) => byId.get(c.id) ?? c));
+      for (const c of target) {
+        cancelSave(c.id);
+        await putCard(c);
+      }
     } else {
       const { cards: next, changed } = applyOrder(cs, direction === 'undo' ? e.before : e.after);
       setCards(next);
@@ -640,6 +667,14 @@ function Editor({ catalog }: { catalog: Catalog }) {
         <button onClick={() => setShowGallery(true)} disabled={!cards.length} title="Every card in this deck as a picture">
           Gallery
         </button>
+        <button
+          onClick={() => setShowChecks(true)}
+          disabled={!cards.length}
+          className={deckLint.warnings ? 'attention' : ''}
+          title="Every card's checks in one place, plus numbering and the edge line for the whole deck"
+        >
+          Checks{deckLint.warnings ? ` · ${deckLint.warnings}` : ''}
+        </button>
         {installer.canInstall && (
           <button onClick={installer.install} title="Add Trek Card Maker to your desktop or home screen; it works offline">
             Install
@@ -723,6 +758,19 @@ function Editor({ catalog }: { catalog: Catalog }) {
             setShowGallery(false);
           }}
           onClose={() => setShowGallery(false)}
+        />
+      )}
+      {showChecks && (
+        <DeckChecks
+          cards={cards}
+          deckName={decks.find((d) => d.id === deckId)?.name ?? ''}
+          lint={deckLint}
+          onSelect={(id) => {
+            setCurrentId(id);
+            setPane('edit');
+          }}
+          onApply={applyBulk}
+          onClose={() => setShowChecks(false)}
         />
       )}
       {showExport && (

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatCollector, looseCollector, nextCollector, parseCollector } from './collector';
+import { formatCollector, looseCollector, nextCollector, numberDeck, parseCollector } from './collector';
 
 describe('collector info', () => {
   it('parses the printed form', () => {
@@ -21,6 +21,12 @@ describe('collector info', () => {
     expect(formatCollector({ set: '25', rarity: 'v', number: '1' })).toBe('25 V 1');
     expect(formatCollector({ set: '25', rarity: '', number: '' })).toBe('25');
     expect(formatCollector({})).toBe('');
+  });
+
+  it('numbers a whole deck in order', () => {
+    expect(numberDeck(3, { set: '25', rarity: 'v', start: 7 })).toEqual(['25 V 7', '25 V 8', '25 V 9']);
+    expect(numberDeck(2, { set: '', rarity: '', start: 1 })).toEqual(['1', '2']);
+    expect(numberDeck(0, { set: '1', rarity: 'C', start: 1 })).toEqual([]);
   });
 
   it('numbers the next card in the same set', () => {

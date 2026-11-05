@@ -158,7 +158,9 @@ export function HelpDialog({ catalog, onClose, onLoadSample }: Props) {
               <li>
                 <strong>Checks</strong> under the card text compares the wording with the printed cards: bold requirements after “Unless you
                 have”, capitalised skill names, Cunning&gt;30 without spaces, a period at the end, misspelt skills, unknown icon ids. They are
-                advice only; nothing stops you saving or printing.
+                advice only; nothing stops you saving or printing. <strong>Checks</strong> in the top bar lists them for the whole deck,
+                adds what only shows across cards (duplicate collector numbers or titles, an edge line on some cards but not others), and
+                can number every card in deck order or set the edge line everywhere in one undoable step.
               </li>
               <li>
                 Typography is applied when the card is drawn, so type with a plain keyboard: straight quotes print as “curly” quotes, a hyphen

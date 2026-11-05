@@ -5,7 +5,9 @@ export type HistoryEntry =
   | { kind: 'edit'; before: Card; after: Card; at: number }
   | { kind: 'add'; card: Card; at: number }
   | { kind: 'delete'; card: Card; index: number; at: number }
-  | { kind: 'reorder'; before: string[]; after: string[]; at: number };
+  | { kind: 'reorder'; before: string[]; after: string[]; at: number }
+  /** Several cards changed at once (numbering the deck, setting the edge line everywhere). */
+  | { kind: 'bulk'; before: Card[]; after: Card[]; at: number };
 
 export interface History {
   undo: HistoryEntry[];
@@ -47,7 +49,7 @@ export function popRedo(h: History): { history: History; entry: HistoryEntry } |
   return { history: { undo: [...h.undo, entry], redo: h.redo.slice(0, -1) }, entry };
 }
 
-const LABELS: Record<HistoryEntry['kind'], string> = { edit: 'edit', add: 'new card', delete: 'delete', reorder: 'reorder' };
+const LABELS: Record<HistoryEntry['kind'], string> = { edit: 'edit', add: 'new card', delete: 'delete', reorder: 'reorder', bulk: 'deck change' };
 
 export function undoLabel(h: History): string | null {
   const e = h.undo[h.undo.length - 1];

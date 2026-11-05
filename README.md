@@ -43,6 +43,11 @@ Open the printed URL (default `http://localhost:5173`).
   A line under the buttons says when the deck was last exported and how many saves have happened
   since; after 20 it turns amber as a reminder that the browser holds the only copy.
 - **Frame**: pick the card type, then the affiliation (or mission/dilemma type).
+- **Checks** (top bar; the button counts the warnings) gathers every card's writing checks in one
+  place, adds the ones that only show across cards (two cards with the same collector number or
+  title, an edge line or collector info on some cards but not others, mixed set numbers), and
+  offers two deck-wide tools: number every card in deck order from a set, rarity and first number,
+  and set the edge line everywhere. Each is one undoable step.
 - **Gallery** (top bar) shows every card in the deck as a picture, with copies and a note when text
   had to shrink; click one to edit it. Pictures render in the background and are kept until a card changes.
 - **Import cards (CSV)…** adds a row per card to the current deck from a spreadsheet; Help's

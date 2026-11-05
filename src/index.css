@@ -991,3 +991,73 @@ button.attention {
 .collector-print {
   white-space: nowrap;
 }
+
+/* deck checks dialog */
+.modal.checks {
+  width: min(760px, 96vw);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+.checks-body h3 {
+  margin: 12px 0 4px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.checks-body section:first-child h3 {
+  margin-top: 0;
+}
+.lint-list {
+  margin: 0;
+  padding-left: 18px;
+}
+.lint-list li {
+  font-size: 13px;
+  margin: 3px 0;
+}
+.lint-list li.warn::marker {
+  color: var(--warn);
+}
+.lint-list li.info::marker {
+  color: var(--muted);
+}
+.lint-list li button.link {
+  color: var(--text);
+  text-align: left;
+  font-size: 13px;
+}
+.lint-list li button.link:hover,
+.checks-card button.link.strong:hover {
+  color: var(--accent);
+}
+.checks-card {
+  margin: 6px 0 10px;
+}
+.checks-card button.link.strong {
+  color: var(--text);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 0;
+}
+.bulk {
+  margin-top: 16px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.bulk-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 8px 0;
+}
+.bulk-row input {
+  width: 70px;
+}
+.bulk-row input.grow {
+  flex: 1;
+  min-width: 200px;
+}
+.bulk-row select {
+  width: 130px;
+}

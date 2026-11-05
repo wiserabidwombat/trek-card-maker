@@ -49,6 +49,16 @@ export function formatCollector(info: Partial<CollectorInfo>): string {
     .join(' ');
 }
 
+/**
+ * Collector info for every card of a deck in order: the same set and rarity, numbered from `start`.
+ * Returns one printed string per card, so the caller can see which cards actually change.
+ */
+export function numberDeck(count: number, opts: { set: string; rarity: string; start: number }): string[] {
+  const out: string[] = [];
+  for (let i = 0; i < count; i++) out.push(formatCollector({ set: opts.set, rarity: opts.rarity, number: String(opts.start + i) }));
+  return out;
+}
+
 /** The collector info a new card gets after `prev`: same set and rarity, next number; empty when prev has no number. */
 export function nextCollector(prev: string): string {
   const p = parseCollector(prev);
