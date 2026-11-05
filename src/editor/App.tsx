@@ -61,6 +61,14 @@ async function dataUrlToBlob(url: string): Promise<Blob> {
   return (await fetch(url)).blob();
 }
 
+type Pane = 'cards' | 'frame' | 'edit' | 'preview';
+const PANES: { id: Pane; label: string }[] = [
+  { id: 'cards', label: 'Cards' },
+  { id: 'frame', label: 'Frame' },
+  { id: 'edit', label: 'Edit' },
+  { id: 'preview', label: 'Preview' },
+];
+
 function Editor({ catalog }: { catalog: Catalog }) {
   const assets = useMemo(() => new AssetCache(), []);
   const [fonts, setFonts] = useState<FontConfig>(DEFAULT_FONTS);
@@ -81,6 +89,8 @@ function Editor({ catalog }: { catalog: Catalog }) {
   useEffect(() => {
     getBackImage().then((b) => setCustomBack(b ?? null), () => undefined);
   }, []);
+  /** Which column a phone shows; the desktop grid shows all four and ignores it. */
+  const [pane, setPane] = useState<Pane>('edit');
   const [showTts, setShowTts] = useState(false);
   const [ttsResult, setTtsResult] = useState<TtsResult | null>(null);
   /** Cards headed for the print sheet whose artwork prints below 300 dpi. */
@@ -189,6 +199,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
   const selectFrame = (f: Frame) => {
     if (!current) return;
     updateCard(f.type === current.type ? { ...current, frameId: f.id, updatedAt: Date.now() } : changeType(current, f.type, f.id));
+    setPane('edit');
   };
 
   const addCard = async (base?: Card) => {
@@ -630,7 +641,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
         <button onClick={() => setShowHelp(true)}>Help</button>
         <button onClick={() => setShowFonts(true)}>Fonts…</button>
       </header>
-      <div className="columns">
+      <div className="columns" data-pane={pane}>
         <DeckList
           cards={cards}
           currentId={currentId}
@@ -642,8 +653,14 @@ function Editor({ catalog }: { catalog: Catalog }) {
           onNewDeck={newDeck}
           onRenameDeck={renameDeck}
           onDeleteDeck={removeDeck}
-          onSelect={setCurrentId}
-          onNew={() => addCard()}
+          onSelect={(id) => {
+            setCurrentId(id);
+            setPane('edit');
+          }}
+          onNew={() => {
+            addCard();
+            setPane('edit');
+          }}
           onDuplicate={(id) => {
             const c = cards.find((x) => x.id === id);
             if (c) addCard(c);
@@ -670,6 +687,13 @@ function Editor({ catalog }: { catalog: Catalog }) {
         </div>
         <Preview render={render} filename={current?.name || current?.fields.title || 'card'} />
       </div>
+      <nav className="mobile-nav" aria-label="Sections">
+        {PANES.map((p) => (
+          <button key={p.id} className={pane === p.id ? 'on' : ''} onClick={() => setPane(p.id)} aria-pressed={pane === p.id}>
+            {p.label}
+          </button>
+        ))}
+      </nav>
       {showFonts && <FontSettings fonts={fonts} onChange={setFonts} onClose={() => setShowFonts(false)} />}
       {showHelp && (
         <HelpDialog

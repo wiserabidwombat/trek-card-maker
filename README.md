@@ -19,6 +19,10 @@ Safari. No install; the first visit shows a welcome panel with a **Load sample d
 The hosted app works offline after the first visit (a service worker keeps the app and the frames
 you have used), and browsers that support it offer an **Install** button in the top bar.
 
+On a phone the four columns become one at a time, picked from a bar along the bottom (Cards, Frame,
+Edit, Preview); ↑ / ↓ buttons reorder cards where there is no drag. Cropping works by touch, though a
+desktop is still the comfortable place for artwork.
+
 ## Run it locally
 
 Node.js 20+ is all you need; the frame catalog is included in the repository.

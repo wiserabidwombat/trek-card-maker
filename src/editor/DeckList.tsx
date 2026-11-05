@@ -127,6 +127,16 @@ export function DeckList(p: Props) {
               title="Copies on the print sheet"
               onChange={(e) => p.onCopiesChange(c.id, Math.max(0, Math.min(99, Number(e.target.value) || 0)))}
             />
+            {!filtering && (
+              <>
+                <button className="move" title="Move up" onClick={() => p.onMoveBy(c.id, -1)}>
+                  ↑
+                </button>
+                <button className="move" title="Move down" onClick={() => p.onMoveBy(c.id, 1)}>
+                  ↓
+                </button>
+              </>
+            )}
             <button title="Duplicate" onClick={() => p.onDuplicate(c.id)}>
               ⧉
             </button>

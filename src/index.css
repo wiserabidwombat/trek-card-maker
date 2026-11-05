@@ -514,6 +514,116 @@ ol.steps ul {
   }
 }
 
+/* phones: one column at a time, picked from a bar along the bottom */
+.mobile-nav {
+  display: none;
+}
+.deck-list .move {
+  display: none;
+}
+@media (max-width: 760px) {
+  .app {
+    height: 100dvh;
+  }
+  .topbar {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 10px;
+  }
+  .topbar h1 {
+    font-size: 16px;
+  }
+  .columns {
+    display: flex;
+    flex-direction: column;
+  }
+  .columns > * {
+    display: none;
+    border-right: none;
+    padding: 12px;
+    flex: 1;
+  }
+  .columns[data-pane='cards'] > .deck {
+    display: flex;
+  }
+  .columns[data-pane='frame'] > .picker {
+    display: block;
+  }
+  .columns[data-pane='edit'] > .middle {
+    display: flex;
+  }
+  .columns[data-pane='preview'] > .preview {
+    display: block;
+  }
+  .mobile-nav {
+    display: flex;
+    gap: 6px;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .mobile-nav button {
+    flex: 1;
+    padding: 9px 4px;
+    font-size: 13px;
+  }
+  .mobile-nav button.on {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0b1522;
+    font-weight: 600;
+  }
+  .drag-handle {
+    display: none;
+  }
+  .deck-list .move {
+    display: inline-block;
+  }
+  .deck-list li {
+    flex-wrap: wrap;
+  }
+  .deck-list .deck-name {
+    flex: 1 1 100%;
+  }
+  .deck-list li > button,
+  .deck-list .copies {
+    padding: 6px 8px;
+  }
+  .preview-toolbar {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .field-head {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .text-tools {
+    justify-content: flex-start;
+  }
+  .compact-row .field {
+    width: calc(50% - 5px);
+  }
+  .modal,
+  .modal.narrow,
+  .modal.gallery,
+  .modal.help {
+    width: 96vw;
+    max-width: none;
+    padding: 12px;
+    max-height: 94vh;
+    overflow: auto;
+  }
+  .help-head {
+    flex-wrap: wrap;
+  }
+  .gallery-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+  .crop-area {
+    height: min(50vh, 420px);
+  }
+}
+
 .modal.narrow {
   max-width: 520px;
 }
