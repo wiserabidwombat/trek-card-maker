@@ -137,6 +137,12 @@ label {
   color: var(--warn);
   border-color: var(--warn);
 }
+.badge.block {
+  display: block;
+  border-radius: 8px;
+  white-space: normal;
+  margin: 8px 0;
+}
 .badge.error {
   color: var(--error);
   border-color: var(--error);

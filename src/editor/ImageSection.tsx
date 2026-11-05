@@ -3,6 +3,7 @@ import type { Frame, Template } from '../catalog/types';
 import { artBoxFor } from '../catalog/types';
 import type { AssetCache } from '../render/assets';
 import { centredCrop } from '../render/geometry';
+import { artPrintDpi, artQuality, describeArtQuality } from '../render/artQuality';
 import { DEFAULT_ART_FILL, type Card, type CropRect } from '../model/card';
 import { getImage, newImageKey, putImage } from '../store/db';
 import { CropDialog } from './CropDialog';
@@ -147,7 +148,10 @@ export function ImageSection({ card, frame, template, assets, onChange }: Props)
     onChange({ ...rest, updatedAt: Date.now() });
   };
 
-  const lowRes = card.image && card.image.crop.w < artW * 0.9;
+  // how the crop will print: source pixels across the art box against its width on a 63 mm card
+  const artFraction = art[2] - art[0];
+  const dpi = card.image ? artPrintDpi(card.image.crop, artFraction) : 0;
+  const artNote = card.image ? describeArtQuality(dpi, artFraction) : null;
 
   return (
     <section
@@ -183,7 +187,7 @@ export function ImageSection({ card, frame, template, assets, onChange }: Props)
       <p className="muted small">
         Or drop a picture here, or paste one with Ctrl+V. Art area is {Math.round(artW)} × {Math.round(artH)} px on this frame.
       </p>
-      {lowRes && <p className="badge warn">The cropped area is smaller than the art box, so it will be upscaled.</p>}
+      {artNote && <p className={artQuality(dpi) === 'low' ? 'badge error' : 'badge warn'}>{artNote}</p>}
       {error && <p className="badge error">{error}</p>}
       {cropSrc && card.image && (
         <CropDialog src={cropSrc} aspect={aspect} initial={card.image.crop} onDone={applyCrop} onCancel={() => setCropSrc(null)} />

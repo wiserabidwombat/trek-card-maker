@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Catalog, Frame } from '../catalog/types';
-import { templateFor } from '../catalog/types';
+import { artBoxFor, templateFor } from '../catalog/types';
 import { useCatalog, FRAMES_BASE } from '../catalog/useCatalog';
 import { changeType, isBlankCard, newCard, type Card } from '../model/card';
 import { parseSkillText } from '../model/skills';
 import { AssetCache } from '../render/assets';
+import { artPrintDpi, artQuality } from '../render/artQuality';
 import { DEFAULT_FONTS, ensureFontsLoaded, registerUserFont, type FontConfig } from '../render/fonts';
 import { renderCard } from '../render/renderCard';
 import { buildSheetPdf, canvasToBytes, downloadBytes, isPng } from '../export/exportPdf';
@@ -68,6 +69,20 @@ function Editor({ catalog }: { catalog: Catalog }) {
   const [showExport, setShowExport] = useState(false);
   const [showTts, setShowTts] = useState(false);
   const [ttsResult, setTtsResult] = useState<TtsResult | null>(null);
+  /** Cards headed for the print sheet whose artwork prints below 300 dpi. */
+  const lowArt = useMemo(
+    () =>
+      cards.flatMap((c) => {
+        if (!c.image || c.copies <= 0) return [];
+        const fr = catalog.frames.find((f) => f.id === c.frameId);
+        if (!fr) return [];
+        const box = artBoxFor(fr, templateFor(catalog, fr));
+        const dpi = artPrintDpi(c.image.crop, box[2] - box[0]);
+        return artQuality(dpi) === 'good' ? [] : [{ name: c.name || c.fields.title || '(untitled)', dpi }];
+      }),
+    [cards, catalog],
+  );
+
   const [showHelp, setShowHelp] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const saveTimers = useRef(new Map<string, number>());
@@ -600,7 +615,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
         />
       )}
       {showExport && (
-        <ExportDialog cardCount={cards.reduce((n, c) => n + Math.max(0, c.copies), 0)} onExport={exportPdf} onCancel={() => setShowExport(false)} />
+        <ExportDialog cardCount={cards.reduce((n, c) => n + Math.max(0, c.copies), 0)} lowArt={lowArt} onExport={exportPdf} onCancel={() => setShowExport(false)} />
       )}
       {showTts && (
         <TtsDialog

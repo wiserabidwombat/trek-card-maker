@@ -2,13 +2,20 @@ import { useState } from 'react';
 import { loadPrintProfile, savePrintProfile, type PrintProfile } from '../render/printProfile';
 import { loadPaper, PAPER_LIST, PAPERS, savePaper, type Paper } from '../export/paper';
 
+export interface LowArt {
+  name: string;
+  dpi: number;
+}
+
 interface Props {
   cardCount: number;
+  /** Cards whose artwork prints below 300 dpi, copies > 0 only. */
+  lowArt: LowArt[];
   onExport: (profile: PrintProfile, paper: Paper) => void;
   onCancel: () => void;
 }
 
-export function ExportDialog({ cardCount, onExport, onCancel }: Props) {
+export function ExportDialog({ cardCount, lowArt, onExport, onCancel }: Props) {
   const [profile, setProfile] = useState<PrintProfile>(loadPrintProfile());
   const [paper, setPaper] = useState<Paper>(loadPaper());
   const choose = (p: PrintProfile) => {
@@ -57,6 +64,12 @@ export function ExportDialog({ cardCount, onExport, onCancel }: Props) {
             </span>
           </label>
         </div>
+        {lowArt.length > 0 && (
+          <p className="badge warn block">
+            Artwork below 300 dpi on {lowArt.length} card{lowArt.length === 1 ? '' : 's'}, so it will print soft or blurry:{' '}
+            {lowArt.map((a) => `${a.name} (${Math.round(a.dpi / 10) * 10} dpi)`).join(', ')}. The Artwork panel says how many pixels each needs.
+          </p>
+        )}
         <p className="muted small">
           On any printer: use matte photo paper or coated card stock rather than plain paper, set the driver to Best or Photo quality, and
           print at 100% (no “fit to page”).

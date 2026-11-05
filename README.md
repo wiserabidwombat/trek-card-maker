@@ -38,7 +38,9 @@ Open the printed URL (default `http://localhost:5173`).
 - **Frame**: pick the card type, then the affiliation (or mission/dilemma type).
 - **Artwork**: choose a PNG/JPEG/WebP, drop one onto the Artwork section, or paste one with
   Ctrl+V while the card is selected; then *Adjust crop* to position, zoom and rotate it. The crop
-  box matches the frame's art area. Zoom out (or *Fit whole picture*) to get more of the picture
+  box matches the frame's art area. The panel rates how the crop will print on a 63 mm card: nothing
+  at 300 dpi or better, a note below that with the pixel width the crop needs, red under 200 dpi;
+  the export dialog lists any such cards. Zoom out (or *Fit whole picture*) to get more of the picture
   in: the part of the art area the picture does not cover shows the **Fill** colour (black by
   default). A warning appears if the crop is smaller than the printed area.
 - **Card text**: fields depend on the card type. Game text supports `**bold**`, `*italic*`,
