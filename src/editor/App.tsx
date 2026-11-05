@@ -15,6 +15,8 @@ import type { TextOp } from '../render/textOps';
 import { PROFILES, SCREEN_PROFILE, type PrintProfile, type RenderProfile } from '../render/printProfile';
 import type { Paper } from '../export/paper';
 import { ExportDialog } from './ExportDialog';
+import { Gallery } from './Gallery';
+import { useThumbnails } from './useThumbnails';
 import { TtsDialog, type TtsResult } from './TtsDialog';
 import { HelpDialog } from './HelpDialog';
 import { Welcome } from './Welcome';
@@ -67,6 +69,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
   const [showFonts, setShowFonts] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [showExport, setShowExport] = useState(false);
+  const [showGallery, setShowGallery] = useState(false);
   const [showTts, setShowTts] = useState(false);
   const [ttsResult, setTtsResult] = useState<TtsResult | null>(null);
   /** Cards headed for the print sheet whose artwork prints below 300 dpi. */
@@ -87,6 +90,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
   const [notice, setNotice] = useState<string | null>(null);
   const saveTimers = useRef(new Map<string, number>());
   const backup = useBackupStatus();
+  const thumbs = useThumbnails(cards, currentId, catalog, fonts, assets, showGallery);
   const [history, setHistory] = useState<History>(EMPTY_HISTORY);
   const cardsRef = useRef<Card[]>([]);
   cardsRef.current = cards;
@@ -561,6 +565,9 @@ function Editor({ catalog }: { catalog: Catalog }) {
         <button onClick={redo} disabled={!redoLabel(history)} title="Ctrl+Shift+Z">
           {redoLabel(history) ?? 'Redo'}
         </button>
+        <button onClick={() => setShowGallery(true)} disabled={!cards.length} title="Every card in this deck as a picture">
+          Gallery
+        </button>
         <button onClick={() => setShowHelp(true)}>Help</button>
         <button onClick={() => setShowFonts(true)}>Fonts…</button>
       </header>
@@ -612,6 +619,19 @@ function Editor({ catalog }: { catalog: Catalog }) {
             setShowHelp(false);
             loadSample();
           }}
+        />
+      )}
+      {showGallery && (
+        <Gallery
+          cards={cards}
+          currentId={currentId}
+          deckName={decks.find((d) => d.id === deckId)?.name ?? ''}
+          thumbs={thumbs}
+          onSelect={(id) => {
+            setCurrentId(id);
+            setShowGallery(false);
+          }}
+          onClose={() => setShowGallery(false)}
         />
       )}
       {showExport && (

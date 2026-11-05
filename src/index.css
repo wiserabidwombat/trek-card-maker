@@ -589,6 +589,80 @@ button.danger:hover:not(:disabled) {
   width: 48px;
 }
 
+/* gallery */
+.modal.gallery {
+  width: min(1400px, 96vw);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+}
+.gallery-grid {
+  overflow: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  padding: 4px 2px 8px;
+}
+.gallery-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+  text-align: left;
+  background: var(--panel-2);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+}
+.gallery-card:hover {
+  border-color: var(--accent);
+}
+.gallery-card.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(111, 179, 255, 0.35);
+}
+.gallery-card img {
+  width: 100%;
+  aspect-ratio: 63 / 88;
+  object-fit: contain;
+  border-radius: 4px;
+  display: block;
+}
+.gallery-blank {
+  width: 100%;
+  aspect-ratio: 63 / 88;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 12px;
+  background: var(--bg);
+  border-radius: 4px;
+}
+.gallery-blank.error {
+  color: var(--error);
+}
+.gallery-caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 6px;
+  font-size: 12px;
+  min-width: 0;
+}
+.gallery-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+.gallery-copies {
+  color: var(--muted);
+  font-size: 11px;
+}
+.gallery-copies.warn {
+  color: var(--warn);
+}
+
 /* help dialog */
 .modal.help {
   max-height: 88vh;

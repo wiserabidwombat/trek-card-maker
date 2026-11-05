@@ -36,6 +36,8 @@ Open the printed URL (default `http://localhost:5173`).
   A line under the buttons says when the deck was last exported and how many saves have happened
   since; after 20 it turns amber as a reminder that the browser holds the only copy.
 - **Frame**: pick the card type, then the affiliation (or mission/dilemma type).
+- **Gallery** (top bar) shows every card in the deck as a picture, with copies and a note when text
+  had to shrink; click one to edit it. Pictures render in the background and are kept until a card changes.
 - **Artwork**: choose a PNG/JPEG/WebP, drop one onto the Artwork section, or paste one with
   Ctrl+V while the card is selected; then *Adjust crop* to position, zoom and rotate it. The crop
   box matches the frame's art area. The panel rates how the crop will print on a 63 mm card: nothing
