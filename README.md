@@ -79,6 +79,12 @@ The originals use Crillee (titles) and Futura Condensed (text), which are commer
 bundles open lookalikes (Exo 2 and Fira Sans Condensed). If you own the originals, use **Fonts…**
 to load your `.ttf`/`.otf` files; they are kept in the browser only.
 
+## Feedback
+
+Something broken, or a frame or icon missing? [Open an issue](https://github.com/wiserabidwombat/trek-card-maker/issues/new/choose);
+the templates ask for the few details that make a report actionable. The Help dialog and the
+welcome panel link there too.
+
 ## Known limitations
 
 - The affiliation icon in the top-left corner belongs to the frame; changing it means picking the

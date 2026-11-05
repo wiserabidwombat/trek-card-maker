@@ -55,6 +55,19 @@ button.primary {
   color: #0b1522;
   font-weight: 600;
 }
+.button-link {
+  display: inline-block;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 13px;
+  margin-right: 8px;
+}
+.button-link:hover {
+  border-color: var(--accent);
+}
 button.link {
   background: none;
   border: none;

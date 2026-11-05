@@ -6,6 +6,7 @@ import { STANDARD_SKILLS } from '../model/skills';
 import { DECK_VERSION } from '../store/deckJson';
 import { downloadBytes } from '../export/exportPdf';
 import { sampleDeckJson } from './sampleDeck';
+import { ISSUES_URL, REPO_URL } from './links';
 
 interface Props {
   catalog: Catalog;
@@ -48,6 +49,9 @@ export function HelpDialog({ catalog, onClose, onLoadSample }: Props) {
             </button>
           </div>
           <span className="spacer" />
+          <a className="button-link" href={ISSUES_URL} target="_blank" rel="noopener noreferrer" title={`Opens the issue tracker at ${REPO_URL}`}>
+            Report a problem
+          </a>
           <button onClick={onClose}>Close</button>
         </div>
 

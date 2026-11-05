@@ -1,0 +1,16 @@
+name: Missing frame, icon or feature
+description: A card type, affiliation, icon or capability you need that the app does not have.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: What you need
+      placeholder: "A Dominion dilemma frame; the Tribble icon inline; a way to export card backs."
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: What it is for
+      description: The deck or set you are making, and how you would use it. This decides how it should work.

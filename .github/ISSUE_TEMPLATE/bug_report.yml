@@ -1,0 +1,33 @@
+name: Something is wrong
+description: A card renders badly, an export fails, data went missing, or the app errors.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what you saw instead.
+      placeholder: "Exported the print sheet on A4 and the right column of cards was cut off."
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and system
+      placeholder: "Firefox 131 on Windows 11, or Safari 17 on macOS 14"
+    validations:
+      required: true
+  - type: input
+    id: card
+    attributes:
+      label: Card type and frame
+      description: As shown in the Frame column, if the problem is about one card.
+      placeholder: "Personnel, Klingon"
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else
+      description: >-
+        A screenshot helps. For render or export problems, Export deck (JSON) and attach the file,
+        or paste the card's text fields. Nothing you add here reaches anyone but the maintainers of this repository
+        and anyone reading its public issues.

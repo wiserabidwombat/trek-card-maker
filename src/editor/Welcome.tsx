@@ -1,3 +1,5 @@
+import { ISSUES_URL } from './links';
+
 interface Props {
   onLoadSample: () => void;
   onHelp: () => void;
@@ -21,7 +23,12 @@ export function Welcome({ onLoadSample, onHelp }: Props) {
         </li>
       </ol>
       <p className="muted small">
-        Cards are saved in this browser only. <em>Export deck (JSON)</em> makes a backup you can import on another machine.
+        Cards are saved in this browser only. <em>Export deck (JSON)</em> makes a backup you can import on another machine. Found a problem or
+        missing a frame?{' '}
+        <a href={ISSUES_URL} target="_blank" rel="noopener noreferrer">
+          Report it on GitHub
+        </a>
+        .
       </p>
       <div className="row">
         <button className="primary" onClick={onLoadSample}>
