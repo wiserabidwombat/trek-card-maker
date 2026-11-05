@@ -26,6 +26,9 @@ MISSION_BAND = (0.10, 0.855, 0.90, 0.935)
 CORNER_EMBLEM = (0.03, 0.0, 0.11, 0.102)
 # the dark disc behind that emblem (centre, radius as fractions of width), just inside the bracket arcs
 CORNER_DISC = (0.0735, 0.0546, 0.0627)
+# the same for standard-resolution personnel frames, where the emblem sits on plain black with no disc or ring
+# (measured on the Vidiian frame: the diamond is centred at 10.35% of the width, 8.1% of the height)
+STD_CORNER_DISC = (0.1035, 0.081, 0.062)
 HI_SIZE = 96  # px, composed high-resolution inline icon (ring + disc)
 HI_DISC = 0.8  # disc diameter as a fraction of the ring diameter
 MAX_GROUP = 40
@@ -45,7 +48,7 @@ OTHER_ICONS = [
     "original-series",
     "voyager",
 ]
-AFFILIATION_ICONS = ["bajoran", "borg", "cardassian", "dominion", "federation", "ferengi", "klingon", "romulan", "starfleet", "non-aligned"]
+AFFILIATION_ICONS = ["bajoran", "borg", "cardassian", "dominion", "federation", "ferengi", "klingon", "romulan", "starfleet", "non-aligned", "vidiian"]
 SOCKET_MATCH_MAX = 160.0  # names were all correct up to ~150 on the calibration sheet; the socket test is the guard
 STRIP_MATCH_MAX = 130.0
 REF_INNER = 0.33  # the icon disc inside a rulebook reference icon (its ring sits at ~0.42); matches RING_INNER crops
@@ -55,6 +58,24 @@ LABELS = {"non-aligned": "Non-Aligned", "deep-space-nine": "Deep Space Nine"}
 
 def label_for(variant: str) -> str:
     return LABELS.get(variant, variant.replace("-", " ").title())
+
+
+def corner_disc(med: np.ndarray, fam: str) -> np.ndarray:
+    """RGBA disc behind the top-left affiliation emblem of a personnel median frame (emblem on dark)."""
+    h, w = med.shape[:2]
+    cx, cy, r = CORNER_DISC if fam == "hires" else STD_CORNER_DISC
+    disc = crop_disc(med, cx * w, cy * h, r * w)
+    disc[disc[..., 3] < 128, :3] = 0  # nothing outside the disc may leak back in when alpha is recomputed
+    return disc
+
+
+def personnel_median(group_medians: dict[tuple[str, str, str], np.ndarray], name: str) -> tuple[str | None, np.ndarray | None]:
+    """The HiRes personnel median for an affiliation, else the standard one (Vidiian has no HiRes set)."""
+    for fam in ("hires", "std"):
+        med = group_medians.get(("personnel", fam, name))
+        if med is not None:
+            return fam, med
+    return None, None
 
 
 def _thumb(img: Image.Image, path: str) -> None:
@@ -421,15 +442,22 @@ def build_base_catalog(
         from_corner: list[str] = []
         for name in missing_m:
             # no source mission lists this affiliation: take the emblem out of the corner disc of
-            # that affiliation's personnel frames (HiRes), else the rulebook's small image
-            med = group_medians.get(("personnel", "hires", name))
-            if med is not None:
+            # that affiliation's personnel frames (HiRes, else standard), else the rulebook's small image
+            fam, med = personnel_median(group_medians, name)
+            if fam == "hires":
                 h, w = med.shape[:2]
                 box = (int(CORNER_EMBLEM[0] * w), int(CORNER_EMBLEM[1] * h), int(CORNER_EMBLEM[2] * w), int(CORNER_EMBLEM[3] * h))
                 crop = tight_crop(crop_box_rgba(med, box, dark=60))
                 from_corner.append(name)
-            else:
+            elif fam == "std":
+                disc = corner_disc(med, fam)
+                crop = tight_crop(crop_box_rgba(disc, (0, 0, disc.shape[1], disc.shape[0]), dark=60))
+                from_corner.append(name)
+            elif name in aff_refs:
                 crop = aff_refs[name]
+            else:
+                log(f"mission icon {name}: no personnel frame and no rulebook image, skipped")
+                continue
             file = f"icons/mission-{name}.png"
             Image.fromarray(crop, "RGBA").save(os.path.join(out, file))
             extra_icons.append({"id": f"mission-{name}", "file": file, "w": crop.shape[1], "h": crop.shape[0], "group": "missionAffiliation"})
@@ -460,13 +488,11 @@ def build_base_catalog(
             file = f"icons/hi-{name}.png"
             img.save(os.path.join(out, file))
             hi_files[name] = file
-        # affiliations: the disc behind the corner emblem of that affiliation's HiRes personnel frames
-        for (ctype, fam, variant), med in group_medians.items():
-            if ctype != "personnel" or fam != "hires":
+        # affiliations: the disc behind the corner emblem of that affiliation's personnel frames, HiRes first
+        for (ctype, fam, variant), med in sorted(group_medians.items(), key=lambda kv: (kv[0][0], kv[0][1] != "hires", kv[0][2])):
+            if ctype != "personnel" or variant in hi_files:
                 continue
-            h, w = med.shape[:2]
-            cx, cy, r = CORNER_DISC[0] * w, CORNER_DISC[1] * h, CORNER_DISC[2] * w
-            img = compose(crop_disc(med, cx, cy, r))
+            img = compose(corner_disc(med, fam))
             file = f"icons/hi-{variant}.png"
             img.save(os.path.join(out, file))
             hi_files[variant] = file

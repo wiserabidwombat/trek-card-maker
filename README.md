@@ -130,6 +130,9 @@ welcome panel link there too.
 - No source mission lists the Borg, so the Borg affiliation mark for missions is cut from the
   corner disc of the Borg personnel frames; Terok Nor appears on no source card and uses the
   rulebook's small image.
+- The Vidiian affiliation (new in *Phage*, 2024) exists only in a standard-resolution set with the
+  icon painted into the frame, so both its inline icon and its mission mark are cut from the
+  corner of the Vidiian personnel frame.
 - Older (non-HiRes) sets had their skill bullets painted into the frame; the extractor erases them.
 - Art is placed with "cover" semantics into a fixed rectangle per card type.
 - Decks saved by the first version (per-card frames, free-text skills) load and import, but their

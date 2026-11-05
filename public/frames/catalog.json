@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-05T07:47:11",
+ "generatedAt": "2026-11-05T17:21:10",
  "families": {
   "std": {
    "refWidthPt": 178.58
@@ -1690,6 +1690,14 @@
    "hi": "icons/hi-klingon.png"
   },
   {
+   "id": "vidiian",
+   "file": "icons/hi-vidiian.png",
+   "w": 96,
+   "h": 96,
+   "group": "inline",
+   "hi": "icons/hi-vidiian.png"
+  },
+  {
    "id": "big-alternate",
    "file": "icons/big-alternate.png",
    "w": 56,
@@ -1841,6 +1849,13 @@
    "file": "icons/mission-starfleet.png",
    "w": 95,
    "h": 103,
+   "group": "missionAffiliation"
+  },
+  {
+   "id": "mission-vidiian",
+   "file": "icons/mission-vidiian.png",
+   "w": 65,
+   "h": 89,
    "group": "missionAffiliation"
   }
  ],
