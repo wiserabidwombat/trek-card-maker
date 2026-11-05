@@ -11,7 +11,8 @@ export interface SheetItem {
   textOps?: TextOp[];
 }
 
-function canvasToBytes(canvas: HTMLCanvasElement, type: 'image/jpeg' | 'image/png', quality = 0.95): Promise<Uint8Array> {
+/** Encode a canvas as JPEG or PNG bytes. */
+export function canvasToBytes(canvas: HTMLCanvasElement, type: 'image/jpeg' | 'image/png', quality = 0.95): Promise<Uint8Array> {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => {

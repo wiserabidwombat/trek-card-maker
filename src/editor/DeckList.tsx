@@ -24,6 +24,7 @@ interface Props {
   onClearAll: () => void;
   onCopiesChange: (id: string, copies: number) => void;
   onExportPdf: () => void;
+  onExportTts: () => void;
   onExportJson: () => void;
   onImportJson: (file: File) => void;
 }
@@ -140,6 +141,9 @@ export function DeckList(p: Props) {
         </p>
         <button className="primary" onClick={p.onExportPdf} disabled={p.busy || total === 0}>
           {p.busy ? 'Building PDF…' : 'Export print sheet (PDF)'}
+        </button>
+        <button onClick={p.onExportTts} disabled={p.busy || total === 0} title="Card-sheet images for Tabletop Simulator's custom deck importer">
+          Export for Tabletop Simulator…
         </button>
         <p className={nudge ? 'small backup-line warn' : 'muted small backup-line'} title="Cards live only in this browser; the JSON export is your copy">
           {describeBackup(p.backup)}

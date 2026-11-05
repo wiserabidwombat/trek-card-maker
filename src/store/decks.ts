@@ -44,15 +44,19 @@ export function uniqueDeckName(wanted: string, existing: DeckMeta[]): string {
   }
 }
 
-/** File name for a deck export: "trek-deck-klingon-aggro.json". */
-export function deckFileName(name: string): string {
-  const slug = name
+/** Lower-case ASCII slug of a deck name for file names; empty when nothing survives. */
+export function deckSlug(name: string): string {
+  return name
     .toLowerCase()
     .normalize('NFKD')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 40);
-  return `trek-deck-${slug || 'deck'}.json`;
+}
+
+/** File name for a deck export: "trek-deck-klingon-aggro.json". */
+export function deckFileName(name: string): string {
+  return `trek-deck-${deckSlug(name) || 'deck'}.json`;
 }
 
 /** Deck name to use for an imported file: the file's own name field, else its file name. */

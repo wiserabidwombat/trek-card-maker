@@ -17,6 +17,27 @@ if (!url || !engines.length) {
 }
 const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'trek-card-maker-smoke-'));
 
+/** Pixel size of a PNG (IHDR) or JPEG (first SOF marker) without decoding it. */
+function imageSize(bytes) {
+  if (bytes[0] === 0x89 && bytes[1] === 0x50) return { kind: 'png', width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
+  let i = 2;
+  while (i + 9 < bytes.length) {
+    if (bytes[i] !== 0xff) {
+      i++;
+      continue;
+    }
+    const marker = bytes[i + 1];
+    if (marker === 0xff) {
+      i++;
+      continue;
+    }
+    const sof = marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc;
+    if (sof) return { kind: 'jpeg', width: bytes.readUInt16BE(i + 7), height: bytes.readUInt16BE(i + 5) };
+    i += 2 + bytes.readUInt16BE(i + 2);
+  }
+  return { kind: 'unknown' };
+}
+
 async function run(engine) {
   const report = { engine, console: [], pageErrors: [], steps: {} };
   const browser = await pw[engine].launch();
@@ -124,6 +145,25 @@ async function run(engine) {
     await download.saveAs(file);
     const parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
     return { file: path.basename(file), cards: parsed.cards.length, images: Object.keys(parsed.images).length, name: parsed.name };
+  });
+
+  await step('export tts', async () => {
+    await page.getByRole('button', { name: /Export for Tabletop Simulator/ }).click();
+    const downloads = [];
+    page.on('download', (d) => downloads.push(d));
+    await page.getByRole('button', { name: 'Export images' }).click();
+    await page.waitForSelector('ol.steps', { timeout: 60000 });
+    await page.waitForTimeout(1000);
+    const files = [];
+    for (const d of downloads) {
+      const file = path.join(outDir, `${engine}-${d.suggestedFilename()}`);
+      await d.saveAs(file);
+      const bytes = fs.readFileSync(file);
+      files.push({ file: path.basename(file), bytes: bytes.length, ...imageSize(bytes) });
+    }
+    const grid = await page.$$eval('ol.steps ul li', (els) => els.map((e) => e.textContent));
+    await page.getByRole('button', { name: 'Done' }).click();
+    return { files, grid };
   });
 
   await step('reload keeps data', async () => {

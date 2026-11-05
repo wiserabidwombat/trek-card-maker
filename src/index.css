@@ -445,6 +445,17 @@ label {
 .modal.narrow {
   width: min(560px, 92vw);
 }
+ol.steps {
+  padding-left: 20px;
+  margin: 6px 0 12px;
+}
+ol.steps li {
+  margin: 4px 0;
+}
+ol.steps ul {
+  padding-left: 18px;
+  margin: 2px 0;
+}
 .crop-area {
   position: relative;
   height: min(60vh, 560px);

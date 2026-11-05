@@ -7,10 +7,14 @@ import { parseSkillText } from '../model/skills';
 import { AssetCache } from '../render/assets';
 import { DEFAULT_FONTS, ensureFontsLoaded, registerUserFont, type FontConfig } from '../render/fonts';
 import { renderCard } from '../render/renderCard';
-import { buildSheetPdf, downloadBytes } from '../export/exportPdf';
-import { PROFILES, type PrintProfile } from '../render/printProfile';
+import { buildSheetPdf, canvasToBytes, downloadBytes, isPng } from '../export/exportPdf';
+import { buildTtsBack, buildTtsSheets } from '../export/ttsExport';
+import { expandCopies, ttsFileName } from '../export/tts';
+import type { TextOp } from '../render/textOps';
+import { PROFILES, SCREEN_PROFILE, type PrintProfile, type RenderProfile } from '../render/printProfile';
 import type { Paper } from '../export/paper';
 import { ExportDialog } from './ExportDialog';
+import { TtsDialog, type TtsResult } from './TtsDialog';
 import { HelpDialog } from './HelpDialog';
 import { Welcome } from './Welcome';
 import { useBackupStatus } from './useBackupStatus';
@@ -19,7 +23,7 @@ import { EMPTY_HISTORY, isTextTarget, popRedo, popUndo, record, redoLabel, undoL
 import { applyOrder, moveCard, nextOrder, normalizeOrder } from '../model/order';
 import { sampleCards } from './sampleDeck';
 import { clearCardsAndImages, deleteCard, getImage, getUserFont, listCards, loadDecks, pruneOrphanImages, putCard, putImage, saveCurrentDeck, saveDecks } from '../store/db';
-import { deckFileName, importedDeckName, newDeckId, uniqueDeckName, type DeckMeta } from '../store/decks';
+import { deckFileName, deckSlug, importedDeckName, newDeckId, uniqueDeckName, type DeckMeta } from '../store/decks';
 import { parseDeck, remapFrames, serializeDeck } from '../store/deckJson';
 import { DeckList } from './DeckList';
 import { FieldsForm } from './FieldsForm';
@@ -62,6 +66,8 @@ function Editor({ catalog }: { catalog: Catalog }) {
   const [showFonts, setShowFonts] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [showExport, setShowExport] = useState(false);
+  const [showTts, setShowTts] = useState(false);
+  const [ttsResult, setTtsResult] = useState<TtsResult | null>(null);
   const [showHelp, setShowHelp] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const saveTimers = useRef(new Map<string, number>());
@@ -313,34 +319,40 @@ function Editor({ catalog }: { catalog: Catalog }) {
     setNotice(`Removed ${removed} card${removed === 1 ? '' : 's'}.`);
   };
 
+  /** Render every card with copies, in deck order; `withText` records the text for the PDF's vector layer. */
+  const renderDeck = async (profile: RenderProfile, withText: boolean) => {
+    const items: { canvas: HTMLCanvasElement; copies: number; textOps?: TextOp[] }[] = [];
+    const skipped: string[] = [];
+    for (const card of cards) {
+      if (card.copies <= 0) continue;
+      const fr = catalog.frames.find((f) => f.id === card.frameId);
+      if (!fr) {
+        skipped.push(card.name || card.fields.title || card.id);
+        continue;
+      }
+      let userImage: HTMLImageElement | undefined;
+      if (card.image) {
+        const blob = await getImage(card.image.blobKey);
+        if (blob) userImage = await assets.getBlobImage(card.image.blobKey, blob);
+      }
+      try {
+        const textSink: TextOp[] | undefined = withText ? [] : undefined;
+        const r = await renderCard(card, { catalog, frame: fr, template: templateFor(catalog, fr), fonts, assets, userImage, base: FRAMES_BASE, profile, textSink });
+        items.push({ canvas: r.canvas, copies: card.copies, textOps: r.textOps });
+      } catch {
+        skipped.push(card.name || card.fields.title || card.id);
+      }
+    }
+    return { items, skipped };
+  };
+
   const exportPdf = async (profileName: PrintProfile, paper: Paper) => {
     setShowExport(false);
     setExporting(true);
     setNotice(null);
     const profile = PROFILES[profileName];
     try {
-      const items = [];
-      const skipped: string[] = [];
-      for (const card of cards) {
-        if (card.copies <= 0) continue;
-        const fr = catalog.frames.find((f) => f.id === card.frameId);
-        if (!fr) {
-          skipped.push(card.name || card.fields.title || card.id);
-          continue;
-        }
-        let userImage: HTMLImageElement | undefined;
-        if (card.image) {
-          const blob = await getImage(card.image.blobKey);
-          if (blob) userImage = await assets.getBlobImage(card.image.blobKey, blob);
-        }
-        try {
-          const textSink: import('../render/textOps').TextOp[] = [];
-          const r = await renderCard(card, { catalog, frame: fr, template: templateFor(catalog, fr), fonts, assets, userImage, base: FRAMES_BASE, profile, textSink });
-          items.push({ canvas: r.canvas, copies: card.copies, textOps: r.textOps });
-        } catch {
-          skipped.push(card.name || card.fields.title || card.id);
-        }
-      }
+      const { items, skipped } = await renderDeck(profile, true);
       const userFonts: { title?: ArrayBuffer; body?: ArrayBuffer } = {};
       for (const slot of ['title', 'body'] as const) {
         const blob = await getUserFont(slot);
@@ -350,6 +362,43 @@ function Editor({ catalog }: { catalog: Catalog }) {
       downloadBytes(bytes, `trek-cards-sheet${paper === 'a4' ? '-a4' : ''}${profileName === 'inkjet' ? '-inkjet' : ''}.pdf`);
       if (skipped.length) setNotice(`Skipped (could not render): ${skipped.join(', ')}`);
     } catch (e) {
+      setNotice(`Export failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  /** Tabletop Simulator sheets: 10 × 7 grids of up to 69 cards each, plus an optional plain back. */
+  const exportTts = async (includeBack: boolean) => {
+    setExporting(true);
+    setNotice(null);
+    setTtsResult(null);
+    try {
+      const { items, skipped } = await renderDeck(SCREEN_PROFILE, false);
+      const deckName = decks.find((d) => d.id === deckId)?.name ?? '';
+      const slug = deckSlug(deckName);
+      const sheets = buildTtsSheets(expandCopies(items).map((i) => i.canvas));
+      const files: TtsResult['files'] = [];
+      for (const [i, sheet] of sheets.entries()) {
+        // WebKit may return PNG when asked for JPEG; name the file by what it holds
+        const bytes = await canvasToBytes(sheet.canvas, 'image/jpeg', 0.92);
+        const png = isPng(bytes);
+        const name = ttsFileName(slug, i + 1, sheets.length, png ? 'png' : 'jpg');
+        downloadBytes(bytes, name, png ? 'image/png' : 'image/jpeg');
+        files.push({ name, role: 'face', cols: sheet.cols, rows: sheet.rows, count: sheet.count });
+        // browsers drop downloads fired in the same tick
+        await new Promise((r) => setTimeout(r, 400));
+      }
+      if (includeBack && sheets.length) {
+        const name = ttsFileName(slug, 'back', sheets.length, 'png');
+        const back = buildTtsBack(sheets[0].cellW, sheets[0].cellH, deckName, fonts);
+        downloadBytes(await canvasToBytes(back, 'image/png'), name, 'image/png');
+        files.push({ name, role: 'back', cols: 1, rows: 1, count: 1 });
+      }
+      setTtsResult({ files });
+      if (skipped.length) setNotice(`Skipped (could not render): ${skipped.join(', ')}`);
+    } catch (e) {
+      setShowTts(false);
       setNotice(`Export failed: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setExporting(false);
@@ -527,6 +576,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
             if (c) updateCard({ ...c, copies });
           }}
           onExportPdf={() => setShowExport(true)}
+          onExportTts={() => setShowTts(true)}
           onExportJson={exportJson}
           onImportJson={importJson}
         />
@@ -551,6 +601,19 @@ function Editor({ catalog }: { catalog: Catalog }) {
       )}
       {showExport && (
         <ExportDialog cardCount={cards.reduce((n, c) => n + Math.max(0, c.copies), 0)} onExport={exportPdf} onCancel={() => setShowExport(false)} />
+      )}
+      {showTts && (
+        <TtsDialog
+          cardCount={cards.reduce((n, c) => n + Math.max(0, c.copies), 0)}
+          deckName={decks.find((d) => d.id === deckId)?.name ?? ''}
+          busy={exporting}
+          result={ttsResult}
+          onExport={exportTts}
+          onClose={() => {
+            setShowTts(false);
+            setTtsResult(null);
+          }}
+        />
       )}
     </div>
   );

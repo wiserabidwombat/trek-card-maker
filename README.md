@@ -55,6 +55,10 @@ Open the printed URL (default `http://localhost:5173`).
     headquarters missions; leave points empty for those.
 - **Preview**: live render; *Download PNG* saves the single card. A badge warns when game text
   had to be shrunk to fit.
+- **Export for Tabletop Simulator** saves the deck as card-sheet images for TTS's Custom Deck
+  importer: a 10 × 7 grid per sheet (69 cards, copies included; longer decks get more sheets),
+  kept within the 4096 px texture limit, plus an optional plain back with the deck name. The
+  dialog lists the Width, Height and Number to enter for each sheet.
 - **Export print sheet** writes every piece of card text as real PDF text (fonts embedded and
   subset), so it prints at the printer's own resolution on any printer and the PDF is searchable;
   only the frame, art and icons are raster. A custom font loaded under **Fonts…** is embedded as
