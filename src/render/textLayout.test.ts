@@ -63,6 +63,21 @@ describe('fitFlow', () => {
     const r = fitFlow([block(many)], 100, 24, 10, 12, measure, 10);
     expect(r.overflow).toBe(true);
     expect(r.sizePx).toBeCloseTo(7, 5);
+    expect(r.scale).toBeCloseTo(0.7, 5);
+  });
+
+  it('reports the scale used and respects a higher floor', () => {
+    expect(fitFlow([block('aaaa')], 100, 100, 10, 12, measure, 10).scale).toBe(1);
+    const many = Array.from({ length: 20 }, () => 'aaaa').join(' ');
+    // fits after shrinking a little with the default floor, but not within the cards' 6.5/7 floor
+    const loose = fitFlow([block(many)], 100, 36, 10, 12, measure, 10);
+    expect(loose.overflow).toBe(false);
+    expect(loose.scale).toBeLessThan(1);
+    const strict = fitFlow([block(many)], 100, 36, 10, 12, measure, 10, 6.5 / 7);
+    expect(strict.overflow).toBe(true);
+    // the floor itself is the last size tried, so what is reported is exactly the floor
+    expect(strict.scale).toBeCloseTo(6.5 / 7, 9);
+    expect(strict.sizePx).toBeCloseTo(10 * (6.5 / 7), 6);
   });
 
   it('positions a second block after the first with its gap and scale', () => {

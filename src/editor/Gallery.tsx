@@ -56,7 +56,7 @@ export function Gallery({ cards, currentId, deckName, thumbs, onSelect, onClose 
                   <span className="deck-type">{c.type}</span>
                   <span className="gallery-name">{label}</span>
                   {c.copies !== 1 && <span className="gallery-copies">×{c.copies}</span>}
-                  {t?.overflow && <span className="gallery-copies warn">text shrunk</span>}
+                  {t?.overflow && <span className="gallery-copies warn">text too long</span>}
                 </span>
               </button>
             );

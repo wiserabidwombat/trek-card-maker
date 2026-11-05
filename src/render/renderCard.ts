@@ -10,7 +10,7 @@ import type { TextOp, TextSpec } from './textOps';
 import { boxToPx, cardBorderPx, cropDraw, ptToPx, type PxRect } from './geometry';
 import { SCREEN_PROFILE, profiledPt, sharpenPixels, type RenderProfile } from './printProfile';
 import { INK_BLACK, inkColour } from './ink';
-import { fitFlow, layoutRuns, type Measure, type PlacedLine, type Style } from './textLayout';
+import { fitFlow, layoutRuns, MIN_BODY_PT, type Measure, type PlacedLine, type Style } from './textLayout';
 import { typeset } from './typography';
 
 export interface RenderContext {
@@ -31,7 +31,11 @@ export interface RenderContext {
 
 export interface RenderResult {
   canvas: HTMLCanvasElement;
+  /** The game text does not fit even at MIN_BODY_PT and runs past its box. */
   overflow: boolean;
+  /** Body text size used, in template points, and the template's own size (7 pt on every frame). */
+  textPt: number;
+  basePt: number;
   /** The recorded text when a sink was given, offset to the finished card's coordinates. */
   textOps?: TextOp[];
 }
@@ -464,6 +468,7 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
     lineHeightPx,
     measure,
     flowSizePx * 1.1,
+    Math.min(1, MIN_BODY_PT / t.flow.sizePt),
   );
   drawPlacedLines(g, sink, fit.lines, flowRect.x, flowTop, flowRect.w, fonts, icons, 'left', inkColour(t.flow.colour));
 
@@ -476,7 +481,13 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
       op.y += pad;
     }
   }
-  return { canvas: card_, overflow: fit.overflow, ...(sink ? { textOps: sink } : {}) };
+  return {
+    canvas: card_,
+    overflow: fit.overflow,
+    textPt: +(t.flow.sizePt * fit.scale).toFixed(1),
+    basePt: t.flow.sizePt,
+    ...(sink ? { textOps: sink } : {}),
+  };
 }
 
 /**

@@ -147,8 +147,18 @@ export interface PlacedLine {
 export interface FitResult {
   sizePx: number;
   lines: PlacedLine[];
+  /** True when the text does not fit even at the smallest allowed size; the lines then run past the box. */
   overflow: boolean;
+  /** The size actually used, as a fraction of the template size (1 = no shrinking). */
+  scale: number;
 }
+
+/**
+ * The smallest body text the printed cards use: measured over the 648 source cards, game text is
+ * 7 pt and the densest cards drop to 6.5 pt, never lower. Text that needs less than this would not
+ * fit on a real card, so it is reported as overflow rather than shrunk further.
+ */
+export const MIN_BODY_PT = 6.5;
 
 function layoutBlocks(
   blocks: FlowBlock[],
@@ -197,9 +207,16 @@ export function fitFlow(
   for (;;) {
     const sizePx = basePx * scale;
     const lines = layoutBlocks(blocks, width, sizePx, lineHeightPx * scale, measure, iconWidth * scale);
-    if (totalHeight(lines) <= height + 1e-6) return { sizePx, lines, overflow: false };
+    if (totalHeight(lines) <= height + 1e-6) return { sizePx, lines, overflow: false, scale };
     const next = +(scale - step).toFixed(4);
-    if (next < minScale - 1e-9) return { sizePx, lines, overflow: true };
+    if (next < minScale - 1e-9) {
+      // the last step lands exactly on the floor before giving up, so the floor size itself is tried and reported
+      if (scale > minScale + 1e-9) {
+        scale = minScale;
+        continue;
+      }
+      return { sizePx, lines, overflow: true, scale };
+    }
     scale = next;
   }
 }

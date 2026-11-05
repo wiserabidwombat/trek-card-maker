@@ -41,7 +41,16 @@ export function Preview({ render, filename }: Props) {
       <div className="preview-toolbar">
         <h2>Preview</h2>
         {render.busy && <span className="badge muted">Rendering…</span>}
-        {render.overflow && !render.error && <span className="badge warn">Text overflows: shrunk to fit</span>}
+        {render.overflow && !render.error && (
+          <span className="badge warn" title="Printed cards never go below 6.5 pt body text; this card needs less than that">
+            Text too long: does not fit at {render.textPt} pt, shorten it
+          </span>
+        )}
+        {!render.overflow && !render.error && render.basePt > 0 && render.textPt < render.basePt && (
+          <span className="badge muted" title="Dense cards print smaller text; the originals go down to 6.5 pt">
+            Text at {render.textPt} pt (frame uses {render.basePt} pt)
+          </span>
+        )}
         <button onClick={download} disabled={!render.canvas}>
           Download PNG
         </button>

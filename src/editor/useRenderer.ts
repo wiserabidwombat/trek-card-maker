@@ -12,6 +12,9 @@ export interface RenderState {
   /** The finished card, or null while nothing has rendered yet or after a failure. */
   canvas: HTMLCanvasElement | null;
   overflow: boolean;
+  /** Body text size used and the frame's own size, in points; equal when nothing was shrunk. */
+  textPt: number;
+  basePt: number;
   error: string | null;
   busy: boolean;
   /** Render the current card again (after a failed fetch, for example). */
@@ -21,7 +24,7 @@ export interface RenderState {
 export function useRenderer(card: Card | null, catalog: Catalog, fonts: FontConfig, assets: AssetCache): RenderState {
   const [attempt, setAttempt] = useState(0);
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
-  const [state, setState] = useState<RenderState>({ canvas: null, overflow: false, error: null, busy: false, retry });
+  const [state, setState] = useState<RenderState>({ canvas: null, overflow: false, textPt: 0, basePt: 0, error: null, busy: false, retry });
   const token = useRef(0);
 
   useEffect(() => {
@@ -39,10 +42,10 @@ export function useRenderer(card: Card | null, catalog: Catalog, fonts: FontConf
           if (blob) userImage = await assets.getBlobImage(card.image.blobKey, blob);
         }
         const result = await renderCard(card, { catalog, frame, template, fonts, assets, userImage, base: FRAMES_BASE });
-        if (my === token.current) setState({ canvas: result.canvas, overflow: result.overflow, error: null, busy: false, retry });
+        if (my === token.current) setState({ canvas: result.canvas, overflow: result.overflow, textPt: result.textPt, basePt: result.basePt, error: null, busy: false, retry });
       } catch (e) {
         // Drop the previous picture: showing it under an error message made failures look like success.
-        if (my === token.current) setState({ canvas: null, overflow: false, error: e instanceof Error ? e.message : String(e), busy: false, retry });
+        if (my === token.current) setState({ canvas: null, overflow: false, textPt: 0, basePt: 0, error: e instanceof Error ? e.message : String(e), busy: false, retry });
       }
     }, 60);
     return () => clearTimeout(timer);

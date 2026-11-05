@@ -82,8 +82,9 @@ Open the printed URL (default `http://localhost:5173`).
     with the next number. The **Edge line** prints in small capitals up the right edge beside the
     art, where the real cards carry their legal notice; the suggested line is
     "FAN-MADE CARD · NOT FOR SALE".
-- **Preview**: live render; *Download PNG* saves the single card. A badge warns when game text
-  had to be shrunk to fit.
+- **Preview**: live render; *Download PNG* saves the single card. Dense game text shrinks the way
+  the real cards do, from 7 pt down to 6.5 pt and no further (a quiet badge says so); text that
+  would need less gets a warning badge and runs past its box, so shorten it rather than print it.
 - **Export for Tabletop Simulator** saves the deck as card-sheet images for TTS's Custom Deck
   importer: a 10 × 7 grid per sheet (69 cards, copies included; longer decks get more sheets),
   kept within the 4096 px texture limit, plus an optional plain back with the deck name. The
