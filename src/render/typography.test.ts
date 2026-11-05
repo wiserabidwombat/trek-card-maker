@@ -24,7 +24,16 @@ describe('typeset', () => {
     expect(typeset('Order -')).toBe('Order –');
     expect(typeset('a--b')).toBe('a–b');
     expect(typeset('a---b')).toBe('a—b');
-    expect(typeset('Non-Aligned {icon:non-aligned} Strength -3')).toBe('Non-Aligned {icon:non-aligned} Strength -3');
+    expect(typeset('Non-Aligned {icon:non-aligned} personnel')).toBe('Non-Aligned {icon:non-aligned} personnel');
+  });
+
+  it('prints a minus before a number as an en dash, as the cards do', () => {
+    expect(typeset('that card is cost -2')).toBe('that card is cost –2');
+    expect(typeset('Strength -3 and attributes +1')).toBe('Strength –3 and attributes +1');
+    expect(typeset('-1 until the end of this turn')).toBe('–1 until the end of this turn');
+    expect(typeset('(Cunning -2)')).toBe('(Cunning –2)');
+    expect(typeset('a 5-3 split and Non-Aligned personnel')).toBe('a 5-3 split and Non-Aligned personnel');
+    expect(typeset('Enterprise-D')).toBe('Enterprise-D');
   });
 
   it('replaces three dots with an ellipsis', () => {

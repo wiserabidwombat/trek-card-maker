@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Catalog, Template } from '../catalog/types';
 import { iconsInGroup } from '../catalog/types';
 import { FRAMES_BASE } from '../catalog/useCatalog';
 import { fieldsFor, maxIcons, staffingIcons, type Card, type FieldDef } from '../model/card';
+import { KEYWORDS, keywordInsert, keywordsFor } from '../model/keywords';
 import { IconsSection } from './IconsSection';
+import { lintCard } from './lint';
 import { SkillsEditor } from './SkillsEditor';
 import { insertText, toggleWrap, type Edit } from './textEdit';
 
@@ -40,6 +42,23 @@ export function FieldsForm({ card, catalog, template, onChange }: Props) {
 
   const setField = (id: string, value: string) =>
     onChange({ ...card, fields: { ...card.fields, [id]: value }, updatedAt: Date.now() });
+
+  const issues = useMemo(
+    () =>
+      lintCard(card, {
+        skills: catalog.skills,
+        keywords: KEYWORDS.map((k) => k.name),
+        icons: iconsInGroup(catalog, 'inline').map((i) => i.id),
+      }),
+    [card, catalog],
+  );
+  const focusField = (id: string) => {
+    const el = document.getElementById(id);
+    if (el instanceof HTMLElement) {
+      el.focus();
+      el.scrollIntoView({ block: 'nearest' });
+    }
+  };
 
   /** Apply a selection-aware edit to a text area, falling back to the end of the text when it has no selection yet. */
   const applyEdit = (fieldId: string, fn: (value: string, start: number, end: number) => Edit) => {
@@ -101,6 +120,31 @@ export function FieldsForm({ card, catalog, template, onChange }: Props) {
                       {p.label}
                     </button>
                   ))}
+                {f.id === 'gameText' && (
+                  <select
+                    className="keyword-pick"
+                    value=""
+                    aria-label="Insert a keyword"
+                    title="Insert a keyword in bold at the cursor"
+                    onChange={(e) => {
+                      const k = KEYWORDS.find((kw) => kw.name === e.target.value);
+                      if (!k) return;
+                      const ins = keywordInsert(k);
+                      applyEdit(f.id, (v, s, en) => {
+                        const r = insertText(v, s, en, ins.text, { spaced: true });
+                        const caret = r.end - (ins.text.length - ins.caret);
+                        return { value: r.value, start: caret, end: caret };
+                      });
+                    }}
+                  >
+                    <option value="">Keyword…</option>
+                    {keywordsFor(card.type).map((k) => (
+                      <option key={k.name} value={k.name}>
+                        {k.value ? `${k.name}: …` : k.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
                 <button
                   type="button"
                   title="Insert an inline icon"
@@ -225,6 +269,26 @@ export function FieldsForm({ card, catalog, template, onChange }: Props) {
         <SkillsEditor skills={card.skills} names={catalog.skills} onChange={(skills) => onChange({ ...card, skills, updatedAt: Date.now() })} />
       )}
       {rest.filter((f) => f.id === 'requirements' || f.id === 'hqLabel' || f.id === 'gameText' || f.id === 'lore' || f.id === 'collectorInfo').map(renderField)}
+      <div className="lint" aria-live="polite">
+        <h3>Checks</h3>
+        {issues.length === 0 ? (
+          <p className="muted small">Reads like a real card: nothing to point out.</p>
+        ) : (
+          <ul>
+            {issues.map((m, i) => (
+              <li key={i} className={m.level}>
+                {m.field ? (
+                  <button type="button" className="link" onClick={() => focusField(m.field)}>
+                    {m.text}
+                  </button>
+                ) : (
+                  m.text
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </section>
   );
 }

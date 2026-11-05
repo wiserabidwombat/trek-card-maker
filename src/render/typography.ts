@@ -4,6 +4,7 @@
  *
  *   "quote"   → “quote”          'quote' → ‘quote’       it's → it’s
  *   a - b     → a – b (en dash)  a--b    → a–b           a---b → a—b (em dash)
+ *   cost -2   → cost –2 (minus)  5-3 and Non-Aligned keep their hyphen
  *   ...       → …
  */
 
@@ -46,6 +47,11 @@ export function typeset(src: string): string {
       const spaceBefore = prev !== '' && /\s/.test(prev);
       const spaceAfter = next === '' || /\s/.test(next);
       if (spaceBefore && spaceAfter) {
+        out += '–';
+        continue;
+      }
+      // a minus sign before a number, as in "cost -2": the cards print it as an en dash (ranges like 5-3 and words keep their hyphen)
+      if (/\d/.test(next) && (prev === '' || /[\s(]/.test(prev))) {
         out += '–';
         continue;
       }

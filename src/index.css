@@ -930,3 +930,48 @@ button.attention {
 .deck-list li.dragging {
   opacity: 0.45;
 }
+
+/* keyword picker in the game-text toolbar */
+.text-tools select.keyword-pick {
+  font-size: 11px;
+  padding: 1px 4px;
+  max-width: 120px;
+}
+
+/* writing checks under the card text */
+.lint {
+  margin-top: 6px;
+  padding: 8px 10px;
+  background: var(--panel);
+  border-radius: 6px;
+}
+.lint h3 {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.lint p {
+  margin: 0;
+}
+.lint ul {
+  margin: 0;
+  padding-left: 16px;
+}
+.lint li {
+  font-size: 12px;
+  margin: 2px 0;
+}
+.lint li.warn::marker {
+  color: var(--warn);
+}
+.lint li.info::marker {
+  color: var(--muted);
+}
+.lint li button.link {
+  color: var(--text);
+  text-align: left;
+}
+.lint li button.link:hover {
+  color: var(--accent);
+}

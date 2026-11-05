@@ -151,7 +151,13 @@ export function HelpDialog({ catalog, onClose, onLoadSample }: Props) {
               <li>A line break starts a new line; a blank line starts a new paragraph.</li>
               <li>
                 The B, I and icon buttons above each text field (or Ctrl+B and Ctrl+I) wrap the selected words; <em>Order</em> and{' '}
-                <em>Interrupt</em> insert the usual bold opening.
+                <em>Interrupt</em> insert the usual bold opening, and the <em>Keyword…</em> menu inserts one of the keywords the real cards
+                print in bold (Admiral, Commander: ship, Decay: n and so on).
+              </li>
+              <li>
+                <strong>Checks</strong> under the card text compares the wording with the printed cards: bold requirements after “Unless you
+                have”, capitalised skill names, Cunning&gt;30 without spaces, a period at the end, misspelt skills, unknown icon ids. They are
+                advice only; nothing stops you saving or printing.
               </li>
               <li>
                 Typography is applied when the card is drawn, so type with a plain keyboard: straight quotes print as “curly” quotes, a hyphen

@@ -56,7 +56,11 @@ Open the printed URL (default `http://localhost:5173`).
   default). A warning appears if the crop is smaller than the printed area.
 - **Card text**: fields depend on the card type. Game text supports `**bold**`, `*italic*`,
   `{icon:klingon}` and blank lines; the toolbar above each text field (or Ctrl+B / Ctrl+I) wraps the
-  selection, and straight quotes, spaced hyphens and `...` print as “ ” – … without changing what you typed.
+  selection, and straight quotes, spaced hyphens, `cost -2` and `...` print as “ ” – –2 … without changing
+  what you typed. The **Keyword…** menu inserts a keyword the way the cards print it (`**Thief.**`,
+  `**Commander: U.S.S. Defiant.**`), and **Checks** under the text points out wording that would give a
+  custom card away: requirements not in bold, lowercase or misspelt skill names, `Cunning > 30` with
+  spaces, a missing final period, unknown icon ids.
   - Personnel and ships: **Other icons** (command, staff, past, alternate, future, Deep Space
     Nine, Earth, Maquis, Terok Nor, The Next Generation, The Original Series, Voyager) go into
     the socket column in the order you pick them; the frame decides how many sockets there are.
