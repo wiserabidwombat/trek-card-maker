@@ -112,6 +112,15 @@ export function HelpDialog({ catalog, onClose, onLoadSample }: Props) {
                 .
               </li>
               <li>A line break starts a new line; a blank line starts a new paragraph.</li>
+              <li>
+                The B, I and icon buttons above each text field (or Ctrl+B and Ctrl+I) wrap the selected words; <em>Order</em> and{' '}
+                <em>Interrupt</em> insert the usual bold opening.
+              </li>
+              <li>
+                Typography is applied when the card is drawn, so type with a plain keyboard: straight quotes print as “curly” quotes, a hyphen
+                between spaces or <code>--</code> as an en dash (–), <code>---</code> as an em dash (—) and <code>...</code> as an ellipsis. Hyphens
+                inside words, like Non-Aligned, are kept.
+              </li>
               <li>Skills print as the name, or "2 Name" when the count is above one. Standard skills: {STANDARD_SKILLS.join(', ')}.</li>
             </ul>
           </div>

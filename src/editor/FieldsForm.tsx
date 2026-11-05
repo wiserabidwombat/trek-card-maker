@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Catalog, Template } from '../catalog/types';
 import { iconsInGroup } from '../catalog/types';
 import { FRAMES_BASE } from '../catalog/useCatalog';
 import { fieldsFor, maxIcons, staffingIcons, type Card, type FieldDef } from '../model/card';
 import { IconsSection } from './IconsSection';
 import { SkillsEditor } from './SkillsEditor';
+import { insertText, toggleWrap, type Edit } from './textEdit';
 
 interface Props {
   card: Card;
@@ -15,16 +16,59 @@ interface Props {
 
 const STAFFING_CHOICES = ['command', 'staff'];
 
+/** Ready-made openings that start most 2E game text. */
+const PHRASES: { label: string; text: string; title: string }[] = [
+  { label: 'Order', text: '**Order** – ', title: 'Insert a bold Order action' },
+  { label: 'Interrupt', text: '**Interrupt** – ', title: 'Insert a bold Interrupt action' },
+];
+
 export function FieldsForm({ card, catalog, template, onChange }: Props) {
   const [iconTarget, setIconTarget] = useState<string | null>(null);
+  const areas = useRef<Record<string, HTMLTextAreaElement | null>>({});
+  const pending = useRef<{ id: string; start: number; end: number } | null>(null);
+
+  // After an edit made through the toolbar, put the caret where the helper said.
+  useEffect(() => {
+    const p = pending.current;
+    if (!p) return;
+    pending.current = null;
+    const el = areas.current[p.id];
+    if (!el) return;
+    el.focus();
+    el.setSelectionRange(p.start, p.end);
+  });
+
   const setField = (id: string, value: string) =>
     onChange({ ...card, fields: { ...card.fields, [id]: value }, updatedAt: Date.now() });
 
-  const insertIcon = (fieldId: string, iconId: string) => {
+  /** Apply a selection-aware edit to a text area, falling back to the end of the text when it has no selection yet. */
+  const applyEdit = (fieldId: string, fn: (value: string, start: number, end: number) => Edit) => {
     const cur = card.fields[fieldId] ?? '';
-    setField(fieldId, `${cur}${cur && !cur.endsWith(' ') ? ' ' : ''}{icon:${iconId}}`);
-    setIconTarget(null);
+    const el = areas.current[fieldId];
+    const start = el?.selectionStart ?? cur.length;
+    const end = el?.selectionEnd ?? cur.length;
+    const r = fn(cur, start, end);
+    pending.current = { id: fieldId, start: r.start, end: r.end };
+    setField(fieldId, r.value);
   };
+
+  const wrap = (fieldId: string, marker: string) => applyEdit(fieldId, (v, s, e) => toggleWrap(v, s, e, marker));
+  const insert = (fieldId: string, text: string) => applyEdit(fieldId, (v, s, e) => insertText(v, s, e, text, { spaced: true }));
+
+  const onTextKey = (fieldId: string) => (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+    const key = e.key.toLowerCase();
+    if (key === 'b') {
+      e.preventDefault();
+      wrap(fieldId, '**');
+    } else if (key === 'i') {
+      e.preventDefault();
+      wrap(fieldId, '*');
+    }
+  };
+
+  // Keep the text area's focus and selection when a toolbar button is pressed.
+  const keepFocus = (e: React.MouseEvent) => e.preventDefault();
 
   const renderField = (f: FieldDef) => {
     const value = card.fields[f.id] ?? '';
@@ -41,21 +85,58 @@ export function FieldsForm({ card, catalog, template, onChange }: Props) {
           <div className="field" key={f.id}>
             <div className="field-head">
               <label htmlFor={f.id}>{f.label}</label>
-              <button className="link" onClick={() => setIconTarget(iconTarget === f.id ? null : f.id)}>
-                {iconTarget === f.id ? 'close icons' : 'insert icon'}
-              </button>
+              <div className="text-tools" role="toolbar" aria-label={`${f.label} formatting`}>
+                <button type="button" className="bold" title="Bold (Ctrl+B)" aria-label="Bold" onMouseDown={keepFocus} onClick={() => wrap(f.id, '**')}>
+                  B
+                </button>
+                <button type="button" className="italic" title="Italic (Ctrl+I)" aria-label="Italic" onMouseDown={keepFocus} onClick={() => wrap(f.id, '*')}>
+                  I
+                </button>
+                <button type="button" title="Insert an en dash" aria-label="En dash" onMouseDown={keepFocus} onClick={() => insert(f.id, '–')}>
+                  –
+                </button>
+                {f.id === 'gameText' &&
+                  PHRASES.map((p) => (
+                    <button type="button" key={p.label} title={p.title} onMouseDown={keepFocus} onClick={() => insert(f.id, p.text)}>
+                      {p.label}
+                    </button>
+                  ))}
+                <button
+                  type="button"
+                  title="Insert an inline icon"
+                  aria-expanded={iconTarget === f.id}
+                  onMouseDown={keepFocus}
+                  onClick={() => setIconTarget(iconTarget === f.id ? null : f.id)}
+                >
+                  {iconTarget === f.id ? 'close icons' : 'icon…'}
+                </button>
+              </div>
             </div>
             {iconTarget === f.id && (
               <div className="icon-palette">
                 {iconsInGroup(catalog, 'inline').map((ic) => (
-                  <button key={ic.id} title={ic.id} onClick={() => insertIcon(f.id, ic.id)}>
+                  <button key={ic.id} title={ic.id} onMouseDown={keepFocus} onClick={() => insert(f.id, `{icon:${ic.id}}`)}>
                     <img src={FRAMES_BASE + ic.file} alt={ic.id} />
                   </button>
                 ))}
               </div>
             )}
-            <textarea id={f.id} rows={f.id === 'gameText' ? 5 : 2} value={value} placeholder={f.placeholder} onChange={(e) => setField(f.id, e.target.value)} />
-            {f.id === 'gameText' && <p className="hint">**bold**, *italic*, {'{icon:klingon}'}; blank line = new paragraph</p>}
+            <textarea
+              id={f.id}
+              ref={(el) => {
+                areas.current[f.id] = el;
+              }}
+              rows={f.id === 'gameText' ? 5 : 2}
+              value={value}
+              placeholder={f.placeholder}
+              onChange={(e) => setField(f.id, e.target.value)}
+              onKeyDown={onTextKey(f.id)}
+            />
+            {f.id === 'gameText' && (
+              <p className="hint">
+                Select text and press Ctrl+B or Ctrl+I; blank line = new paragraph. Straight quotes, spaced hyphens and ... print as “ ” – …
+              </p>
+            )}
           </div>
         );
       case 'number':

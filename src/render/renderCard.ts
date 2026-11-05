@@ -11,6 +11,7 @@ import { boxToPx, cardBorderPx, cropDraw, ptToPx, type PxRect } from './geometry
 import { SCREEN_PROFILE, profiledPt, sharpenPixels, type RenderProfile } from './printProfile';
 import { INK_BLACK, inkColour } from './ink';
 import { fitFlow, layoutRuns, type Measure, type PlacedLine, type Style } from './textLayout';
+import { typeset } from './typography';
 
 export interface RenderContext {
   catalog: Catalog;
@@ -225,9 +226,9 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
   // simple boxes
   const simple: Record<string, string> = {
     cost: card.fields.cost ?? '',
-    title: displayTitle(card),
-    subtitle: card.fields.subtitle ?? '',
-    typeBar: typeBarText(card),
+    title: typeset(displayTitle(card)),
+    subtitle: typeset(card.fields.subtitle ?? ''),
+    typeBar: typeset(typeBarText(card)),
     points: card.fields.points ?? '',
     span: card.fields.span ?? '',
     collector: card.fields.collectorInfo ?? '',
@@ -257,9 +258,10 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
   }
 
   // icons needed for flow + skills
-  const gameRuns = parseMarkup(card.fields.gameText ?? '');
-  const loreRuns = parseMarkup(card.fields.lore ?? '');
-  const reqRuns = parseMarkup(card.fields.requirements ?? '');
+  // typographic quotes and dashes first, then the inline markup
+  const gameRuns = parseMarkup(typeset(card.fields.gameText ?? ''));
+  const loreRuns = parseMarkup(typeset(card.fields.lore ?? ''));
+  const reqRuns = parseMarkup(typeset(card.fields.requirements ?? ''));
   const staffing = card.type === 'ship' ? staffingIcons(card) : [];
   const listIcons = card.icons.slice(0, maxIcons(card.type, t));
   const icons = await loadIcons(ctx, [
@@ -292,7 +294,7 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
   }
 
   // headquarters missions carry a text label in the strip instead of affiliation icons
-  const hqLabel = card.type === 'mission' ? (card.fields.hqLabel ?? '').trim() : '';
+  const hqLabel = card.type === 'mission' ? typeset((card.fields.hqLabel ?? '').trim()) : '';
   if (hqLabel && t.missionAffiliations) {
     const strip = t.missionAffiliations;
     const titleBox = t.boxes.title;

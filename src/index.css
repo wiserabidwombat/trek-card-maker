@@ -316,6 +316,25 @@ label {
   justify-content: space-between;
   align-items: baseline;
 }
+.text-tools {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.text-tools button {
+  font-size: 11px;
+  line-height: 1.5;
+  padding: 1px 7px;
+  min-width: 24px;
+}
+.text-tools button.bold {
+  font-weight: 700;
+}
+.text-tools button.italic {
+  font-style: italic;
+}
 .compact-row {
   display: flex;
   gap: 10px;

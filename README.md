@@ -42,7 +42,8 @@ Open the printed URL (default `http://localhost:5173`).
   in: the part of the art area the picture does not cover shows the **Fill** colour (black by
   default). A warning appears if the crop is smaller than the printed area.
 - **Card text**: fields depend on the card type. Game text supports `**bold**`, `*italic*`,
-  `{icon:klingon}` (use *insert icon* for the list) and blank lines.
+  `{icon:klingon}` and blank lines; the toolbar above each text field (or Ctrl+B / Ctrl+I) wraps the
+  selection, and straight quotes, spaced hyphens and `...` print as “ ” – … without changing what you typed.
   - Personnel and ships: **Other icons** (command, staff, past, alternate, future, Deep Space
     Nine, Earth, Maquis, Terok Nor, The Next Generation, The Original Series, Voyager) go into
     the socket column in the order you pick them; the frame decides how many sockets there are.
