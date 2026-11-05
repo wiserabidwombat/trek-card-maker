@@ -28,6 +28,7 @@ import { sampleCards } from './sampleDeck';
 import { clearCardsAndImages, deleteCard, getImage, getUserFont, listCards, loadDecks, pruneOrphanImages, putCard, putImage, saveCurrentDeck, saveDecks } from '../store/db';
 import { deckFileName, deckSlug, importedDeckName, newDeckId, uniqueDeckName, type DeckMeta } from '../store/decks';
 import { parseDeck, remapFrames, serializeDeck } from '../store/deckJson';
+import { cardsFromRows, parseDelimited } from '../store/csvImport';
 import { DeckList } from './DeckList';
 import { FieldsForm } from './FieldsForm';
 import { FontSettings } from './FontSettings';
@@ -544,6 +545,19 @@ function Editor({ catalog }: { catalog: Catalog }) {
     }
   };
 
+  /** Rows from a spreadsheet become cards in the current deck; the notice carries the first few warnings. */
+  const importCsv = async (file: File) => {
+    try {
+      const rows = parseDelimited(await file.text());
+      const { cards: incoming, warnings } = cardsFromRows(rows, catalog, deckId);
+      const fresh = await addCards(incoming);
+      const notes = warnings.length ? ` ${warnings.slice(0, 3).join(' ')}${warnings.length > 3 ? ` (${warnings.length - 3} more)` : ''}` : '';
+      setNotice(`Added ${fresh.length} card${fresh.length === 1 ? '' : 's'} from ${file.name}.${notes}`);
+    } catch (e) {
+      setNotice(`CSV import failed: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  };
+
   if (!loaded) return <main className="setup">Loading your cards…</main>;
 
   const pristine = cards.every(isBlankCard);
@@ -601,6 +615,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
           onExportTts={() => setShowTts(true)}
           onExportJson={exportJson}
           onImportJson={importJson}
+          onImportCsv={importCsv}
         />
         <FramePicker catalog={catalog} selectedId={current?.frameId ?? ''} onSelect={selectFrame} />
         <div className="middle">

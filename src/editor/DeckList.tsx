@@ -27,6 +27,7 @@ interface Props {
   onExportTts: () => void;
   onExportJson: () => void;
   onImportJson: (file: File) => void;
+  onImportCsv: (file: File) => void;
 }
 
 export function DeckList(p: Props) {
@@ -155,6 +156,18 @@ export function DeckList(p: Props) {
         <label className="file-button">
           Import deck (JSON)…
           <input type="file" accept="application/json,.json" onChange={(e) => e.target.files?.[0] && p.onImportJson(e.target.files[0])} />
+        </label>
+        <label className="file-button" title="Add cards from a spreadsheet saved as CSV or tab-separated text; Help has the columns and a template">
+          Import cards (CSV)…
+          <input
+            type="file"
+            accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) p.onImportCsv(f);
+              e.target.value = '';
+            }}
+          />
         </label>
         <button className="danger" onClick={p.onClearAll} disabled={p.busy || !p.cards.length} title="Delete every card in this deck and its image">
           Clear all…

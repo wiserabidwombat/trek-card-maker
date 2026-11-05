@@ -7,6 +7,7 @@ import { DECK_VERSION } from '../store/deckJson';
 import { downloadBytes } from '../export/exportPdf';
 import { sampleDeckJson } from './sampleDeck';
 import { ISSUES_URL, REPO_URL } from './links';
+import { csvTemplate } from '../store/csvImport';
 
 interface Props {
   catalog: Catalog;
@@ -15,7 +16,7 @@ interface Props {
   onLoadSample?: () => void;
 }
 
-type Tab = 'deck' | 'markup' | 'fields';
+type Tab = 'deck' | 'csv' | 'markup' | 'fields';
 
 export function HelpDialog({ catalog, onClose, onLoadSample }: Props) {
   const [tab, setTab] = useState<Tab>('deck');
@@ -40,6 +41,9 @@ export function HelpDialog({ catalog, onClose, onLoadSample }: Props) {
           <div className="type-tabs">
             <button className={tab === 'deck' ? 'tab active' : 'tab'} onClick={() => setTab('deck')}>
               Deck JSON
+            </button>
+            <button className={tab === 'csv' ? 'tab active' : 'tab'} onClick={() => setTab('csv')}>
+              Spreadsheet
             </button>
             <button className={tab === 'markup' ? 'tab active' : 'tab'} onClick={() => setTab('markup')}>
               Text markup
@@ -98,6 +102,35 @@ export function HelpDialog({ catalog, onClose, onLoadSample }: Props) {
               <button onClick={() => downloadBytes(new TextEncoder().encode(sample), 'sample-deck.json', 'application/json')}>Download sample-deck.json</button>
             </div>
             <pre className="help-sample">{sample}</pre>
+          </div>
+        )}
+
+        {tab === 'csv' && (
+          <div className="help-body">
+            <p>
+              <strong>Import cards (CSV)…</strong> adds a row per card to the current deck from a spreadsheet saved as CSV (or tab-separated
+              text). The first row names the columns; order does not matter and unknown columns are ignored.
+            </p>
+            <ul>
+              <li>
+                <code>type</code> (personnel, ship, equipment, event, interrupt, mission, dilemma) and <code>frame</code> (an affiliation such as
+                Klingon, or Planet / Space / Headquarters / Dual for missions and dilemmas). A missing frame falls back to the first of the type.
+              </li>
+              <li>
+                <code>title</code>, <code>unique</code> (yes / 1 / x), <code>subtitle</code>, <code>species</code>, <code>class</code>,{' '}
+                <code>cost</code>, <code>integrity</code>, <code>cunning</code>, <code>strength</code>, <code>range</code>, <code>weapons</code>,{' '}
+                <code>shields</code>, <code>quadrant</code>, <code>points</code>, <code>span</code>, <code>requirements</code>, <code>hq</code>,{' '}
+                <code>game text</code>, <code>lore</code>, <code>collector</code>, <code>copies</code>.
+              </li>
+              <li>
+                <code>skills</code>: comma-separated, "2 Leadership" for multiples. <code>staffing</code>: command, staff. <code>icons</code>:
+                Other Icon names (command, staff, past…) or mission affiliations (Klingon, Federation…), comma-separated.
+              </li>
+              <li>Game text takes the same markup as the editor. Artwork is not part of the import; add it per card afterwards.</li>
+            </ul>
+            <button onClick={() => downloadBytes(new TextEncoder().encode(csvTemplate()), 'trek-cards-template.csv', 'text/csv')}>
+              Download template (CSV)
+            </button>
           </div>
         )}
 
