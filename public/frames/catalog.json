@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-05T17:21:10",
+ "generatedAt": "2026-11-05T19:07:45",
  "families": {
   "std": {
    "refWidthPt": 178.58
@@ -1496,6 +1496,13 @@
   {
    "id": "delta-quadrant",
    "file": "icons/delta-quadrant.png",
+   "w": 31,
+   "h": 31,
+   "group": "inline"
+  },
+  {
+   "id": "gamma-quadrant",
+   "file": "icons/gamma-quadrant.png",
    "w": 31,
    "h": 31,
    "group": "inline"

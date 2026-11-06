@@ -133,6 +133,10 @@ welcome panel link there too.
 - The Vidiian affiliation (new in *Phage*, 2024) exists only in a standard-resolution set with the
   icon painted into the frame, so both its inline icon and its mission mark are cut from the
   corner of the Vidiian personnel frame.
+- The Gamma Quadrant mark is on none of the Second Edition source cards in hand (the only PDF that
+  carries one is a First Edition starter supplement, whose square icon would not match), so
+  `gamma-quadrant` is derived from the Delta Quadrant icon: the delta is painted out and a gamma drawn
+  in the same white on the same green disc (`tools/derived_icons.py`).
 - Older (non-HiRes) sets had their skill bullets painted into the frame; the extractor erases them.
 - Art is placed with "cover" semantics into a fixed rectangle per card type.
 - Decks saved by the first version (per-card frames, free-text skills) load and import, but their

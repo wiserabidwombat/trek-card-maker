@@ -33,6 +33,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from affiliation import AFFILIATION_ALIASES, AFFILIATION_TABLE, cluster_colours, nearest_cluster, sample_features  # noqa: E402
 from artmask import compute_art_mask, erase_red_dots  # noqa: E402
 from cardsort import classify_type, derive_template, family_for, legal_box, line_roles  # noqa: E402
+from derived_icons import gamma_from_delta  # noqa: E402
 from pass3 import build_base_catalog  # noqa: E402
 from refs import load_reference_icons  # noqa: E402
 
@@ -92,25 +93,56 @@ def pix_to_rgb(doc: pymupdf.Document, xref: int) -> np.ndarray:
     return np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, 3).copy()
 
 
-def pix_to_rgba(doc: pymupdf.Document, xref: int) -> Image.Image:
+def load_icon(doc: pymupdf.Document, xref: int) -> tuple[Image.Image, str]:
+    """A small image as RGBA, plus the digest that names it in ``icon_names.json``.
+
+    The digest is taken over the source colour pixels, before any alpha is derived, so a change to the
+    knock-out does not rename every icon.
+    """
     pix = pymupdf.Pixmap(doc, xref)
     if pix.alpha and pix.n == 4:
-        return Image.frombytes("RGBA", (pix.width, pix.height), pix.samples)
+        img = Image.frombytes("RGBA", (pix.width, pix.height), pix.samples)
+        return img, icon_digest(img)
     rgb = pix if (pix.n == 3 and not pix.alpha) else pymupdf.Pixmap(pymupdf.csRGB, pix)
     img = Image.frombytes("RGB", (rgb.width, rgb.height), rgb.samples).convert("RGBA")
-    return _knock_out_background(img)
+    return _knock_out_background(img), icon_digest(img)
+
+
+def icon_digest(img: Image.Image) -> str:
+    return hashlib.md5(img.convert("RGB").tobytes()).hexdigest()[:8]
 
 
 def _knock_out_background(img: Image.Image) -> Image.Image:
-    """Icons come without alpha; make a near-uniform corner colour transparent."""
+    """Icons come without alpha; make a near-uniform corner colour transparent.
+
+    Only background that touches the border is knocked out: a glyph of the background colour inside the
+    icon (the white delta of the Delta Quadrant mark on a white page) stays opaque.
+    """
     arr = np.array(img)
     corners = np.array([arr[0, 0, :3], arr[0, -1, :3], arr[-1, 0, :3], arr[-1, -1, :3]]).astype(int)
     if corners.std(axis=0).max() > 12:
         return img
     bg = corners.mean(axis=0)
     dist = np.abs(arr[..., :3].astype(int) - bg).sum(axis=2)
-    arr[..., 3] = np.clip((dist - 20) * 12, 0, 255).astype(np.uint8)
+    alpha = np.clip((dist - 20) * 12, 0, 255).astype(np.uint8)
+    arr[..., 3] = np.where(_border_connected(alpha < 255), alpha, 255).astype(np.uint8)
     return Image.fromarray(arr, "RGBA")
+
+
+def _border_connected(mask: np.ndarray) -> np.ndarray:
+    """The pixels of a boolean mask that are 4-connected to the image border through the mask."""
+    reach = np.zeros_like(mask)
+    reach[0, :], reach[-1, :], reach[:, 0], reach[:, -1] = mask[0, :], mask[-1, :], mask[:, 0], mask[:, -1]
+    while True:
+        grown = reach.copy()
+        grown[1:, :] |= reach[:-1, :]
+        grown[:-1, :] |= reach[1:, :]
+        grown[:, 1:] |= reach[:, :-1]
+        grown[:, :-1] |= reach[:, 1:]
+        grown &= mask
+        if np.array_equal(grown, reach):
+            return reach
+        reach = grown
 
 
 def norm_rect(r: pymupdf.Rect, card: pymupdf.Rect) -> tuple[float, float, float, float]:
@@ -227,10 +259,9 @@ def main() -> int:
                 if w < 400:
                     if ICON_MIN <= w <= ICON_MAX and ICON_MIN <= h <= ICON_MAX:
                         try:
-                            icon = pix_to_rgba(doc, xref)
+                            icon, digest = load_icon(doc, xref)
                         except Exception:  # noqa: BLE001
                             continue
-                        digest = hashlib.md5(icon.tobytes()).hexdigest()[:8]
                         if digest in icons:
                             continue
                         name = icon_names.get(digest, f"icon-{digest}")
@@ -452,6 +483,16 @@ def finish(args, out, overrides, refs, frames, roles_by_frame, templates, art_bo
             with Image.open(os.path.join(out, file)) as im:
                 w, h = im.size
             inline_icons.append({"id": name, "file": file, "w": w, "h": h, "group": "inline", "hi": file})
+    # the Gamma Quadrant mark is on no source card; it is the Delta Quadrant icon with its glyph redrawn
+    ids = [ic["id"] for ic in inline_icons]
+    if "delta-quadrant" in ids and "gamma-quadrant" not in ids:
+        delta = inline_icons[ids.index("delta-quadrant")]
+        with Image.open(os.path.join(out, delta["file"])) as im:
+            gamma = gamma_from_delta(np.asarray(im.convert("RGBA")))
+        file = "icons/gamma-quadrant.png"
+        Image.fromarray(gamma, "RGBA").save(os.path.join(out, file))
+        inline_icons.insert(ids.index("delta-quadrant") + 1, {"id": "gamma-quadrant", "file": file, "w": gamma.shape[1], "h": gamma.shape[0], "group": "inline"})
+        log("inline icon gamma-quadrant derived from delta-quadrant")
     catalog = {
         "generatedAt": time.strftime("%Y-%m-%dT%H:%M:%S"),
         "families": families,
