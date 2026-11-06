@@ -34,6 +34,13 @@ HI_DISC = 0.8  # disc diameter as a fraction of the ring diameter
 MAX_GROUP = 40
 MAX_SLOTS = 4
 RING_INNER = 0.66  # icon disc / ring boundary as a fraction of the ring radius (mirrored in src/render/iconLayout.ts)
+# mission quadrant badges, as fractions of the badge radius in template_overrides.json: the icon crop takes
+# the whole badge inside its ring (the letter reaches past the coloured disc into the dark surround), the
+# fill is sampled from the coloured centre; pixels darker than BADGE_BODY_LUM are disc rather than letter
+BADGE_DISC = 1.0
+BADGE_BODY = 0.55
+BADGE_BODY_LUM = 110
+QUADRANT_NAMES = {"A": "alpha", "D": "delta", "G": "gamma"}
 OTHER_ICONS = [
     "command",
     "staff",
@@ -54,6 +61,52 @@ STRIP_MATCH_MAX = 130.0
 REF_INNER = 0.33  # the icon disc inside a rulebook reference icon (its ring sits at ~0.42); matches RING_INNER crops
 MIN_SKILL_COUNT = 5
 LABELS = {"non-aligned": "Non-Aligned", "deep-space-nine": "Deep Space Nine"}
+
+
+def classify_quadrant(rgb) -> str | None:
+    """Quadrant of a mission badge from its disc colour: blue is Alpha, green Delta, red Gamma."""
+    r, g, b = (float(v) for v in rgb)
+    if max(r, g, b) < 15:
+        return None
+    if r > g and r > b:
+        return "G"
+    return "A" if b > g else "D"
+
+
+def quadrant_badges(frames: list[dict], load, overrides: dict, log) -> dict[tuple[str, str], tuple[np.ndarray, str]]:
+    """Per (family, quadrant): the median badge disc of that quadrant's missions (RGBA, letter included)
+    and the mean colour of the disc body as a hex fill, measured where template_overrides.json puts the badge."""
+    out: dict[tuple[str, str], tuple[np.ndarray, str]] = {}
+    for fam in ("hires", "std"):
+        spec = overrides.get(f"mission.{fam}", {}).get("quadrant")
+        if not spec:
+            continue
+        crops: dict[str, list[np.ndarray]] = defaultdict(list)
+        bodies: dict[str, list[np.ndarray]] = defaultdict(list)
+        for i, fr in enumerate(frames):
+            if fr["type"] != "mission" or fr["family"] != fam or not fr.get("sourceTitle"):
+                continue
+            img = load(i)
+            h, w = img.shape[:2]
+            cx, cy, r = spec["cx"] * w, spec["cy"] * h, spec["r"] * w
+            disc = crop_disc(img, cx, cy, r * BADGE_DISC)
+            centre = crop_disc(img, cx, cy, r * BADGE_BODY)
+            lum = centre[..., :3].astype(float) @ [0.299, 0.587, 0.114]
+            body = centre[(centre[..., 3] > 128) & (lum < BADGE_BODY_LUM)][:, :3]
+            if len(body) == 0:
+                continue
+            q = classify_quadrant(np.median(body, axis=0))
+            if q is None:
+                continue
+            if crops[q] and disc.shape != crops[q][0].shape:
+                disc = np.asarray(Image.fromarray(disc, "RGBA").resize(crops[q][0].shape[1::-1], Image.LANCZOS))
+            crops[q].append(disc)
+            bodies[q].append(body.mean(axis=0))
+        for q, discs in crops.items():
+            fill = "#%02x%02x%02x" % tuple(int(v + 0.5) for v in np.mean(bodies[q], axis=0))
+            out[(fam, q)] = (np.median(np.stack(discs), axis=0).astype(np.uint8), fill)
+        log(f"quadrant badges {fam}: " + ", ".join(f"{q}={len(crops[q])} frames, fill {out[(fam, q)][1]}" for q in sorted(crops)))
+    return out
 
 
 def label_for(variant: str) -> str:
@@ -467,6 +520,10 @@ def build_base_catalog(
             _sheet(mission_review[:240], os.path.join(review_dir, "icons_mission.png"))
 
     extra_icons.sort(key=lambda i: i["id"])
+    # ---- mission quadrant badges: a hi-res inline icon per quadrant and the badge fill per family ----
+    badges = quadrant_badges(frames, load, overrides, log)
+    for (fam, q), (_disc, fill) in badges.items():
+        templates[f"mission.{fam}"].setdefault("quadrant", {}).setdefault("fills", {})[q] = fill
     # ---- high-resolution inline icons: a silver socket ring around the emblem disc ----
     hi_files: dict[str, str] = {}
     ring_src = cleanest_ring(os.path.join(out, "rings"))
@@ -496,6 +553,15 @@ def build_base_catalog(
             file = f"icons/hi-{variant}.png"
             img.save(os.path.join(out, file))
             hi_files[variant] = file
+        # quadrant marks: the badge disc of that quadrant's missions, letter included, HiRes first
+        for (fam, q), (disc, _fill) in sorted(badges.items(), key=lambda kv: (kv[0][1], kv[0][0] != "hires")):
+            name = f"{QUADRANT_NAMES[q]}-quadrant"
+            if name in hi_files:
+                continue
+            img = compose(disc)
+            file = f"icons/hi-{name}.png"
+            img.save(os.path.join(out, file))
+            hi_files[name] = file
         log(f"hi-res inline icons: {sorted(hi_files)}")
 
     skills = collect_skills(roles_by_frame)

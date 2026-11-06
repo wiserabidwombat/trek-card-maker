@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-05T19:07:45",
+ "generatedAt": "2026-11-05T19:39:06",
  "families": {
   "std": {
    "refWidthPt": 178.58
@@ -340,7 +340,12 @@
     "cy": 0.5755,
     "r": 0.051,
     "fill": "#0d1f3c",
-    "sizePt": 15
+    "sizePt": 15,
+    "fills": {
+     "D": "#2c3b21",
+     "A": "#1c4051",
+     "G": "#692614"
+    }
    },
    "missionAffiliations": {
     "cy": 0.8946,
@@ -1130,7 +1135,12 @@
     "cy": 0.572,
     "r": 0.049,
     "fill": "#0d1f3c",
-    "sizePt": 15
+    "sizePt": 15,
+    "fills": {
+     "A": "#1b4456",
+     "D": "#2c391f",
+     "G": "#6e2715"
+    }
    },
    "missionAffiliations": {
     "cy": 0.8916,
@@ -1498,14 +1508,8 @@
    "file": "icons/delta-quadrant.png",
    "w": 31,
    "h": 31,
-   "group": "inline"
-  },
-  {
-   "id": "gamma-quadrant",
-   "file": "icons/gamma-quadrant.png",
-   "w": 31,
-   "h": 31,
-   "group": "inline"
+   "group": "inline",
+   "hi": "icons/hi-delta-quadrant.png"
   },
   {
    "id": "dominion",
@@ -1681,12 +1685,28 @@
    "hi": "icons/hi-voyager.png"
   },
   {
+   "id": "alpha-quadrant",
+   "file": "icons/hi-alpha-quadrant.png",
+   "w": 96,
+   "h": 96,
+   "group": "inline",
+   "hi": "icons/hi-alpha-quadrant.png"
+  },
+  {
    "id": "bajoran",
    "file": "icons/hi-bajoran.png",
    "w": 96,
    "h": 96,
    "group": "inline",
    "hi": "icons/hi-bajoran.png"
+  },
+  {
+   "id": "gamma-quadrant",
+   "file": "icons/hi-gamma-quadrant.png",
+   "w": 96,
+   "h": 96,
+   "group": "inline",
+   "hi": "icons/hi-gamma-quadrant.png"
   },
   {
    "id": "klingon",

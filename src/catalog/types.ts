@@ -55,8 +55,9 @@ export interface Template {
   requirements?: (Box & { sizePt: number; colour?: string }) | null;
   /** Ship staffing icon slots: centred at cx, first at y0, then every `step`; icon width `size` (fractions). */
   staffing?: { cx: number; y0: number; step: number; size: number; max: number } | null;
-  /** Mission quadrant badge: disc centre/radius (fractions of width for r) and the letter size. */
-  quadrant?: { cx: number; cy: number; r: number; fill: string; sizePt: number } | null;
+  /** Mission quadrant badge: disc centre/radius (fractions of width for r), the letter size, the fallback
+   *  disc colour and, per quadrant code (A, D, G), the colour measured from that quadrant's source cards. */
+  quadrant?: { cx: number; cy: number; r: number; fill: string; fills?: Record<string, string>; sizePt: number } | null;
   /** Other Icons sockets (personnel, ship), top to bottom. */
   iconSlots?: IconSlot[] | null;
   /** Mission affiliation icon strip geometry. */

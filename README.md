@@ -74,7 +74,8 @@ Open the printed URL (default `http://localhost:5173`).
   - Personnel: **Skills** from the 23 standard skills with a multiplier (prints as
     "2 Leadership"), or *Custom…* for a house skill.
   - Ships: staffing icons over the art. Missions: **Affiliations** (up to five, centred along the
-    bottom), a quadrant letter, points, span and requirements. A **Headquarters label** (for
+    bottom), a quadrant letter (its badge takes the quadrant's own colour: blue Alpha, green Delta,
+    red Gamma), points, span and requirements. A **Headquarters label** (for
     example "Borg Headquarters") replaces the affiliation icons in the bottom strip, as on
     headquarters missions; leave points empty for those.
   - **Collector info** is set number, rarity and card number ("25 V 1"; V is a virtual card, VP a
@@ -133,10 +134,9 @@ welcome panel link there too.
 - The Vidiian affiliation (new in *Phage*, 2024) exists only in a standard-resolution set with the
   icon painted into the frame, so both its inline icon and its mission mark are cut from the
   corner of the Vidiian personnel frame.
-- The Gamma Quadrant mark is on none of the Second Edition source cards in hand (the only PDF that
-  carries one is a First Edition starter supplement, whose square icon would not match), so
-  `gamma-quadrant` is derived from the Delta Quadrant icon: the delta is painted out and a gamma drawn
-  in the same white on the same green disc (`tools/derived_icons.py`).
+- No source card uses the Alpha or Gamma Quadrant mark as a small inline icon, so `alpha-quadrant`
+  and `gamma-quadrant` are the quadrant badge of the missions of that quadrant (letter included), cut
+  from the badge disc and set in the standard ring; the badge fill per quadrant is measured the same way.
 - Older (non-HiRes) sets had their skill bullets painted into the frame; the extractor erases them.
 - Art is placed with "cover" semantics into a fixed rectangle per card type.
 - Decks saved by the first version (per-card frames, free-text skills) load and import, but their

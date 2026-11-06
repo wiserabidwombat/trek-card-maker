@@ -381,7 +381,8 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
   }
 
   // mission quadrant badge
-  const quadrant = card.type === 'mission' ? QUADRANTS[(card.fields.quadrant ?? '').toUpperCase()] : undefined;
+  const quadrantCode = (card.fields.quadrant ?? '').toUpperCase();
+  const quadrant = card.type === 'mission' ? QUADRANTS[quadrantCode] : undefined;
   if (t.quadrant && quadrant) {
     const q = t.quadrant;
     const cx = q.cx * W;
@@ -390,7 +391,7 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
     g.save();
     g.beginPath();
     g.arc(cx, cy, r, 0, Math.PI * 2);
-    g.fillStyle = q.fill;
+    g.fillStyle = quadrantFill(q, quadrantCode);
     g.fill();
     g.font = `normal 400 ${px(q.sizePt)}px ${fonts.title}`;
     g.fillStyle = '#ffffff';
@@ -529,4 +530,9 @@ export function roundedRectPath(g: CanvasRenderingContext2D, x: number, y: numbe
   g.arcTo(x, y + h, x, y, rr);
   g.arcTo(x, y, x + w, y, rr);
   g.closePath();
+}
+
+/** The badge disc colour for a quadrant code: the colour measured from that quadrant's cards, else the template's one. */
+export function quadrantFill(q: { fill: string; fills?: Record<string, string> }, code: string): string {
+  return q.fills?.[code.toUpperCase()] ?? q.fill;
 }

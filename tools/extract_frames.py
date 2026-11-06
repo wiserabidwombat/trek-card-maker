@@ -33,7 +33,6 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from affiliation import AFFILIATION_ALIASES, AFFILIATION_TABLE, cluster_colours, nearest_cluster, sample_features  # noqa: E402
 from artmask import compute_art_mask, erase_red_dots  # noqa: E402
 from cardsort import classify_type, derive_template, family_for, legal_box, line_roles  # noqa: E402
-from derived_icons import gamma_from_delta  # noqa: E402
 from pass3 import build_base_catalog  # noqa: E402
 from refs import load_reference_icons  # noqa: E402
 
@@ -483,16 +482,6 @@ def finish(args, out, overrides, refs, frames, roles_by_frame, templates, art_bo
             with Image.open(os.path.join(out, file)) as im:
                 w, h = im.size
             inline_icons.append({"id": name, "file": file, "w": w, "h": h, "group": "inline", "hi": file})
-    # the Gamma Quadrant mark is on no source card; it is the Delta Quadrant icon with its glyph redrawn
-    ids = [ic["id"] for ic in inline_icons]
-    if "delta-quadrant" in ids and "gamma-quadrant" not in ids:
-        delta = inline_icons[ids.index("delta-quadrant")]
-        with Image.open(os.path.join(out, delta["file"])) as im:
-            gamma = gamma_from_delta(np.asarray(im.convert("RGBA")))
-        file = "icons/gamma-quadrant.png"
-        Image.fromarray(gamma, "RGBA").save(os.path.join(out, file))
-        inline_icons.insert(ids.index("delta-quadrant") + 1, {"id": "gamma-quadrant", "file": file, "w": gamma.shape[1], "h": gamma.shape[0], "group": "inline"})
-        log("inline icon gamma-quadrant derived from delta-quadrant")
     catalog = {
         "generatedAt": time.strftime("%Y-%m-%dT%H:%M:%S"),
         "families": families,

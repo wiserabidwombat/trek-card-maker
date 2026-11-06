@@ -5,7 +5,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from pass3 import STD_CORNER_DISC, corner_disc, personnel_median  # noqa: E402
+from pass3 import STD_CORNER_DISC, classify_quadrant, corner_disc, personnel_median, quadrant_badges  # noqa: E402
 
 
 def _std_frame():
@@ -34,3 +34,40 @@ def test_personnel_median_prefers_hires_and_falls_back_to_std():
     assert personnel_median(medians, "dominion") == ("hires", hires)
     assert personnel_median(medians, "vidiian") == ("std", std)
     assert personnel_median(medians, "kazon") == (None, None)
+
+
+def test_classify_quadrant_by_disc_colour():
+    assert classify_quadrant((22, 52, 63)) == "A"
+    assert classify_quadrant((33, 44, 22)) == "D"
+    assert classify_quadrant((75, 26, 14)) == "G"
+    assert classify_quadrant((0, 0, 0)) is None
+
+
+def _mission_frame(colour, w=200, h=280, spec=(0.1, 0.5, 0.05)):
+    """A dark frame with a badge disc of one colour, a white letter stroke through its middle."""
+    arr = np.zeros((h, w, 3), np.uint8)
+    arr[...] = (10, 10, 10)
+    yy, xx = np.indices((h, w))
+    r = np.hypot(xx - spec[0] * w, yy - spec[1] * h)
+    arr[r <= spec[2] * w] = colour
+    arr[(r <= spec[2] * w) & (abs(xx - spec[0] * w) < 1.5)] = (255, 255, 255)
+    return arr
+
+
+def test_quadrant_badges_groups_missions_by_colour_and_measures_the_fill():
+    frames = [
+        {"type": "mission", "family": "std", "sourceTitle": "Earth Orbit"},
+        {"type": "mission", "family": "std", "sourceTitle": "Wadi Homeworld"},
+        {"type": "mission", "family": "std", "sourceTitle": "Founders' Homeworld"},
+        {"type": "personnel", "family": "std", "sourceTitle": "Nobody"},
+    ]
+    images = [_mission_frame((22, 52, 63)), _mission_frame((80, 26, 14)), _mission_frame((70, 26, 14)), _mission_frame((255, 0, 0))]
+    overrides = {"mission.std": {"quadrant": {"cx": 0.1, "cy": 0.5, "r": 0.05, "fill": "#000000", "sizePt": 15}}}
+    logs = []
+    badges = quadrant_badges(frames, lambda i: images[i], overrides, logs.append)
+    assert sorted(badges) == [("std", "A"), ("std", "G")]
+    disc, fill = badges[("std", "G")]
+    assert fill == "#4b1a0e"  # the mean of the two red discs, letter excluded
+    assert disc.shape[2] == 4 and disc[disc.shape[0] // 2, disc.shape[1] // 2, 3] == 255
+    assert badges[("std", "A")][1] == "#16343f"
+    assert logs and "A=1 frames" in logs[0] and "G=2 frames" in logs[0]
