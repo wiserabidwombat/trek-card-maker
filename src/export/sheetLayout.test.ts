@@ -36,16 +36,39 @@ describe('layoutSheet', () => {
 });
 
 describe('cutMarks', () => {
-  it('draws 8pt hairlines in the margins at every grid line', () => {
+  it('draws hairlines from the paper edge to the card grid at every grid line', () => {
     const marks = cutMarks();
     expect(marks).toHaveLength(16);
     const v = marks.filter((m) => m.x1 === m.x2);
     const h = marks.filter((m) => m.y1 === m.y2);
     expect(v).toHaveLength(8);
     expect(h).toHaveLength(8);
-    expect(v.some((m) => m.x1 === MARGIN.x && m.y1 === 0 && m.y2 === 8)).toBe(true);
-    expect(v.some((m) => m.x1 === MARGIN.x + 3 * CARD.w && m.y1 === LETTER.h - 8)).toBe(true);
-    expect(h.some((m) => m.y1 === MARGIN.y && m.x1 === 0 && m.x2 === 8)).toBe(true);
+    expect(v.some((m) => m.x1 === MARGIN.x && m.y1 === 0 && m.y2 === MARGIN.y)).toBe(true);
+    expect(v.some((m) => m.x1 === MARGIN.x + 3 * CARD.w && m.y1 === LETTER.h - MARGIN.y && m.y2 === LETTER.h)).toBe(true);
+    expect(h.some((m) => m.y1 === MARGIN.y && m.x1 === 0 && m.x2 === MARGIN.x)).toBe(true);
+    expect(h.some((m) => m.y1 === MARGIN.y + 3 * CARD.h && m.x1 === LETTER.w - MARGIN.x && m.x2 === LETTER.w)).toBe(true);
+  });
+
+  it('never crosses the card grid, where the cards abut with no gutter', () => {
+    for (const paper of ['letter', 'a4'] as const) {
+      const { x, y } = marginFor(paper);
+      const size = PAPERS[paper];
+      for (const m of cutMarks(paper)) {
+        const inGridX = Math.min(m.x1, m.x2) > x && Math.max(m.x1, m.x2) < size.w - x;
+        const inGridY = Math.min(m.y1, m.y2) > y && Math.max(m.y1, m.y2) < size.h - y;
+        expect(inGridX && inGridY).toBe(false);
+      }
+    }
+  });
+
+  it('still prints on a printer that cannot reach the outer 6 mm of the sheet', () => {
+    const dead = 6 * MM;
+    for (const paper of ['letter', 'a4'] as const) {
+      for (const m of cutMarks(paper)) {
+        const len = m.x1 === m.x2 ? Math.abs(m.y2 - m.y1) : Math.abs(m.x2 - m.x1);
+        expect(len).toBeGreaterThan(dead + 1 * MM); // at least a millimetre survives
+      }
+    }
   });
 });
 
@@ -99,11 +122,12 @@ describe('bleedRect', () => {
     expect(r.h).toBeCloseTo(slot.h + 11.34, 5);
   });
 
-  it('stays inside the page and clear of the cut marks on both papers', () => {
+  it('stays inside the page and under the inner end of the cut marks on both papers', () => {
     for (const paper of ['letter', 'a4'] as const) {
       const r = bleedRect(layoutSheet(1, paper)[0], 2 * MM);
-      expect(r.x).toBeGreaterThan(8); // marks are 8pt hairlines at the page edge
-      expect(r.y + r.h).toBeLessThan(PAPERS[paper].h - 8);
+      expect(r.x).toBeGreaterThan(0);
+      expect(r.y + r.h).toBeLessThan(PAPERS[paper].h);
+      expect(r.x).toBeLessThan(marginFor(paper).x); // the bleed covers only the last 2 mm of the mark
     }
   });
 });

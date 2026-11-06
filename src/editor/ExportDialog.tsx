@@ -94,7 +94,7 @@ export function ExportDialog({ cardCount, lowArt, customBackUrl, onCustomBack, o
           <input type="checkbox" checked={bleed} onChange={(e) => chooseBleed(e.target.checked)} />
           <span>
             <strong>Bleed</strong>: black runs {BLEED_MM} mm past every cut line, so a cut that drifts leaves no white sliver. Cards print with
-            square corners; round them with a corner punch. The cut marks do not move.
+            square corners; round them with a corner punch. The cut marks do not move; they run from the paper edge to the cards.
           </span>
         </label>
         <h3 className="dialog-sub">Card backs</h3>

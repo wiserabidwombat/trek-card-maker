@@ -103,6 +103,10 @@ Open the printed URL (default `http://localhost:5173`).
 - **Bleed** (on by default in the export dialog): black runs 2 mm past every cut line on fronts
   and backs, so a cut that drifts leaves a black sliver rather than a white one. Cards on a bleed
   sheet print with square corners for a corner punch; the cut marks stay where they are.
+- **Cut marks** run from the paper edge all the way to the card grid (the full margin, 8 to 17 mm
+  depending on the paper and side). Home printers cannot print the outer few millimetres of a
+  sheet, so a short mark at the edge would often vanish; these still show along whatever part of
+  the margin the printer reaches. Cards abut inside the grid, so no line crosses a card.
 - **Export print sheet** writes every piece of card text as real PDF text (fonts embedded and
   subset), so it prints at the printer's own resolution on any printer and the PDF is searchable;
   only the frame, art and icons are raster. A custom font loaded under **Fonts…** is embedded as
