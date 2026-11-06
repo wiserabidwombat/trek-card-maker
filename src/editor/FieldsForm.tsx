@@ -258,7 +258,6 @@ export function FieldsForm({ card, catalog, template, onChange }: Props) {
             <select id={f.id} value={value} onChange={(e) => setField(f.id, e.target.value)}>
               <option value="">(keep frame's)</option>
               <option value="A">Alpha</option>
-              <option value="B">Beta</option>
               <option value="G">Gamma</option>
               <option value="D">Delta</option>
             </select>

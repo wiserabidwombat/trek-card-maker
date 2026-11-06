@@ -10,7 +10,7 @@ describe('quadrantFill', () => {
   });
 
   it('falls back to the template fill for quadrants without a measurement', () => {
-    expect(quadrantFill(q, 'B')).toBe('#0d1f3c');
+    expect(quadrantFill(q, 'X')).toBe('#0d1f3c');
     expect(quadrantFill({ fill: '#0d1f3c' }, 'D')).toBe('#0d1f3c');
   });
 });

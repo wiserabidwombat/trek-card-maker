@@ -48,7 +48,7 @@ export function sampleCards(catalog: Catalog): Card[] {
     title: "Qo'noS",
     unique: '1',
     subtitle: 'Heart of the Empire',
-    quadrant: 'B',
+    quadrant: 'A',
     points: '35',
     span: '2',
     requirements: 'Diplomacy, Honor, 2 Leadership, and Strength>34',

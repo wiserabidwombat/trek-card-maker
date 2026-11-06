@@ -75,6 +75,8 @@ describe('ship and mission extras', () => {
   });
   it('maps quadrant codes to Greek letters', () => {
     expect(QUADRANTS.A).toBe('Α');
+    expect(QUADRANTS.G).toBe('Γ');
     expect(QUADRANTS.D).toBe('Δ');
+    expect(QUADRANTS.B).toBeUndefined(); // no Second Edition mission lies in the Beta Quadrant
   });
 });

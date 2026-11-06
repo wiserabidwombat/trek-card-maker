@@ -174,8 +174,8 @@ export function displayTitle(card: Card): string {
   return card.fields.unique === '1' ? `•${t}` : t;
 }
 
-/** Quadrant letters as printed on mission cards. */
-export const QUADRANTS: Record<string, string> = { A: 'Α', B: 'Β', G: 'Γ', D: 'Δ' };
+/** Quadrant letters as printed on mission cards: Second Edition missions lie in the Alpha, Gamma or Delta Quadrant. */
+export const QUADRANTS: Record<string, string> = { A: 'Α', G: 'Γ', D: 'Δ' };
 
 /** Staffing is stored as a comma-separated list of icon ids. */
 export function staffingIcons(card: Card): string[] {
