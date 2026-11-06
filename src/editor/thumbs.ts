@@ -12,7 +12,8 @@ export interface Thumb {
 
 /** Everything a card's picture depends on. */
 export function thumbKey(card: Card, fonts: FontConfig): string {
-  return `${card.id}|${card.updatedAt}|${card.frameId}|${card.image?.blobKey ?? ''}|${fonts.title}|${fonts.body}|${fonts.heavier ? 'h' : ''}`;
+  const emblem = card.emblem?.icon ?? card.emblem?.blobKey ?? '';
+  return `${card.id}|${card.updatedAt}|${card.frameId}|${card.image?.blobKey ?? ''}|${emblem}|${fonts.title}|${fonts.body}|${fonts.heavier ? 'h' : ''}`;
 }
 
 /** Cards whose thumbnail is missing or stale, in deck order with the current card first so it refreshes soonest. */

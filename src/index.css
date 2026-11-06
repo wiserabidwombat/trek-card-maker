@@ -712,6 +712,13 @@ button.danger:hover:not(:disabled) {
 .icon-check button:disabled {
   opacity: 0.35;
 }
+.icon-check button.frame-own {
+  font-size: 11px;
+  color: var(--muted);
+}
+.icon-check button.frame-own.on {
+  color: inherit;
+}
 .skill-row input.count {
   width: 48px;
 }

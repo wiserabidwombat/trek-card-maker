@@ -36,6 +36,25 @@ export interface CardImage {
 
 export const DEFAULT_ART_FILL = '#000000';
 
+/**
+ * What goes in the top-left affiliation disc of a personnel or ship frame instead of the frame's
+ * own emblem: a catalog corner icon (corner-klingon) or a picture kept in the browser.
+ */
+export interface CardEmblem {
+  icon?: string;
+  blobKey?: string;
+}
+
+/** Card types whose frame has the corner emblem disc. */
+export function hasEmblem(type: CardType): boolean {
+  return type === 'personnel' || type === 'ship';
+}
+
+/** Every stored image a card refers to: its artwork and a custom corner emblem. */
+export function imageKeys(card: Pick<Card, 'image' | 'emblem'>): string[] {
+  return [card.image?.blobKey, card.emblem?.blobKey].filter((k): k is string => !!k);
+}
+
 export interface Card {
   id: string;
   name: string;
@@ -46,6 +65,8 @@ export interface Card {
   /** Other Icons (personnel, ship: big-*) or affiliation icons (mission: mission-*), in draw order. */
   icons: string[];
   image?: CardImage;
+  /** Replaces the frame's corner emblem (personnel, ship); absent means the frame's own. */
+  emblem?: CardEmblem;
   copies: number;
   updatedAt: number;
   /** The deck this card belongs to; cards saved before decks existed get the default deck on load. */
@@ -145,13 +166,16 @@ export function changeType(card: Card, type: CardType, frameId: string): Card {
   for (const f of COMMON_FIELDS) fields[f.id] = card.fields[f.id] ?? '';
   // Keep values for fields both types share (e.g. cost, subtitle).
   for (const f of FIELD_DEFS[type]) if (card.fields[f.id] !== undefined) fields[f.id] = card.fields[f.id];
+  const { emblem, ...rest } = card;
   return {
-    ...card,
+    ...rest,
     type,
     frameId,
     fields,
     skills: type === 'personnel' ? card.skills : [],
     icons: iconsKeepAcross(card.type, type) ? card.icons : [],
+    // the corner emblem only exists on personnel and ship frames
+    ...(emblem && hasEmblem(type) ? { emblem } : {}),
     updatedAt: Date.now(),
   };
 }
@@ -187,6 +211,6 @@ export function staffingIcons(card: Card): string[] {
 
 /** True for a card nobody has touched yet: no name, artwork, skills or icons, and every text field empty. */
 export function isBlankCard(card: Card): boolean {
-  if (card.name.trim() || card.image || card.skills.length || card.icons.length) return false;
+  if (card.name.trim() || card.image || card.emblem || card.skills.length || card.icons.length) return false;
   return Object.values(card.fields).every((v) => !v.trim());
 }

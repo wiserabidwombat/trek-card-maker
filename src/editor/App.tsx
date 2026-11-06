@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Catalog, Frame } from '../catalog/types';
 import { artBoxFor, templateFor } from '../catalog/types';
 import { useCatalog, FRAMES_BASE } from '../catalog/useCatalog';
-import { changeType, isBlankCard, newCard, type Card } from '../model/card';
+import { changeType, hasEmblem, imageKeys, isBlankCard, newCard, type Card } from '../model/card';
 import { parseSkillText } from '../model/skills';
 import { AssetCache } from '../render/assets';
 import { artPrintDpi, artQuality } from '../render/artQuality';
@@ -42,6 +42,8 @@ import { FieldsForm } from './FieldsForm';
 import { FontSettings } from './FontSettings';
 import { FramePicker } from './FramePicker';
 import { ImageSection } from './ImageSection';
+import { EmblemSection } from './EmblemSection';
+import { loadCardImages } from './cardImages';
 import { Preview } from './Preview';
 import { SetupScreen } from './SetupScreen';
 import { useRenderer } from './useRenderer';
@@ -245,6 +247,14 @@ function Editor({ catalog }: { catalog: Catalog }) {
         c.image = { ...base.image, blobKey: key };
       }
     }
+    if (base?.emblem?.blobKey) {
+      const blob = await getImage(base.emblem.blobKey);
+      if (blob) {
+        const key = `img-${c.id}-emblem`;
+        await putImage(key, blob);
+        c.emblem = { blobKey: key };
+      }
+    }
     setCards((cs) => [...cs, c]);
     setCurrentId(c.id);
     setHistory((h) => record(h, { kind: 'add', card: c, at: Date.now() }));
@@ -385,7 +395,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
     if (!ok) return;
     for (const timer of saveTimers.current.values()) window.clearTimeout(timer);
     saveTimers.current.clear();
-    for (const c of cards) if (c.image) assets.dropBlob(c.image.blobKey);
+    for (const c of cards) for (const key of imageKeys(c)) assets.dropBlob(key);
     const removed = await clearCardsAndImages(deckId);
     recordChange();
     setHistory(EMPTY_HISTORY);
@@ -408,14 +418,10 @@ function Editor({ catalog }: { catalog: Catalog }) {
         skipped.push(card.name || card.fields.title || card.id);
         continue;
       }
-      let userImage: HTMLImageElement | undefined;
-      if (card.image) {
-        const blob = await getImage(card.image.blobKey);
-        if (blob) userImage = await assets.getBlobImage(card.image.blobKey, blob);
-      }
+      const pictures = await loadCardImages(card, assets);
       try {
         const textSink: TextOp[] | undefined = withText ? [] : undefined;
-        const r = await renderCard(card, { catalog, frame: fr, template: templateFor(catalog, fr), fonts, assets, userImage, base: FRAMES_BASE, profile, textSink, squareCorners });
+        const r = await renderCard(card, { catalog, frame: fr, template: templateFor(catalog, fr), fonts, assets, ...pictures, base: FRAMES_BASE, profile, textSink, squareCorners });
         items.push({ canvas: r.canvas, copies: card.copies, textOps: r.textOps });
       } catch {
         skipped.push(card.name || card.fields.title || card.id);
@@ -526,9 +532,10 @@ function Editor({ catalog }: { catalog: Catalog }) {
   const exportJson = async () => {
     const images: Record<string, string> = {};
     for (const c of cards) {
-      if (!c.image) continue;
-      const blob = await getImage(c.image.blobKey);
-      if (blob) images[c.image.blobKey] = await blobToDataUrl(blob);
+      for (const key of imageKeys(c)) {
+        const blob = await getImage(key);
+        if (blob) images[key] = await blobToDataUrl(blob);
+      }
     }
     const deckName = decks.find((d) => d.id === deckId)?.name ?? '';
     downloadBytes(new TextEncoder().encode(serializeDeck(cards, images, deckName)), deckFileName(deckName), 'application/json');
@@ -585,7 +592,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
     if (!window.confirm(`Delete the deck "${cur.name}" and its ${n} card${n === 1 ? '' : 's'}? This cannot be undone. Export it first if you want to keep it.`)) return;
     for (const timer of saveTimers.current.values()) window.clearTimeout(timer);
     saveTimers.current.clear();
-    for (const c of cards) if (c.image) assets.dropBlob(c.image.blobKey);
+    for (const c of cards) for (const key of imageKeys(c)) assets.dropBlob(key);
     await clearCardsAndImages(deckId);
     recordChange();
     let rest = decks.filter((d) => d.id !== deckId);
@@ -739,6 +746,7 @@ function Editor({ catalog }: { catalog: Catalog }) {
         <div className="middle">
           {pristine && <Welcome onLoadSample={loadSample} onHelp={() => setShowHelp(true)} />}
           {current && frame && template && <ImageSection card={current} frame={frame} template={template} assets={assets} onChange={updateCard} />}
+          {current && template?.cornerDisc && hasEmblem(current.type) && <EmblemSection card={current} catalog={catalog} assets={assets} onChange={updateCard} />}
           {current && <FieldsForm card={current} catalog={catalog} template={template} onChange={updateCard} />}
         </div>
         <Preview render={render} filename={current?.name || current?.fields.title || 'card'} />

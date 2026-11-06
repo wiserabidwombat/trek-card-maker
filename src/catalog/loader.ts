@@ -54,7 +54,7 @@ export function validateCatalog(json: unknown): Catalog {
   const templates: Record<string, Template> = {};
   for (const [key, t] of Object.entries(json.templates)) templates[key] = checkTemplate(key, t);
   const frames = json.frames.map((f, i) => checkFrame(i, f, templates));
-  const groups: IconGroup[] = ['inline', 'other', 'missionAffiliation'];
+  const groups: IconGroup[] = ['inline', 'other', 'missionAffiliation', 'corner'];
   const icons = json.icons.map((ic, i) => {
     need(isRecord(ic) && typeof ic.id === 'string' && typeof ic.file === 'string', `icons[${i}] invalid`);
     const group = (groups as string[]).includes(String(ic.group)) ? (ic.group as IconGroup) : 'inline';

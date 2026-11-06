@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { newCard, changeType, typeBarText, displayTitle, COMMON_FIELDS, FIELD_DEFS, fieldsFor, staffingIcons, QUADRANTS, maxIcons } from './card';
+import { newCard, changeType, typeBarText, displayTitle, COMMON_FIELDS, FIELD_DEFS, fieldsFor, staffingIcons, QUADRANTS, maxIcons, hasEmblem, imageKeys, isBlankCard } from './card';
 
 describe('card model', () => {
   it('creates a card with every field initialised to an empty string', () => {
@@ -28,6 +28,27 @@ describe('card model', () => {
     expect(changeType(c, 'mission', 'C').icons).toEqual([]);
     expect(d.frameId).toBe('B');
     expect(d.id).toBe(c.id);
+  });
+
+  it('changeType keeps the corner emblem between personnel and ship and drops it elsewhere', () => {
+    const c = newCard('personnel', 'A');
+    c.emblem = { icon: 'corner-borg' };
+    expect(changeType(c, 'ship', 'B').emblem).toEqual({ icon: 'corner-borg' });
+    expect(changeType(c, 'event', 'C').emblem).toBeUndefined();
+    expect('emblem' in changeType(c, 'event', 'C')).toBe(false);
+    expect(hasEmblem('ship')).toBe(true);
+    expect(hasEmblem('mission')).toBe(false);
+  });
+
+  it('imageKeys lists the artwork and a custom emblem, and an emblem makes a card not blank', () => {
+    const c = newCard('ship', 'A');
+    expect(imageKeys(c)).toEqual([]);
+    expect(isBlankCard(c)).toBe(true);
+    c.emblem = { blobKey: 'img-e' };
+    expect(isBlankCard(c)).toBe(false);
+    c.image = { blobKey: 'img-a', crop: { x: 0, y: 0, w: 1, h: 1 }, srcW: 1, srcH: 1 };
+    expect(imageKeys(c)).toEqual(['img-a', 'img-e']);
+    expect(imageKeys({ ...c, emblem: { icon: 'corner-borg' } })).toEqual(['img-a']);
   });
 
   it('typeBarText depends on the card type', () => {

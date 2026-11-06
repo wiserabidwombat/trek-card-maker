@@ -1,5 +1,5 @@
 import { createStore, get, set, del, keys, getMany, delMany } from 'idb-keyval';
-import type { Card } from '../model/card';
+import { imageKeys, type Card } from '../model/card';
 import { migrateLegacy, type DeckMeta } from './decks';
 
 const store = createStore('trek-card-maker', 'kv');
@@ -27,7 +27,7 @@ export async function clearCardsAndImages(deckId?: string): Promise<number> {
     return doomed.filter((k) => k.startsWith(CARD_PREFIX)).length;
   }
   const cards = await listCards(deckId);
-  const doomed = cards.flatMap((c) => [CARD_PREFIX + c.id, ...(c.image ? [c.image.blobKey] : [])]);
+  const doomed = cards.flatMap((c) => [CARD_PREFIX + c.id, ...imageKeys(c)]);
   await delMany(doomed, store);
   return cards.length;
 }
@@ -39,9 +39,9 @@ export async function listCards(deckId?: string): Promise<Card[]> {
   return cards.sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity) || a.updatedAt - b.updatedAt);
 }
 
-/** Image keys that no card references any more (replaced, removed or undone artwork). */
-export function orphanImageKeys(allKeys: unknown[], cards: Pick<Card, 'image'>[]): string[] {
-  const used = new Set(cards.map((c) => c.image?.blobKey).filter((k): k is string => !!k));
+/** Image keys that no card references any more (replaced, removed or undone artwork or emblems). */
+export function orphanImageKeys(allKeys: unknown[], cards: Pick<Card, 'image' | 'emblem'>[]): string[] {
+  const used = new Set(cards.flatMap(imageKeys));
   return allKeys.filter((k): k is string => typeof k === 'string' && k.startsWith(IMAGE_PREFIX) && !used.has(k));
 }
 

@@ -14,6 +14,8 @@ describe('thumbKey', () => {
     expect(thumbKey({ ...a, frameId: 'personnel.romulan' }, DEFAULT_FONTS)).not.toBe(base);
     expect(thumbKey({ ...a, image: { blobKey: 'img1', crop: { x: 0, y: 0, w: 1, h: 1 }, srcW: 1, srcH: 1 } }, DEFAULT_FONTS)).not.toBe(base);
     expect(thumbKey(a, { ...DEFAULT_FONTS, body: '"UserBody"' })).not.toBe(base);
+    expect(thumbKey({ ...a, emblem: { icon: 'corner-borg' } }, DEFAULT_FONTS)).not.toBe(base);
+    expect(thumbKey({ ...a, emblem: { blobKey: 'img-e' } }, DEFAULT_FONTS)).not.toBe(thumbKey({ ...a, emblem: { icon: 'corner-borg' } }, DEFAULT_FONTS));
     expect(thumbKey(a, DEFAULT_FONTS)).toBe(base);
   });
 });

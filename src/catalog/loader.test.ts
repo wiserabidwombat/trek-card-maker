@@ -63,8 +63,18 @@ describe('validateCatalog', () => {
     const rich = {
       ...minimal,
       skills: ['Honor', 'Leadership'],
-      templates: { 'dilemma.hires': { ...minimal.templates['dilemma.hires'], iconSlots: [{ cx: 0.07, cy: 0.64, size: 0.08 }], missionAffiliations: { cy: 0.89, step: 0.147, size: 0.08 } } },
-      icons: [{ id: 'big-earth', file: 'icons/big-earth.png', w: 60, h: 60, group: 'other' }],
+      templates: {
+        'dilemma.hires': {
+          ...minimal.templates['dilemma.hires'],
+          iconSlots: [{ cx: 0.07, cy: 0.64, size: 0.08 }],
+          missionAffiliations: { cy: 0.89, step: 0.147, size: 0.08 },
+          cornerDisc: { cx: 0.0735, cy: 0.0546, r: 0.0627, fill: '#000319' },
+        },
+      },
+      icons: [
+        { id: 'big-earth', file: 'icons/big-earth.png', w: 60, h: 60, group: 'other' },
+        { id: 'corner-borg', file: 'icons/corner-borg.png', w: 130, h: 130, group: 'corner' },
+      ],
       frames: [{ ...minimal.frames[0], variant: 'dual', label: 'Dual', ring: 'rings/hires.none.png' }],
     };
     const c = validateCatalog(rich);
@@ -72,6 +82,8 @@ describe('validateCatalog', () => {
     expect(c.frames[0].label).toBe('Dual');
     expect(c.frames[0].ring).toBe('rings/hires.none.png');
     expect(c.icons[0].group).toBe('other');
+    expect(c.icons[1].group).toBe('corner');
+    expect(c.templates['dilemma.hires'].cornerDisc?.fill).toBe('#000319');
     expect(c.skills).toEqual(['Honor', 'Leadership']);
     expect(c.templates['dilemma.hires'].iconSlots).toHaveLength(1);
     expect(c.templates['dilemma.hires'].missionAffiliations?.step).toBe(0.147);

@@ -6,7 +6,7 @@ import type { Card } from '../model/card';
 import type { AssetCache } from '../render/assets';
 import type { FontConfig } from '../render/fonts';
 import { renderCard } from '../render/renderCard';
-import { getImage } from '../store/db';
+import { loadCardImages } from './cardImages';
 import { pendingThumbs, pruneThumbs, thumbKey, type Thumb } from './thumbs';
 
 /** Width of a gallery picture in device pixels; cards are rendered at full size and shrunk. */
@@ -53,12 +53,8 @@ export function useThumbnails(cards: Card[], currentId: string | null, catalog: 
         try {
           const frame = catalog.frames.find((f) => f.id === card.frameId);
           if (!frame) throw new Error(`Frame ${card.frameId} is not in the catalog`);
-          let userImage: HTMLImageElement | undefined;
-          if (card.image) {
-            const blob = await getImage(card.image.blobKey);
-            if (blob) userImage = await assets.getBlobImage(card.image.blobKey, blob);
-          }
-          const r = await renderCard(card, { catalog, frame, template: templateFor(catalog, frame), fonts, assets, userImage, base: FRAMES_BASE });
+          const pictures = await loadCardImages(card, assets);
+          const r = await renderCard(card, { catalog, frame, template: templateFor(catalog, frame), fonts, assets, ...pictures, base: FRAMES_BASE });
           thumb = { key, url: shrink(r.canvas, THUMB_WIDTH), overflow: r.overflow };
         } catch (e) {
           thumb = { key, url: '', overflow: false, error: e instanceof Error ? e.message : String(e) };

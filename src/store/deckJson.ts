@@ -59,6 +59,11 @@ function checkCard(i: number, c: unknown): Card {
       ...(typeof c.image.fill === 'string' ? { fill: c.image.fill } : {}),
     };
   }
+  let emblem: Card['emblem'];
+  if (isRecord(c.emblem)) {
+    if (typeof c.emblem.icon === 'string' && c.emblem.icon) emblem = { icon: c.emblem.icon };
+    else if (typeof c.emblem.blobKey === 'string' && c.emblem.blobKey) emblem = { blobKey: c.emblem.blobKey };
+  }
   return {
     id: c.id,
     name: typeof c.name === 'string' ? c.name : '',
@@ -68,6 +73,7 @@ function checkCard(i: number, c: unknown): Card {
     skills,
     icons,
     ...(image ? { image } : {}),
+    ...(emblem ? { emblem } : {}),
     copies: Number.isFinite(Number(c.copies)) ? Number(c.copies) : 1,
     updatedAt: Number(c.updatedAt) || Date.now(),
   };

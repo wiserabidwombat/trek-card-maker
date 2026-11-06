@@ -60,6 +60,8 @@ export interface Template {
   quadrant?: { cx: number; cy: number; r: number; fill: string; fills?: Record<string, string>; sizePt: number } | null;
   /** Other Icons sockets (personnel, ship), top to bottom. */
   iconSlots?: IconSlot[] | null;
+  /** The top-left affiliation disc (personnel, ship): centre, radius (fraction of width) and the colour behind the emblem. */
+  cornerDisc?: { cx: number; cy: number; r: number; fill: string } | null;
   /** Mission affiliation icon strip geometry. */
   missionAffiliations?: MissionStrip | null;
   /** Black card border drawn around the frame image (PDF points); 0 when the image already has it. */
@@ -86,7 +88,8 @@ export interface Frame {
   ring: string | null;
 }
 
-export type IconGroup = 'inline' | 'other' | 'missionAffiliation';
+/** corner: an affiliation's whole corner disc, emblem on its background, drawn in place of the frame's own. */
+export type IconGroup = 'inline' | 'other' | 'missionAffiliation' | 'corner';
 
 export interface IconDef {
   id: string;

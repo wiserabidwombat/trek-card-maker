@@ -5,8 +5,8 @@ import type { Card } from '../model/card';
 import type { AssetCache } from '../render/assets';
 import type { FontConfig } from '../render/fonts';
 import { renderCard } from '../render/renderCard';
-import { getImage } from '../store/db';
 import { FRAMES_BASE } from '../catalog/useCatalog';
+import { loadCardImages } from './cardImages';
 
 export interface RenderState {
   /** The finished card, or null while nothing has rendered yet or after a failure. */
@@ -36,12 +36,8 @@ export function useRenderer(card: Card | null, catalog: Catalog, fonts: FontConf
         const frame = catalog.frames.find((f) => f.id === card.frameId);
         if (!frame) throw new Error(`Frame ${card.frameId} is not in the catalog`);
         const template = templateFor(catalog, frame);
-        let userImage: HTMLImageElement | undefined;
-        if (card.image) {
-          const blob = await getImage(card.image.blobKey);
-          if (blob) userImage = await assets.getBlobImage(card.image.blobKey, blob);
-        }
-        const result = await renderCard(card, { catalog, frame, template, fonts, assets, userImage, base: FRAMES_BASE });
+        const pictures = await loadCardImages(card, assets);
+        const result = await renderCard(card, { catalog, frame, template, fonts, assets, ...pictures, base: FRAMES_BASE });
         if (my === token.current) setState({ canvas: result.canvas, overflow: result.overflow, textPt: result.textPt, basePt: result.basePt, error: null, busy: false, retry });
       } catch (e) {
         // Drop the previous picture: showing it under an error message made failures look like success.

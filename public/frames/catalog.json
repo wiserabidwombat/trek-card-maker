@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-05T19:39:06",
+ "generatedAt": "2026-11-06T08:09:32",
  "families": {
   "std": {
    "refWidthPt": 178.58
@@ -497,6 +497,12 @@
      "size": 0.0753
     }
    ],
+   "cornerDisc": {
+    "cx": 0.1035,
+    "cy": 0.081,
+    "r": 0.062,
+    "fill": "#010101"
+   },
    "card": {
     "borderPt": 0.0,
     "cornerPt": 0.0
@@ -718,6 +724,12 @@
      "size": 0.0753
     }
    ],
+   "cornerDisc": {
+    "cx": 0.1035,
+    "cy": 0.081,
+    "r": 0.062,
+    "fill": "#010101"
+   },
    "card": {
     "borderPt": 0.0,
     "cornerPt": 0.0
@@ -1292,6 +1304,12 @@
      "size": 0.0793
     }
    ],
+   "cornerDisc": {
+    "cx": 0.0735,
+    "cy": 0.0546,
+    "r": 0.0627,
+    "fill": "#000319"
+   },
    "card": {
     "borderPt": 7.5,
     "cornerPt": 7.08
@@ -1432,6 +1450,12 @@
      "size": 0.0793
     }
    ],
+   "cornerDisc": {
+    "cx": 0.0735,
+    "cy": 0.0546,
+    "r": 0.0627,
+    "fill": "#000319"
+   },
    "card": {
     "borderPt": 7.5,
     "cornerPt": 7.08
@@ -1807,6 +1831,83 @@
    "w": 56,
    "h": 56,
    "group": "other"
+  },
+  {
+   "id": "corner-bajoran",
+   "file": "icons/corner-bajoran.png",
+   "w": 130,
+   "h": 130,
+   "group": "corner"
+  },
+  {
+   "id": "corner-borg",
+   "file": "icons/corner-borg.png",
+   "w": 130,
+   "h": 130,
+   "group": "corner"
+  },
+  {
+   "id": "corner-cardassian",
+   "file": "icons/corner-cardassian.png",
+   "w": 130,
+   "h": 130,
+   "group": "corner"
+  },
+  {
+   "id": "corner-dominion",
+   "file": "icons/corner-dominion.png",
+   "w": 130,
+   "h": 130,
+   "group": "corner"
+  },
+  {
+   "id": "corner-federation",
+   "file": "icons/corner-federation.png",
+   "w": 130,
+   "h": 130,
+   "group": "corner"
+  },
+  {
+   "id": "corner-ferengi",
+   "file": "icons/corner-ferengi.png",
+   "w": 130,
+   "h": 130,
+   "group": "corner"
+  },
+  {
+   "id": "corner-klingon",
+   "file": "icons/corner-klingon.png",
+   "w": 130,
+   "h": 131,
+   "group": "corner"
+  },
+  {
+   "id": "corner-non-aligned",
+   "file": "icons/corner-non-aligned.png",
+   "w": 130,
+   "h": 130,
+   "group": "corner"
+  },
+  {
+   "id": "corner-romulan",
+   "file": "icons/corner-romulan.png",
+   "w": 130,
+   "h": 130,
+   "group": "corner"
+  },
+  {
+   "id": "corner-starfleet",
+   "file": "icons/corner-starfleet.png",
+   "w": 130,
+   "h": 130,
+   "group": "corner"
+  },
+  {
+   "id": "corner-vidiian",
+   "file": "icons/corner-vidiian.png",
+   "w": 95,
+   "h": 94,
+   "group": "corner"
   },
   {
    "id": "mission-bajoran",
@@ -2341,17 +2442,17 @@
    "id": "ship.ferengi",
    "set": "base",
    "type": "ship",
-   "family": "std",
+   "family": "hires",
    "affiliation": "ferengi",
    "variant": "ferengi",
    "label": "Ferengi",
    "sourceTitle": "",
-   "w": 744,
-   "h": 1039,
+   "w": 1021,
+   "h": 1464,
    "file": "base/ship.ferengi.jpg",
    "thumb": "base/thumbs/ship.ferengi.jpg",
-   "overlay": null,
-   "ring": null,
+   "overlay": "overlays/personnel.hires.ferengi.png",
+   "ring": "rings/hires.ferengi.png",
    "artBox": null
   },
   {
@@ -2403,6 +2504,23 @@
    "thumb": "base/thumbs/ship.romulan.jpg",
    "overlay": null,
    "ring": "rings/hires.romulan.png",
+   "artBox": null
+  },
+  {
+   "id": "ship.starfleet",
+   "set": "base",
+   "type": "ship",
+   "family": "hires",
+   "affiliation": "starfleet",
+   "variant": "starfleet",
+   "label": "Starfleet",
+   "sourceTitle": "",
+   "w": 1021,
+   "h": 1464,
+   "file": "base/ship.starfleet.jpg",
+   "thumb": "base/thumbs/ship.starfleet.jpg",
+   "overlay": null,
+   "ring": "rings/hires.starfleet.png",
    "artBox": null
   },
   {

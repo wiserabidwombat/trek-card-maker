@@ -1,6 +1,7 @@
 import type { Catalog, Frame, Template, TextBox } from '../catalog/types';
 import { artBoxFor } from '../catalog/types';
-import { ATTRIBUTE_FIELDS, DEFAULT_ART_FILL, QUADRANTS, displayTitle, maxIcons, staffingIcons, typeBarText, type Card } from '../model/card';
+import { ATTRIBUTE_FIELDS, DEFAULT_ART_FILL, QUADRANTS, displayTitle, hasEmblem, maxIcons, staffingIcons, typeBarText, type Card } from '../model/card';
+import { emblemFit } from './emblem';
 import { parseMarkup, type Run } from '../model/markup';
 import { skillText } from '../model/skills';
 import { missionIconPositions, slotPlacement } from './iconLayout';
@@ -20,6 +21,8 @@ export interface RenderContext {
   fonts: FontConfig;
   assets: AssetCache;
   userImage?: HTMLImageElement;
+  /** The custom corner emblem picture when `card.emblem.blobKey` names one. */
+  emblemImage?: HTMLImageElement;
   base: string; // URL prefix for catalog files, e.g. '/frames/'
   /** Printer-specific adjustments; the screen preview uses the laser (neutral) profile. */
   profile?: RenderProfile;
@@ -312,6 +315,7 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
   const reqRuns = parseMarkup(typeset(card.fields.requirements ?? ''));
   const staffing = card.type === 'ship' ? staffingIcons(card) : [];
   const listIcons = card.icons.slice(0, maxIcons(card.type, t));
+  const emblem = hasEmblem(card.type) && t.cornerDisc ? card.emblem : undefined;
   const icons = await loadIcons(ctx, [
     ...iconIds(gameRuns),
     ...iconIds(loreRuns),
@@ -319,7 +323,31 @@ export async function renderCard(card: Card, ctx: RenderContext): Promise<Render
     SKILL_BULLET,
     ...staffing,
     ...listIcons,
+    ...(emblem?.icon ? [emblem.icon] : []),
   ]);
+
+  // the corner emblem: another affiliation's whole disc, or a picture of the user's own on the disc colour
+  if (emblem && t.cornerDisc) {
+    const d = t.cornerDisc;
+    const cx = d.cx * W;
+    const cy = d.cy * H;
+    const r = d.r * W;
+    const disc = emblem.icon ? icons.get(emblem.icon) : undefined;
+    if (disc) {
+      g.drawImage(disc, cx - r, cy - r, 2 * r, 2 * r);
+    } else if (emblem.blobKey && ctx.emblemImage) {
+      g.save();
+      g.beginPath();
+      g.arc(cx, cy, r, 0, Math.PI * 2);
+      g.clip();
+      g.fillStyle = d.fill;
+      g.fillRect(cx - r, cy - r, 2 * r, 2 * r);
+      const img = ctx.emblemImage;
+      const fit = emblemFit(cx, cy, r, img.naturalWidth, img.naturalHeight);
+      g.drawImage(img, fit.x, fit.y, fit.w, fit.h);
+      g.restore();
+    }
+  }
 
   // Other Icons in the socket column (personnel, ship): ring, then icon
   if ((card.type === 'personnel' || card.type === 'ship') && t.iconSlots && listIcons.length) {

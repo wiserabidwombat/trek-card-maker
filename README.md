@@ -73,6 +73,10 @@ Open the printed URL (default `http://localhost:5173`).
     the socket column in the order you pick them; the frame decides how many sockets there are.
   - Personnel: **Skills** from the 23 standard skills with a multiplier (prints as
     "2 Leadership"), or *Custom…* for a house skill.
+  - Personnel and ships: **Corner emblem**. The top-left disc shows the frame's own affiliation
+    emblem; pick another affiliation's instead, or load your own picture (a PNG with a transparent
+    background looks best; it is fitted inside the disc on the disc's own dark colour) for a
+    faction the game never had. Pictures are kept in the browser and travel with the deck file.
   - Ships: staffing icons over the art. Missions: **Affiliations** (up to five, centred along the
     bottom), a quadrant letter (its badge takes the quadrant's own colour: blue Alpha, green Delta,
     red Gamma), points, span and requirements. A **Headquarters label** (for
@@ -125,8 +129,11 @@ welcome panel link there too.
 
 ## Known limitations
 
-- The affiliation icon in the top-left corner belongs to the frame; changing it means picking the
-  other affiliation's frame. Mission type and dilemma type are frame variants for the same reason.
+- Each affiliation is a whole frame design (colours, textures, ring), not just the corner emblem,
+  so a card takes its colours from the frame you pick; only the emblem in the corner disc can be
+  swapped. Mission type and dilemma type are frame variants for the same reason.
+- No source set has a Starfleet ship, and the Ferengi ship exists only in a classic-resolution
+  set; both ship frames are the affiliation's HiRes personnel frame, which is the same picture.
 - The headquarters mission frame comes from the single headquarters card in the HiRes sets.
 - No source mission lists the Borg, so the Borg affiliation mark for missions is cut from the
   corner disc of the Borg personnel frames; Terok Nor appears on no source card and uses the
@@ -162,12 +169,16 @@ was matched to). The extractor writes:
 - `public/frames/base/<type>.<variant>.jpg` one clean frame per card type and variant
   (affiliation for personnel and ships; planet/space/headquarters for missions;
   dual/planet/space for dilemmas). HiRes sources are preferred; the older sets fill the gaps
-  (Vidiian personnel, the Ferengi ship). Icon sockets and mission affiliation icons are removed.
+  (Vidiian personnel and ship). A ship frame missing from the HiRes sets (Starfleet, Ferengi) is
+  the affiliation's HiRes personnel frame. Icon sockets and mission affiliation icons are removed.
 - `public/frames/rings/*.png` the empty socket ring per affiliation, drawn under each Other Icon
 - `public/frames/icons/big-*.png` full-size Other Icons cropped from the frames and named by
   matching against the rulebook's icon list; `icons/mission-*.png` affiliation icons for the
   mission strip; `icons/hi-*.png` 96 px versions of the inline icons (ring plus emblem), used in
-  game text and staffing in place of the small `icons/*.png` originals wherever one exists
+  game text and staffing in place of the small `icons/*.png` originals wherever one exists;
+  `icons/corner-*.png` each affiliation's whole corner disc at frame resolution, drawn over
+  another frame's disc when a card swaps its emblem (the disc geometry and background colour per
+  family are `cornerDisc` in the personnel and ship templates)
 - `public/frames/overlays/*.png` the frame edges that overlap the art area, drawn back on top of your image
 - `public/frames/catalog.json` the base frames, one layout template per card type and family
   (text boxes from the PDFs' own text layer, socket slots and strip geometry measured from the

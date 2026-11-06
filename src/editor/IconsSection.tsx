@@ -9,9 +9,9 @@ interface Props {
   onChange: (ids: string[]) => void;
 }
 
-/** Strip the group prefix for display: big-earth → earth, mission-klingon → klingon. */
+/** Strip the group prefix for display: big-earth → earth, mission-klingon → klingon, corner-borg → borg. */
 export function iconLabel(id: string): string {
-  return id.replace(/^(big|mission)-/, '').replace(/-/g, ' ');
+  return id.replace(/^(big|mission|corner)-/, '').replace(/-/g, ' ');
 }
 
 export function IconsSection({ title, choices, value, max, onChange }: Props) {

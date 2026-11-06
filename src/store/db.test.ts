@@ -14,7 +14,11 @@ describe('isCardOrImageKey', () => {
 describe('orphanImageKeys', () => {
   it('lists image keys no card references', async () => {
     const { orphanImageKeys } = await import('./db');
-    const cards = [{ image: { blobKey: 'img-keep', crop: { x: 0, y: 0, w: 1, h: 1 }, srcW: 1, srcH: 1 } }, { image: undefined }];
-    expect(orphanImageKeys(['img-keep', 'img-old', 'card:1', 'font:title', 7], cards)).toEqual(['img-old']);
+    const cards = [
+      { image: { blobKey: 'img-keep', crop: { x: 0, y: 0, w: 1, h: 1 }, srcW: 1, srcH: 1 } },
+      { image: undefined, emblem: { blobKey: 'img-emblem' } },
+      { image: undefined, emblem: { icon: 'corner-borg' } },
+    ];
+    expect(orphanImageKeys(['img-keep', 'img-old', 'img-emblem', 'card:1', 'font:title', 7], cards)).toEqual(['img-old']);
   });
 });

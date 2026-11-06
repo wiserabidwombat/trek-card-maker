@@ -10,12 +10,21 @@ describe('deck JSON', () => {
     a.skills = [{ name: 'Honor', count: 1 }, { name: 'Leadership', count: 2 }];
     a.icons = ['big-staff', 'big-earth'];
     a.image = { blobKey: 'img-1', crop: { x: -5, y: 2, w: 30, h: 40 }, srcW: 10, srcH: 20, fill: '#102030' };
+    a.emblem = { blobKey: 'img-2' };
     const b = newCard('event', 'event.default');
-    const json = serializeDeck([a, b], { 'img-1': 'data:image/png;base64,AAAA' });
+    const s = newCard('ship', 'ship.klingon');
+    s.emblem = { icon: 'corner-borg' };
+    const json = serializeDeck([a, b, s], { 'img-1': 'data:image/png;base64,AAAA', 'img-2': 'data:image/png;base64,BBBB' });
     expect(JSON.parse(json).version).toBe(2);
     const parsed = parseDeck(json);
-    expect(parsed.cards).toEqual([a, b]);
-    expect(parsed.images).toEqual({ 'img-1': 'data:image/png;base64,AAAA' });
+    expect(parsed.cards).toEqual([a, b, s]);
+    expect(parsed.images).toEqual({ 'img-1': 'data:image/png;base64,AAAA', 'img-2': 'data:image/png;base64,BBBB' });
+  });
+
+  it('ignores an emblem that names neither an icon nor a picture', () => {
+    const c = { ...newCard('ship', 'ship.klingon'), emblem: { icon: '' } };
+    const { cards } = parseDeck(serializeDeck([c], {}));
+    expect('emblem' in cards[0]).toBe(false);
   });
 
   it('migrates version 1 skills and defaults icons', () => {

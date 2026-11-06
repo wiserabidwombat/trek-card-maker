@@ -2,7 +2,9 @@
 
 Input: the per-card frames written by pass 1 (with affiliation/cluster from pass 2), the
 templates, and the art boxes. Output: ``base/<type>.<variant>.jpg`` (+ thumbs), ``rings/``,
-``icons/big-*.png`` and ``icons/mission-*.png``, plus the catalog entries for all of them.
+``icons/big-*.png``, ``icons/mission-*.png`` and ``icons/corner-*.png``, plus the catalog entries for
+all of them. A ship frame is synthesized from the personnel frame of an affiliation that has no ship
+of its own (the two frames are the same picture).
 """
 
 from __future__ import annotations
@@ -29,6 +31,7 @@ CORNER_DISC = (0.0735, 0.0546, 0.0627)
 # the same for standard-resolution personnel frames, where the emblem sits on plain black with no disc or ring
 # (measured on the Vidiian frame: the diamond is centred at 10.35% of the width, 8.1% of the height)
 STD_CORNER_DISC = (0.1035, 0.081, 0.062)
+CORNER_BG_LUM = 60  # disc pixels darker than this are the background behind the emblem, not the emblem
 HI_SIZE = 96  # px, composed high-resolution inline icon (ring + disc)
 HI_DISC = 0.8  # disc diameter as a fraction of the ring diameter
 MAX_GROUP = 40
@@ -120,6 +123,29 @@ def corner_disc(med: np.ndarray, fam: str) -> np.ndarray:
     disc = crop_disc(med, cx * w, cy * h, r * w)
     disc[disc[..., 3] < 128, :3] = 0  # nothing outside the disc may leak back in when alpha is recomputed
     return disc
+
+
+def corner_fill(med: np.ndarray, fam: str) -> str:
+    """The colour behind the corner emblem as "#rrggbb": the median of the disc's dark pixels."""
+    disc = corner_disc(med, fam)
+    rgb = disc[disc[..., 3] >= 128][:, :3]
+    lum = rgb.astype(float) @ [0.299, 0.587, 0.114]
+    bg = rgb[lum < CORNER_BG_LUM]
+    if len(bg) == 0:
+        bg = rgb
+    return "#%02x%02x%02x" % tuple(int(v) for v in np.median(bg, axis=0))
+
+
+def corner_emblems(group_medians: dict[tuple[str, str, str], np.ndarray]) -> dict[str, tuple[str, np.ndarray]]:
+    """Per affiliation, the family and the RGBA corner disc (emblem on its background) cut from that
+    affiliation's personnel median, else its ship median; HiRes before standard."""
+    out: dict[str, tuple[str, np.ndarray]] = {}
+    order = sorted(group_medians, key=lambda k: (k[0] != "personnel", k[1] != "hires", k[2]))
+    for ctype, fam, variant in order:
+        if ctype not in ("personnel", "ship") or variant in out:
+            continue
+        out[variant] = (fam, corner_disc(group_medians[(ctype, fam, variant)], fam))
+    return out
 
 
 def personnel_median(group_medians: dict[tuple[str, str, str], np.ndarray], name: str) -> tuple[str | None, np.ndarray | None]:
@@ -305,6 +331,7 @@ def build_base_catalog(
     # ---- base frames ----
     base_frames: list[dict] = []
     group_medians: dict[tuple[str, str, str], np.ndarray] = {}  # (type, fam, variant) -> median
+    personnel_bases: dict[tuple[str, str], tuple[np.ndarray, dict]] = {}  # (fam, variant) -> cleaned base, source frame
     rings: dict[tuple[str, str], str] = {}
     review_dir = os.path.join(out, "review")
     for key in sorted(groups):
@@ -357,6 +384,8 @@ def build_base_catalog(
         img = Image.fromarray(base, "RGB")
         img.save(os.path.join(out, "base", f"{fid}.jpg"), quality=92, subsampling=0)
         _thumb(img, os.path.join(out, "base", "thumbs", f"{fid}.jpg"))
+        if ctype == "personnel":
+            personnel_bases[(fam, variant)] = (base, frames[idxs[0]])
         # ring for personnel/ship groups, from the median's first occupied socket
         ring_file = None
         if ctype in ("personnel", "ship") and slots:
@@ -416,8 +445,72 @@ def build_base_catalog(
             pair.thumbnail((900, 700))
             pair.save(os.path.join(review_dir, f"base_{fid}.png"))
 
-    # ---- socket icons (hires frames of every affiliation) ----
+    # ---- ship frames for affiliations whose personnel frame has no ship twin: the same picture ----
+    # Starfleet has no source ship at all; the Ferengi ship exists only in a classic-resolution set,
+    # and the HiRes personnel frame makes a sharper one, which takes its place.
+    ship_families: dict[str, set[str]] = defaultdict(set)
+    for ctype, fam, variant in group_medians:
+        if ctype == "ship":
+            ship_families[variant].add(fam)
+    for (fam, variant), (pbase, src) in sorted(personnel_bases.items()):
+        have = ship_families[variant]
+        if f"ship.{fam}" not in templates or fam in have or (fam == "std" and have):
+            continue
+        fid = f"ship.{variant}"
+        replaced = [f for f in base_frames if f["id"] == fid]
+        base_frames = [f for f in base_frames if f["id"] != fid]
+        base = pbase.copy()
+        if f"ship.{fam}" in art_box_px:
+            fill_art_box(base, art_box_px[f"ship.{fam}"])
+        H, W = base.shape[:2]
+        img = Image.fromarray(base, "RGB")
+        img.save(os.path.join(out, "base", f"{fid}.jpg"), quality=92, subsampling=0)
+        _thumb(img, os.path.join(out, "base", "thumbs", f"{fid}.jpg"))
+        base_frames.append(
+            {
+                "id": fid,
+                "set": "base",
+                "type": "ship",
+                "family": fam,
+                "affiliation": variant,
+                "variant": variant,
+                "label": label_for(variant),
+                "sourceTitle": "",
+                "w": W,
+                "h": H,
+                "file": f"base/{fid}.jpg",
+                "thumb": f"base/thumbs/{fid}.jpg",
+                "overlay": src.get("overlay"),
+                "ring": rings.get((fam, variant)),
+                "artBox": None,
+            }
+        )
+        why = f"replaces the {replaced[0]['family']} source ship" if replaced else "no source ship of that affiliation"
+        log(f"base {fid}: {fam} synthesized from personnel.{variant} ({why})")
+    base_frames.sort(key=lambda f: f["id"])
+
+    # ---- the corner emblem disc: where it sits and what lies behind it, per family ----
+    for fam in ("hires", "std"):
+        meds = [group_medians[k] for k in sorted(group_medians) if k[0] == "personnel" and k[1] == fam]
+        if not meds:
+            continue
+        cx, cy, r = CORNER_DISC if fam == "hires" else STD_CORNER_DISC
+        spec = {"cx": cx, "cy": cy, "r": r, "fill": corner_fill(meds[0], fam)}
+        for ctype in ("personnel", "ship"):
+            if f"{ctype}.{fam}" in templates:
+                templates[f"{ctype}.{fam}"]["cornerDisc"] = dict(spec)
+        log(f"corner disc {fam}: {spec}")
+
+    # ---- corner emblems: the whole disc, so it replaces another affiliation's exactly ----
     extra_icons: list[dict] = []
+    emblems = corner_emblems(group_medians)
+    for name, (fam, disc) in sorted(emblems.items()):
+        file = f"icons/corner-{name}.png"
+        Image.fromarray(disc, "RGBA").save(os.path.join(out, file))
+        extra_icons.append({"id": f"corner-{name}", "file": file, "w": disc.shape[1], "h": disc.shape[0], "group": "corner"})
+    log(f"corner emblems: {sorted(emblems)}")
+
+    # ---- socket icons (hires frames of every affiliation) ----
     def ref_inner(ref: np.ndarray) -> np.ndarray:
         h, w = ref.shape[:2]
         return crop_disc(ref[..., :3], (w - 1) / 2, (h - 1) / 2, REF_INNER * w)
