@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-06T08:09:32",
+ "generatedAt": "2026-11-06T11:15:46",
  "families": {
   "std": {
    "refWidthPt": 178.58
@@ -1741,6 +1741,14 @@
    "hi": "icons/hi-klingon.png"
   },
   {
+   "id": "lower-decks",
+   "file": "icons/hi-lower-decks.png",
+   "w": 96,
+   "h": 96,
+   "group": "inline",
+   "hi": "icons/hi-lower-decks.png"
+  },
+  {
    "id": "vidiian",
    "file": "icons/hi-vidiian.png",
    "w": 96,
@@ -1781,6 +1789,13 @@
    "file": "icons/big-future.png",
    "w": 56,
    "h": 56,
+   "group": "other"
+  },
+  {
+   "id": "big-lower-decks",
+   "file": "icons/big-lower-decks.png",
+   "w": 55,
+   "h": 55,
    "group": "other"
   },
   {

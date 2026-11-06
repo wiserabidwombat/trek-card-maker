@@ -69,8 +69,10 @@ Open the printed URL (default `http://localhost:5173`).
   custom card away: requirements not in bold, lowercase or misspelt skill names, `Cunning > 30` with
   spaces, a missing final period, unknown icon ids.
   - Personnel and ships: **Other icons** (command, staff, past, alternate, future, Deep Space
-    Nine, Earth, Maquis, Terok Nor, The Next Generation, The Original Series, Voyager) go into
-    the socket column in the order you pick them; the frame decides how many sockets there are.
+    Nine, Earth, Maquis, Terok Nor, The Next Generation, The Original Series, Voyager, and a
+    **Lower Decks** show icon of the U.S.S. Cerritos that Second Edition never printed, drawn in
+    the style of the others) go into the socket column in the order you pick them; the frame
+    decides how many sockets there are. `{icon:lower-decks}` puts it in game text.
   - Personnel: **Skills** from the 23 standard skills with a multiplier (prints as
     "2 Leadership"), or *Custom…* for a house skill.
   - Personnel and ships: **Corner emblem**. The top-left disc shows the frame's own affiliation
@@ -177,7 +179,8 @@ was matched to). The extractor writes:
   the affiliation's HiRes personnel frame. Icon sockets and mission affiliation icons are removed.
 - `public/frames/rings/*.png` the empty socket ring per affiliation, drawn under each Other Icon
 - `public/frames/icons/big-*.png` full-size Other Icons cropped from the frames and named by
-  matching against the rulebook's icon list; `icons/mission-*.png` affiliation icons for the
+  matching against the rulebook's icon list, plus the drawn ones of `tools/drawn_icons.py`
+  (`big-lower-decks`, rendered at the socket size and again at the inline size); `icons/mission-*.png` affiliation icons for the
   mission strip; `icons/hi-*.png` 96 px versions of the inline icons (ring plus emblem), used in
   game text and staffing in place of the small `icons/*.png` originals wherever one exists;
   `icons/corner-*.png` each affiliation's whole corner disc at frame resolution, drawn over

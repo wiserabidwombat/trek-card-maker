@@ -3,7 +3,7 @@
 Input: the per-card frames written by pass 1 (with affiliation/cluster from pass 2), the
 templates, and the art boxes. Output: ``base/<type>.<variant>.jpg`` (+ thumbs), ``rings/``,
 ``icons/big-*.png``, ``icons/mission-*.png`` and ``icons/corner-*.png``, plus the catalog entries for
-all of them. A ship frame is synthesized from the personnel frame of an affiliation that has no ship
+all of them, and the drawn show icons of ``drawn_icons.py``. A ship frame is synthesized from the personnel frame of an affiliation that has no ship
 of its own (the two frames are the same picture).
 """
 
@@ -16,6 +16,7 @@ from collections import Counter, defaultdict
 import numpy as np
 from PIL import Image, ImageDraw
 
+from drawn_icons import DRAWN_OTHER_ICONS
 from baseframe import clean_strip, fill_art_box, median_frame, patch_slot, slot_diff, socket_bands, socket_present
 from iconcrop import crop_box_rgba, crop_disc, crop_ring, merge_boxes, sharpness, strip_blobs, tight_crop
 from refs import nearest_reference
@@ -612,6 +613,17 @@ def build_base_catalog(
             mission_review.sort(key=lambda t: t[1])
             _sheet(mission_review[:240], os.path.join(review_dir, "icons_mission.png"))
 
+    # ---- drawn show icons: ones Second Edition never printed, in the socket icons' size ----
+    drawn_size = next((c.shape[0] for _score, c in best.values()), 56)
+    drawn_discs: dict[str, np.ndarray] = {}
+    for name, draw in sorted(DRAWN_OTHER_ICONS.items()):
+        disc = draw(drawn_size)
+        file = f"icons/big-{name}.png"
+        Image.fromarray(disc, "RGBA").save(os.path.join(out, file))
+        extra_icons.append({"id": f"big-{name}", "file": file, "w": disc.shape[1], "h": disc.shape[0], "group": "other"})
+        drawn_discs[name] = draw(int(HI_SIZE * HI_DISC))
+    log(f"drawn icons: {sorted(drawn_discs)}")
+
     extra_icons.sort(key=lambda i: i["id"])
     # ---- mission quadrant badges: a hi-res inline icon per quadrant and the badge fill per family ----
     badges = quadrant_badges(frames, load, overrides, log)
@@ -635,6 +647,12 @@ def build_base_catalog(
         # Other Icons: the socket crops already are emblem-on-dark discs
         for name, (_score, crop) in best.items():
             img = compose(crop)
+            file = f"icons/hi-{name}.png"
+            img.save(os.path.join(out, file))
+            hi_files[name] = file
+        # drawn show icons, drawn straight at the composed disc size
+        for name, disc in sorted(drawn_discs.items()):
+            img = compose(disc)
             file = f"icons/hi-{name}.png"
             img.save(os.path.join(out, file))
             hi_files[name] = file
