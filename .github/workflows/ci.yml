@@ -60,3 +60,7 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          # Pages sometimes sits in syncing_files for well over the action's default ten minutes
+          # (three deploys in a row timed out on 2026-11-06); give it half an hour before giving up.
+          timeout: 1800000
